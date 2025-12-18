@@ -5,7 +5,7 @@
   <title>FuelSkip</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: sans-serif; padding: 16px; }
+    body { font-family: sans-serif; padding: 16px; max-width: 480px; margin: 0 auto; }
     a.button {
       display:block;
       padding: 12px 16px;
@@ -15,6 +15,10 @@
       color:white;
       text-align:center;
       text-decoration:none;
+      font-size:15px;
+    }
+    a.button.owner {
+      background:#2563eb;
     }
     h2 { margin-bottom: 4px; }
     p { color:#555; font-size:14px; }
@@ -26,5 +30,6 @@
 
   <a class="button" href="customer.html">Customer view</a>
   <a class="button" href="attendant.html">Attendant view</a>
+  <a class="button owner" href="owner.html">Owner dashboard</a>
 </body>
 </html>
