@@ -44,36 +44,54 @@
   </table>
 
 <script>
-const API = "http://192.168.1.6:8000";  // same as others
+const API = "https://fuelskip-production.up.railway.app";  // cloud backend
 
 async function loadVouchers() {
-  const bunkId = document.getElementById('bunkInput').value;
+  const bunkId = document.getElementById('bunkInput').value.trim();
   const status = document.getElementById('statusSelect').value;
 
   const params = new URLSearchParams();
   if (bunkId) params.append("bunk_id", bunkId);
   if (status) params.append("status", status);
 
-  const res = await fetch(`${API}/vouchers?` + params.toString());
-  const data = await res.json();
-
   const tbody = document.querySelector("#tbl tbody");
-  tbody.innerHTML = "";
-  data.forEach(v => {
-    const tr = document.createElement("tr");
-    const st = v.status;
-    tr.innerHTML = `
-      <td>${v.created_at}</td>
-      <td>${v.id}</td>
-      <td>${v.bunk_id}</td>
-      <td>₹${v.amount}</td>
-      <td>${v.litres}</td>
-      <td><span class="pill ${st}">${st}</span></td>
-    `;
-    tbody.appendChild(tr);
-  });
+  tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+
+  try {
+    const res = await fetch(`${API}/vouchers?` + params.toString(), {
+      cache: "no-store"   // always fresh data
+    });
+    if (!res.ok) {
+      tbody.innerHTML = "<tr><td colspan='6'>Error loading vouchers</td></tr>";
+      return;
+    }
+    const data = await res.json();
+
+    if (!data.length) {
+      tbody.innerHTML = "<tr><td colspan='6'>No vouchers found</td></tr>";
+      return;
+    }
+
+    tbody.innerHTML = "";
+    data.forEach(v => {
+      const st = v.status;
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${v.created_at}</td>
+        <td>${v.id}</td>
+        <td>${v.bunk_id}</td>
+        <td>₹${v.amount}</td>
+        <td>${v.litres}</td>
+        <td><span class="pill ${st}">${st}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan='6'>Error: ${e.message}</td></tr>`;
+  }
 }
 
+// initial load
 loadVouchers();
 </script>
 </body>
