@@ -34,12 +34,27 @@ const API = "https://fuelskip-production.up.railway.app";
 let currentVoucherId = null;
 let currentVoucherLitres = null;
 
+// read ?voucher=... from URL
+function getVoucherFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("voucher");
+}
+
+// on page load, auto-fill from QR link
+window.addEventListener("load", () => {
+  const vid = getVoucherFromUrl();
+  if (vid) {
+    document.getElementById("voucherInput").value = vid;
+    loadVoucher();  // auto fetch and validate if paid
+  }
+});
+
 async function loadVoucher() {
   const voucherId = document.getElementById('voucherInput').value.trim();
   if (!voucherId) return;
 
   try {
-    const res = await fetch(`${API}/voucher/${voucherId}`);
+    const res = await fetch(`${API}/voucher/${encodeURIComponent(voucherId)}`);
     if (!res.ok) throw new Error("Voucher not found");
     
     const voucher = await res.json();
@@ -60,7 +75,6 @@ async function loadVoucher() {
     document.getElementById('voucherInfo').style.display = 'block';
 
     if (isValid) {
-      // directly validate & dispense as part of the same step
       await validateAndDispense();
     } else {
       document.getElementById('statusMsg').innerHTML =
@@ -74,11 +88,8 @@ async function loadVoucher() {
 async function validateAndDispense() {
   if (!currentVoucherId) return;
 
-  // Optional: if you still want a confirm, keep this; otherwise remove.
-  // if (!confirm(`Dispense ${currentVoucherLitres}L for voucher ${currentVoucherId}?`)) return;
-
   try {
-    const res = await fetch(`${API}/validate/${currentVoucherId}`, { method: 'POST' });
+    const res = await fetch(`${API}/validate/${encodeURIComponent(currentVoucherId)}`, { method: 'POST' });
     if (res.ok) {
       document.getElementById('statusMsg').innerHTML =
         '<p style="color:#10b981; font-size:18px;">✅ VALIDATED & FUEL DISPENSED</p>';
@@ -93,4 +104,3 @@ async function validateAndDispense() {
 </script>
 </body>
 </html>
-
