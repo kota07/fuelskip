@@ -77,6 +77,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
 
+@app.get("/")
+def root():
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+@app.get("/index.html")
+def index_page():
+    return FileResponse(os.path.join(BASE_DIR, "index.html"))
+
+
 @app.get("/customer.html")
 def customer_page():
     return FileResponse(os.path.join(BASE_DIR, "customer.html"))
@@ -384,5 +393,6 @@ def my_vouchers(user_id: int, db: Session = Depends(get_db)):
 def list_users(db: Session = Depends(get_db)):
     users = db.query(UserDB).order_by(UserDB.created_at.desc()).all()
     return [u.__dict__ for u in users]
+
 
 
