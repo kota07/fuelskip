@@ -179,6 +179,7 @@ def nearby_bunks(lat: float, lon: float) -> List[dict]:
     ]
 
 
+
 @app.post("/create-voucher")
 def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     if req.bunk_id not in bunks:
@@ -377,4 +378,11 @@ def my_vouchers(user_id: int, db: Session = Depends(get_db)):
         .order_by(VoucherDB.created_at.desc())
     )
     return [v.__dict__ for v in q.all()]
+
+# in main.py
+@app.get("/admin/users")
+def list_users(db: Session = Depends(get_db)):
+    users = db.query(UserDB).order_by(UserDB.created_at.desc()).all()
+    return [u.__dict__ for u in users]
+
 
