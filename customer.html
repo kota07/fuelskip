@@ -95,7 +95,7 @@
 </div>
 
 <script>
-const API = "http://192.168.1.6:8000";   // your FastAPI IP
+const API = "https://fuelskip-production.up.railway.app";   // your FastAPI IP
 
 let selectedBunkId = null;
 let lastVoucherId = null;
@@ -307,7 +307,7 @@ function showQr() {
   document.getElementById('qrContainer').innerHTML = "";
 
   const attendantUrl =
-    `http://192.168.1.6:8080/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
+    `https://fuelskip-production.up.railway.app/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
 
   new QRCode(document.getElementById("qrContainer"), {
     text: attendantUrl,
@@ -363,3 +363,4 @@ function getStatusBadge(status) {
 </script>
 </body>
 </html>
+
