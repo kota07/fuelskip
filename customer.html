@@ -131,15 +131,24 @@ function showAfterLogin() {
 
 // --- Logout ---
 function logout() {
+  // Clear stored session
   window.localStorage.removeItem("fuelskip_user_id");
   window.localStorage.removeItem("fuelskip_user_name");
   window.localStorage.removeItem("fuelskip_user_phone");
+
+  // Show login, hide rest
   document.getElementById("loginBox").style.display = "block";
   document.getElementById("createBox").style.display = "none";
   document.getElementById("historyBox").style.display = "none";
-  document.getElementById("myVouchers").textContent = "Login with phone to see your history.";
-  refreshUserDisplay();
+  document.getElementById("voucherBox").style.display = "none";
+
+  document.getElementById("myVouchers").textContent =
+    "Login with phone to see your history.";
+
+  // Clear header user display
+  document.getElementById("userDisplay").textContent = "";
 }
+
 
 // --- Login ---
 async function login() {
@@ -337,3 +346,4 @@ async function loadMyVouchers() {
 </script>
 </body>
 </html>
+
