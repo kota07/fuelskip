@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, List
 import uuid, datetime, os
@@ -21,6 +23,7 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
 
 
 class UserDB(Base):
@@ -61,16 +64,39 @@ app = FastAPI(title="FuelSkip Flow A")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # OK for local testing
+    allow_origins=["*"],      # OK for testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ---- Static / HTML pages ----
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Optional: serve whole folder as /static
+app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
+
+
+@app.get("/customer.html")
+def customer_page():
+    return FileResponse(os.path.join(BASE_DIR, "customer.html"))
+
+
+@app.get("/attendant.html")
+def attendant_page():
+    return FileResponse(os.path.join(BASE_DIR, "attendant.html"))
+
+
+@app.get("/owner.html")
+def owner_page():
+    return FileResponse(os.path.join(BASE_DIR, "owner.html"))
+# ------------------------------
+
 
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+
 
 
 # ----- Razorpay setup -----
@@ -351,3 +377,4 @@ def my_vouchers(user_id: int, db: Session = Depends(get_db)):
         .order_by(VoucherDB.created_at.desc())
     )
     return [v.__dict__ for v in q.all()]
+
