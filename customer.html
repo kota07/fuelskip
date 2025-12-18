@@ -32,10 +32,13 @@
 </head>
 <body>
 
-  <!-- Header with logout -->
-  <div style="display:flex; justify-content:space-between; align-items:center;">
+  <!-- Header with user + logout -->
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
     <h2>⛽ FuelSkip - BPCL Siripuram</h2>
-    <button class="btn-secondary btn-small" onclick="logout()">Logout</button>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span id="userDisplay" style="font-size:13px; color:#4b5563;"></span>
+      <button class="btn-secondary btn-small" onclick="logout()">Logout</button>
+    </div>
   </div>
 
   <!-- Login -->
@@ -48,8 +51,8 @@
     <button class="btn-primary" onclick="login()">Login</button>
   </div>
 
-  <!-- Create voucher -->
-  <div class="card">
+  <!-- Create voucher (hidden until login) -->
+  <div class="card" id="createBox" style="display:none;">
     <h3 style="margin-top:0;">Create voucher</h3>
     <div class="label">Enter amount (₹)</div>
     <input id="amount" type="number" min="1" />
@@ -66,7 +69,6 @@
     <div id="voucherDetails" style="font-size:14px; margin-bottom:8px;"></div>
     <div>
       <p style="margin:4px 0 6px 0;">Payment:</p>
-      <!-- ensure type="button" so form is not submitted -->
       <button type="button" class="btn-primary" id="payBtn" onclick="payNow()">Pay now</button>
     </div>
     <div id="qrSection" style="margin-top:12px; display:none;">
@@ -75,13 +77,15 @@
     </div>
   </div>
 
-  <!-- History -->
-  <div class="card">
+  <!-- History (hidden until login) -->
+  <div class="card" id="historyBox" style="display:none;">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h3 style="margin:0;">My vouchers</h3>
       <button class="btn-secondary btn-small" onclick="loadMyVouchers()">⟲ Refresh</button>
     </div>
-    <div id="myVouchers" style="margin-top:8px; font-size:13px; color:#4b5563;"></div>
+    <div id="myVouchers" style="margin-top:8px; font-size:13px; color:#4b5563;">
+      Login with phone to see your history.
+    </div>
   </div>
 
 <script>
@@ -96,15 +100,45 @@ let pollTimer = null;
 function getUserId() {
   return window.localStorage.getItem("fuelskip_user_id");
 }
-
 function setUserId(id) {
   window.localStorage.setItem("fuelskip_user_id", id);
 }
+function setUserName(name) {
+  window.localStorage.setItem("fuelskip_user_name", name || "");
+}
+function setUserPhone(phone) {
+  window.localStorage.setItem("fuelskip_user_phone", phone || "");
+}
 
+function refreshUserDisplay() {
+  const name = window.localStorage.getItem("fuelskip_user_name") || "";
+  const phone = window.localStorage.getItem("fuelskip_user_phone") || "";
+  const span = document.getElementById("userDisplay");
+  if (name || phone) {
+    span.textContent = name ? `${name} (${phone})` : phone;
+  } else {
+    span.textContent = "";
+  }
+}
+
+function showAfterLogin() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("createBox").style.display = "block";
+  document.getElementById("historyBox").style.display = "block";
+  refreshUserDisplay();
+  loadMyVouchers();
+}
+
+// --- Logout ---
 function logout() {
   window.localStorage.removeItem("fuelskip_user_id");
+  window.localStorage.removeItem("fuelskip_user_name");
+  window.localStorage.removeItem("fuelskip_user_phone");
   document.getElementById("loginBox").style.display = "block";
-  document.getElementById("myVouchers").textContent = "Logged out.";
+  document.getElementById("createBox").style.display = "none";
+  document.getElementById("historyBox").style.display = "none";
+  document.getElementById("myVouchers").textContent = "Login with phone to see your history.";
+  refreshUserDisplay();
 }
 
 // --- Login ---
@@ -128,18 +162,20 @@ async function login() {
     }
     const data = await res.json();
     setUserId(data.user_id);
-    document.getElementById("loginBox").style.display = "none";
-    loadMyVouchers();
+    setUserName(data.name || "");
+    setUserPhone(data.phone || "");
+    showAfterLogin();
   } catch (e) {
     alert("Error: " + e.message);
   }
 }
 
-// Auto-hide login if already logged in
+// Auto-restore session on load
 window.addEventListener("load", () => {
   if (getUserId()) {
-    document.getElementById("loginBox").style.display = "none";
-    loadMyVouchers();
+    showAfterLogin();
+  } else {
+    refreshUserDisplay();
   }
 });
 
@@ -203,7 +239,7 @@ function payNow() {
     order_id: razorpayOrderId,
     name: "FuelSkip",
     description: "Fuel voucher " + lastVoucherId,
-    redirect: false,  // stay on same page after payment
+    redirect: false,
     handler: function (response) {
       console.log("Payment success:", response);
       startPollingStatus();
@@ -218,7 +254,6 @@ function payNow() {
 function startPollingStatus() {
   if (!lastVoucherId) return;
   if (pollTimer) window.clearInterval(pollTimer);
-
   pollTimer = window.setInterval(checkVoucherStatus, 3000);
 }
 
