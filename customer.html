@@ -136,6 +136,16 @@ function logout() {
   window.localStorage.removeItem("fuelskip_user_name");
   window.localStorage.removeItem("fuelskip_user_phone");
 
+  // Reset forms
+  document.getElementById("phone").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("amount").value = "";
+  document.getElementById("litres").value = "";
+  document.getElementById("msg").textContent = "";
+  document.getElementById("voucherDetails").textContent = "";
+  document.getElementById("qrContainer").innerHTML = "";
+  document.getElementById("qrSection").style.display = "none";
+
   // Show login, hide rest
   document.getElementById("loginBox").style.display = "block";
   document.getElementById("createBox").style.display = "none";
@@ -147,8 +157,13 @@ function logout() {
 
   // Clear header user display
   document.getElementById("userDisplay").textContent = "";
-}
 
+  // Stop any running poll
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
 
 // --- Login ---
 async function login() {
@@ -184,6 +199,11 @@ window.addEventListener("load", () => {
   if (getUserId()) {
     showAfterLogin();
   } else {
+    // Ensure we start in pure login state
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("createBox").style.display = "none";
+    document.getElementById("historyBox").style.display = "none";
+    document.getElementById("voucherBox").style.display = "none";
     refreshUserDisplay();
   }
 });
@@ -346,4 +366,3 @@ async function loadMyVouchers() {
 </script>
 </body>
 </html>
-
