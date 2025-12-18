@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>FuelSkip - Attendant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; padding: 16px; }
+    .box { border: 1px solid #ddd; padding: 16px; border-radius: 8px; margin-top: 12px; }
+    .status { padding: 8px 12px; border-radius: 20px; color: white; font-weight: bold; }
+    .status.valid { background: #10b981; }
+    .status.invalid { background: #ef4444; }
+    button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin: 8px 0; }
+    .btn-scan { background: #3b82f6; color: white; }
+  </style>
+</head>
+<body>
+<h2>⛽ FuelSkip - Attendant</h2>
+
+<div class="box">
+  <input id="voucherInput" placeholder="Paste voucher ID or scan QR" style="width:70%;">
+  <button class="btn-scan" onclick="loadVoucher()">Check Voucher</button>
+</div>
+
+<div class="box" id="voucherInfo" style="display:none;">
+  <h3>Voucher Details</h3>
+  <div id="voucherData"></div>
+  <div id="statusMsg"></div>
+</div>
+
+<script>
+const API = "http://192.168.1.6:8000";
+let currentVoucherId = null;
+let currentVoucherLitres = null;
+
+async function loadVoucher() {
+  const voucherId = document.getElementById('voucherInput').value.trim();
+  if (!voucherId) return;
+
+  try {
+    const res = await fetch(`${API}/voucher/${voucherId}`);
+    if (!res.ok) throw new Error("Voucher not found");
+    
+    const voucher = await res.json();
+    currentVoucherId = voucherId;
+    currentVoucherLitres = voucher.litres;
+
+    const isValid = voucher.status === 'paid' && !voucher.used;
+
+    document.getElementById('voucherData').innerHTML = `
+      <p><strong>ID:</strong> ${voucher.id}</p>
+      <p><strong>Customer:</strong> ${voucher.user_name ? voucher.user_name + ' (' + voucher.user_phone + ')' : 'No user'}</p>
+      <p><strong>Amount:</strong> ₹${voucher.amount}</p>
+      <p><strong>Litres:</strong> ${voucher.litres} L</p>
+      <p><strong>Status:</strong> <span class="status ${isValid ? 'valid' : 'invalid'}">${voucher.status.toUpperCase()}</span></p>
+      <p><strong>Expires:</strong> ${new Date(voucher.expires_at).toLocaleString()}</p>
+    `;
+    
+    document.getElementById('voucherInfo').style.display = 'block';
+
+    if (isValid) {
+      // directly validate & dispense as part of the same step
+      await validateAndDispense();
+    } else {
+      document.getElementById('statusMsg').innerHTML =
+        '<p style="color:#ef4444;">❌ Invalid - cannot dispense</p>';
+    }
+  } catch (e) {
+    alert('Voucher not found: ' + e.message);
+  }
+}
+
+async function validateAndDispense() {
+  if (!currentVoucherId) return;
+
+  // Optional: if you still want a confirm, keep this; otherwise remove.
+  // if (!confirm(`Dispense ${currentVoucherLitres}L for voucher ${currentVoucherId}?`)) return;
+
+  try {
+    const res = await fetch(`${API}/validate/${currentVoucherId}`, { method: 'POST' });
+    if (res.ok) {
+      document.getElementById('statusMsg').innerHTML =
+        '<p style="color:#10b981; font-size:18px;">✅ VALIDATED & FUEL DISPENSED</p>';
+    } else {
+      const err = await res.json();
+      alert('Validation failed: ' + err.detail);
+    }
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>

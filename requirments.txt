@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+razorpay
+python-dotenv
+python-multipart

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FuelSkip - Owner Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: sans-serif; padding: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { border: 1px solid #ccc; padding: 6px; font-size: 14px; }
+    th { background: #f3f4f6; }
+    .pill { padding: 2px 6px; border-radius: 10px; font-size: 12px; }
+    .paid { background:#dcfce7; color:#166534; }
+    .pending { background:#fee2e2; color:#b91c1c; }
+    .used { background:#e0f2fe; color:#075985; }
+  </style>
+</head>
+<body>
+  <h2>FuelSkip – Owner Dashboard</h2>
+
+  <label>Bunk ID:</label>
+  <input id="bunkInput" value="BUNK-1">
+  <label>Status:</label>
+  <select id="statusSelect">
+    <option value="">All</option>
+    <option value="pending">pending</option>
+    <option value="paid">paid</option>
+    <option value="used">used</option>
+  </select>
+  <button onclick="loadVouchers()">Load</button>
+
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th>Time (UTC)</th>
+        <th>Voucher</th>
+        <th>Bunk</th>
+        <th>Amount</th>
+        <th>Litres</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+const API = "http://192.168.1.6:8000";  // same as others
+
+async function loadVouchers() {
+  const bunkId = document.getElementById('bunkInput').value;
+  const status = document.getElementById('statusSelect').value;
+
+  const params = new URLSearchParams();
+  if (bunkId) params.append("bunk_id", bunkId);
+  if (status) params.append("status", status);
+
+  const res = await fetch(`${API}/vouchers?` + params.toString());
+  const data = await res.json();
+
+  const tbody = document.querySelector("#tbl tbody");
+  tbody.innerHTML = "";
+  data.forEach(v => {
+    const tr = document.createElement("tr");
+    const st = v.status;
+    tr.innerHTML = `
+      <td>${v.created_at}</td>
+      <td>${v.id}</td>
+      <td>${v.bunk_id}</td>
+      <td>₹${v.amount}</td>
+      <td>${v.litres}</td>
+      <td><span class="pill ${st}">${st}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+loadVouchers();
+</script>
+</body>
+</html>
