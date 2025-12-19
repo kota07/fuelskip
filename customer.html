@@ -86,7 +86,7 @@
       font-weight: 500;
     }
 
-    /* hideable state */
+    /* hideable state for mobile */
     .sidebar-hidden {
       display: none !important;
     }
@@ -268,7 +268,7 @@
 </head>
 <body>
 
-  <!-- LEFT ANALYTICS SIDEBAR (hidden before login) -->
+  <!-- LEFT ANALYTICS SIDEBAR -->
   <aside class="sidebar sidebar-hidden" id="sidebar">
     <div class="sidebar-header">
       <h2>📊 Analytics</h2>
@@ -292,6 +292,7 @@
       <h1>🚗 FuelSkip</h1>
       <div class="header-right">
         <div class="user-pill" id="userDisplay"></div>
+        <!-- button to show/hide Analytics sidebar on mobile -->
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
       </div>
     </div>
@@ -537,7 +538,7 @@ async function login(){
     document.getElementById("historyBox").style.display="block";
     document.getElementById("expenseTracker").style.display="block";
 
-    // keep sidebar hidden until user taps ☰
+    // keep sidebar hidden; user can open with ☰
     document.getElementById("sidebar").classList.add("sidebar-hidden");
 
     refreshUserDisplay();
