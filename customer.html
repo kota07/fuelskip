@@ -234,11 +234,11 @@
 </head>
 <body>
 
-  <!-- LEFT ANALYTICS SIDEBAR -->
-  <aside class="sidebar">
+  <!-- LEFT ANALYTICS SIDEBAR (hidden before login) -->
+  <aside class="sidebar" id="sidebar" style="display:none;">
     <div class="sidebar-header">
       <h2>📊 Analytics</h2>
-      <small id="sidebarUser">Loading...</small>
+      <small id="sidebarUser">Not logged in</small>
     </div>
     <ul class="sidebar-menu">
       <li><a href="#" id="navDashboard" onclick="openSection('dashboard');return false;">Dashboard</a></li>
@@ -422,16 +422,21 @@ function logout(){
   localStorage.removeItem("fuelskip_user_id");
   localStorage.removeItem("fuelskip_user_name");
   localStorage.removeItem("fuelskip_user_phone");
+
   document.getElementById("phone").value="";
   document.getElementById("name").value="";
   document.getElementById("amount").value="";
   document.getElementById("litres").value="";
   document.getElementById("vehicleNo").value="";
+
   document.getElementById("loginBox").style.display="block";
   document.getElementById("createBox").style.display="none";
   document.getElementById("voucherBox").style.display="none";
   document.getElementById("historyBox").style.display="none";
   document.getElementById("expenseTracker").style.display="none";
+
+  document.getElementById("sidebar").style.display="none"; // hide sidebar
+
   openSection("create");
   refreshUserDisplay();
   if(pollTimer) clearInterval(pollTimer);
@@ -456,10 +461,14 @@ async function login(){
     setUserId(data.user_id);
     setUserName(data.name||"");
     setUserPhone(data.phone||"");
+
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
     document.getElementById("expenseTracker").style.display="block";
+
+    document.getElementById("sidebar").style.display="flex"; // show sidebar
+
     refreshUserDisplay();
     loadVehicleHistory();
     loadMyVouchers();
@@ -655,6 +664,7 @@ function loadAnalytics(){
 
 window.addEventListener("load",()=>{
   if(getUserId()){
+    document.getElementById("sidebar").style.display="flex";
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
@@ -662,6 +672,8 @@ window.addEventListener("load",()=>{
     refreshUserDisplay();
     loadVehicleHistory();
     loadMyVouchers();
+  } else {
+    document.getElementById("sidebar").style.display="none";
   }
 });
 </script>
