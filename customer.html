@@ -405,6 +405,11 @@ function setUserId(id){ localStorage.setItem("fuelskip_user_id", id); }
 function setUserName(n){ localStorage.setItem("fuelskip_user_name", n || ""); }
 function setUserPhone(p){ localStorage.setItem("fuelskip_user_phone", p || ""); }
 
+function historyKey(){
+  const uid = getUserId();
+  return uid ? `fuelskip_vehicle_history_${uid}` : null;
+}
+
 function refreshUserDisplay(){
   const n = localStorage.getItem("fuelskip_user_name") || "";
   const p = localStorage.getItem("fuelskip_user_phone") || "";
@@ -435,7 +440,7 @@ function logout(){
   document.getElementById("historyBox").style.display="none";
   document.getElementById("expenseTracker").style.display="none";
 
-  document.getElementById("sidebar").style.display="none"; // hide sidebar
+  document.getElementById("sidebar").style.display="none";
 
   openSection("create");
   refreshUserDisplay();
@@ -467,7 +472,7 @@ async function login(){
     document.getElementById("historyBox").style.display="block";
     document.getElementById("expenseTracker").style.display="block";
 
-    document.getElementById("sidebar").style.display="flex"; // show sidebar
+    document.getElementById("sidebar").style.display="flex";
 
     refreshUserDisplay();
     loadVehicleHistory();
@@ -476,17 +481,25 @@ async function login(){
 }
 
 function loadVehicleHistory(){
-  const history=JSON.parse(localStorage.getItem("fuelskip_vehicle_history")||"[]");
+  const key = historyKey();
+  if (!key) return;
+  const history = JSON.parse(localStorage.getItem(key) || "[]");
   if(history.length>0){
     const last=history[0];
     document.getElementById("vehicleType").value=last.vehicleType||"Car";
     document.getElementById("vehicleNo").value=last.vehicleNo||"";
     updateExpenseTracker(last.vehicleNo);
+  } else {
+    document.getElementById("vehicleNo").value="";
+    document.getElementById("totalExpense").textContent="₹0";
+    document.getElementById("recentFills").textContent="No fills yet";
   }
 }
 
 function updateExpenseTracker(vehicleNo=null){
-  const history=JSON.parse(localStorage.getItem("fuelskip_vehicle_history")||"[]");
+  const key = historyKey();
+  if (!key) return;
+  const history = JSON.parse(localStorage.getItem(key) || "[]");
   const fills=vehicleNo?history.filter(f=>f.vehicleNo===vehicleNo):history;
   const total=fills.reduce((s,f)=>s+(parseFloat(f.amount)||0),0);
   document.getElementById("totalExpense").textContent="₹"+total.toLocaleString();
@@ -495,7 +508,9 @@ function updateExpenseTracker(vehicleNo=null){
 }
 
 function saveVehicleFill(v){
-  const history=JSON.parse(localStorage.getItem("fuelskip_vehicle_history")||"[]");
+  const key = historyKey();
+  if (!key) return;
+  const history = JSON.parse(localStorage.getItem(key) || "[]");
   history.unshift({
     vehicleType:v.vehicleType,
     vehicleNo:v.vehicleNo,
@@ -505,7 +520,7 @@ function saveVehicleFill(v){
     bunkId:v.bunk_id,
     timestamp:new Date().toISOString()
   });
-  localStorage.setItem("fuelskip_vehicle_history",JSON.stringify(history.slice(0,200)));
+  localStorage.setItem(key,JSON.stringify(history.slice(0,200)));
   updateExpenseTracker(v.vehicleNo);
 }
 
@@ -630,8 +645,11 @@ async function loadMyVouchers(){
 }
 
 function loadAnalytics(){
-  const history=JSON.parse(localStorage.getItem("fuelskip_vehicle_history")||"[]");
+  const key = historyKey();
+  if (!key) return;
+  const history=JSON.parse(localStorage.getItem(key)||"[]");
   if(!history.length)return;
+
   const total=history.reduce((s,f)=>s+(parseFloat(f.amount)||0),0);
   document.getElementById("dashTotalSpend").textContent="₹"+total.toLocaleString();
   document.getElementById("dashTotalFills").textContent=history.length;
