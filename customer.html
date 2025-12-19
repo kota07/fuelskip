@@ -86,6 +86,11 @@
       font-weight: 500;
     }
 
+    /* hideable state */
+    .sidebar-hidden {
+      display: none !important;
+    }
+
     /* Main container */
     .container {
       flex: 1;
@@ -111,9 +116,26 @@
       font-size: 22px;
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .user-pill {
       font-size: 13px;
       color: #4b5563;
+    }
+
+    .hamburger {
+      display: none;
+      background: #111827;
+      color: #f9fafb;
+      border: none;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 18px;
+      cursor: pointer;
     }
 
     .card {
@@ -237,13 +259,17 @@
         padding: 16px 12px 24px;
         box-shadow: 0 10px 20px rgba(0,0,0,0.08);
       }
+
+      .hamburger {
+        display: inline-block;
+      }
     }
   </style>
 </head>
 <body>
 
   <!-- LEFT ANALYTICS SIDEBAR (hidden before login) -->
-  <aside class="sidebar" id="sidebar" style="display:none;">
+  <aside class="sidebar sidebar-hidden" id="sidebar">
     <div class="sidebar-header">
       <h2>📊 Analytics</h2>
       <small id="sidebarUser">Not logged in</small>
@@ -264,7 +290,10 @@
   <div class="container">
     <div class="header">
       <h1>🚗 FuelSkip</h1>
-      <div class="user-pill" id="userDisplay"></div>
+      <div class="header-right">
+        <div class="user-pill" id="userDisplay"></div>
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      </div>
     </div>
 
     <!-- 1) LOGIN + CREATE VOUCHER FLOW (DEFAULT) -->
@@ -440,6 +469,11 @@ function refreshUserDisplay(){
   document.getElementById("sidebarUser").textContent = p ? (n ? `${n} • ${p}` : p) : "Not logged in";
 }
 
+function toggleSidebar(){
+  const sidebar = document.getElementById("sidebar");
+  sidebar.classList.toggle("sidebar-hidden");
+}
+
 function openSection(id){
   document.querySelectorAll(".page-section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
@@ -469,7 +503,7 @@ function logout(){
   document.getElementById("historyBox").style.display="none";
   document.getElementById("expenseTracker").style.display="none";
 
-  document.getElementById("sidebar").style.display="none";
+  document.getElementById("sidebar").classList.add("sidebar-hidden");
 
   openSection("create");
   refreshUserDisplay();
@@ -503,7 +537,8 @@ async function login(){
     document.getElementById("historyBox").style.display="block";
     document.getElementById("expenseTracker").style.display="block";
 
-    document.getElementById("sidebar").style.display="flex";
+    // keep sidebar hidden until user taps ☰
+    document.getElementById("sidebar").classList.add("sidebar-hidden");
 
     refreshUserDisplay();
     loadVehicleHistory();
@@ -777,7 +812,7 @@ function openProfileEdit(){
 
 window.addEventListener("load",()=>{
   if(getUserId()){
-    document.getElementById("sidebar").style.display="flex";
+    document.getElementById("sidebar").classList.add("sidebar-hidden");
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
@@ -786,7 +821,7 @@ window.addEventListener("load",()=>{
     loadVehicleHistory();
     loadMyVouchers();
   } else {
-    document.getElementById("sidebar").style.display="none";
+    document.getElementById("sidebar").classList.add("sidebar-hidden");
   }
 });
 </script>
