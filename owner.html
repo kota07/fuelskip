@@ -210,16 +210,18 @@ async function loadVouchers() {
 
     tbody.innerHTML = "";
     data.forEach(v => {
-      totalAmt += Number(v.amount || 0);
-      totalLit += Number(v.litres || 0);
+      const amt = Number(v.amount || 0);
+      const lit = Number(v.litres || 0);
+      totalAmt += amt;
+      totalLit += lit;
       const st = v.status || "";
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${fmtIST(v.created_at)}</td>
         <td>${v.id}</td>
         <td>${v.bunk_id}</td>
-        <td>₹${v.amount}</td>
-        <td>${v.litres}</td>
+        <td>₹${amt.toLocaleString("en-IN")}</td>
+        <td>${lit.toFixed(2)}</td>
         <td><span class="pill ${st}">${st}</span></td>
       `;
       tbody.appendChild(tr);
