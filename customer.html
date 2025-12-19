@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FuelSkip - Customer (Sidebar Analytics)</title>
+  <title>FuelSkip - Customer (Analytics Dashboard)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- QRCode.js -->
@@ -16,45 +16,88 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       margin: 0;
-      padding: 0;
+      padding: 20px;
       color: #333;
-      overflow-x: hidden;
-    }
-    .app-container {
-      display: flex;
-      min-height: 100vh;
+      line-height: 1.4;
       position: relative;
+    }
+    
+    /* Hamburger Menu */
+    .hamburger {
+      position: fixed;
+      top: 25px;
+      left: 25px;
+      z-index: 1001;
+      background: rgba(255,255,255,0.95);
+      border: none;
+      border-radius: 12px;
+      width: 52px;
+      height: 52px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    .hamburger:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    .hamburger span {
+      width: 24px;
+      height: 3px;
+      background: #4a5568;
+      transition: all 0.3s ease;
+      border-radius: 2px;
+    }
+    .hamburger.open span:nth-child(1) {
+      transform: rotate(45deg) translate(7px, 7px);
+    }
+    .hamburger.open span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.open span:nth-child(3) {
+      transform: rotate(-45deg) translate(7px, -7px);
     }
     
     /* Sidebar */
     .sidebar {
-      width: 280px;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(20px);
-      box-shadow: 2px 0 20px rgba(0,0,0,0.1);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
       position: fixed;
       left: 0;
       top: 0;
-      bottom: 0;
+      width: 280px;
+      height: 100vh;
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(20px);
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1000;
-      padding: 20px 0;
+      box-shadow: 4px 0 30px rgba(0,0,0,0.1);
+      padding: 80px 0 20px 0;
     }
     .sidebar.open {
       transform: translateX(0);
     }
     .sidebar-header {
-      padding: 20px 24px;
+      padding: 0 24px 20px;
       border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+    .sidebar h3 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      color: #2d3748;
+    }
+    .sidebar-user {
       display: flex;
       align-items: center;
       gap: 12px;
-    }
-    .sidebar h3 {
-      margin: 0;
-      font-size: 18px;
-      color: #2d3748;
+      font-size: 14px;
+      color: #6b7280;
     }
     .sidebar-menu {
       list-style: none;
@@ -67,74 +110,38 @@
     .sidebar-menu a {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px 24px;
+      gap: 16px;
+      padding: 18px 24px;
       color: #4a5568;
       text-decoration: none;
       font-weight: 500;
       transition: all 0.2s ease;
-      border-left: 3px solid transparent;
+      border-left: 4px solid transparent;
     }
     .sidebar-menu a:hover, .sidebar-menu a.active {
-      background: #f7fafc;
+      background: linear-gradient(90deg, #f8fafc, #e2e8f0);
       color: #667eea;
       border-left-color: #667eea;
     }
     
-    /* Main content */
-    .main-content {
-      flex: 1;
-      margin-left: 0;
-      transition: margin-left 0.3s ease;
-      padding: 20px;
-      overflow-y: auto;
-    }
-    .main-content.shifted {
-      margin-left: 280px;
-    }
-    
-    /* Hamburger */
-    .hamburger {
+    /* Overlay */
+    .sidebar-overlay {
       position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 1001;
-      background: rgba(255,255,255,0.9);
-      border: none;
-      border-radius: 12px;
-      width: 50px;
-      height: 50px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: all 0.3s ease;
-    }
-    .hamburger:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    }
-    .hamburger span {
-      width: 24px;
-      height: 2px;
-      background: #4a5568;
-      transition: all 0.3s ease;
-      border-radius: 2px;
-    }
-    .hamburger.open span:nth-child(1) {
-      transform: rotate(45deg) translate(6px, 6px);
-    }
-    .hamburger.open span:nth-child(2) {
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
       opacity: 0;
+      visibility: hidden;
+      z-index: 999;
+      transition: all 0.3s ease;
     }
-    .hamburger.open span:nth-child(3) {
-      transform: rotate(-45deg) translate(6px, -6px);
+    .sidebar-overlay.open {
+      opacity: 1;
+      visibility: visible;
     }
     
-    /* Container */
     .container {
       max-width: 500px;
       margin: 0 auto;
@@ -143,41 +150,48 @@
       padding: 30px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.1);
       backdrop-filter: blur(10px);
+      transition: margin-left 0.3s ease;
     }
     
-    /* Analytics Dashboard */
-    .analytics-card {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      padding: 24px;
-      border-radius: 16px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .stat-number {
-      font-size: 36px;
-      font-weight: bold;
-      margin: 8px 0;
-    }
-    .stat-label {
-      font-size: 14px;
-      opacity: 0.9;
-      margin: 0;
-    }
-    .bunk-stats {
+    /* Analytics Cards */
+    .analytics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 16px;
-      margin-top: 20px;
+      margin-bottom: 24px;
     }
-    .vehicle-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 12px;
+    .analytics-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 24px 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 8px 0;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 13px;
+      opacity: 0.95;
+      margin: 0;
+      font-weight: 500;
     }
     
-    /* Rest of styles (same as before) */
+    /* Page Sections */
+    .page-section {
+      display: none;
+    }
+    .page-section.active {
+      display: block;
+    }
+    
+    /* Rest of your existing styles */
     h1 { text-align: center; color: #4a5568; margin-bottom: 30px; font-size: 28px; }
+    h2 { margin-bottom: 12px; font-size: 22px; color: #2d3748; }
     h3 { margin-top: 0; margin-bottom: 8px; font-size: 18px; color: #4a5568; }
     .form-group { margin-bottom: 20px; }
     .label { display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748; font-size: 14px; }
@@ -199,169 +213,334 @@
     .badge-paid { background: #dcfce7; color:#166534; }
     .badge-used { background: #e5e7eb; color:#374151; }
     .badge-failed { background: #fee2e2; color:#b91c1c; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid rgba(255,255,255,0.3); }
     
-    /* Hide sections */
-    .page-section { display: none; }
-    .page-section.active { display: block; }
-    
-    @media (max-width: 768px) {
-      .main-content.shifted { margin-left: 0; }
+    @media (max-width: 480px) {
       .sidebar { width: 100%; }
+      .container { margin: 20px 10px; padding: 20px; }
     }
   </style>
 </head>
 <body>
-  <div class="app-container">
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  
+  <!-- Hamburger Menu -->
+  <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <div class="container">
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h3>📊 Analytics</h3>
+        <div class="sidebar-user" id="sidebarUser">
+          <div>👤 Loading...</div>
+        </div>
       </div>
       <ul class="sidebar-menu">
-        <li><a href="#" onclick="showPage('dashboard')" class="active"><span>📈</span> Dashboard</a></li>
-        <li><a href="#" onclick="showPage('vehicles')"><span>🚗</span> Vehicles</a></li>
-        <li><a href="#" onclick="showPage('bunks')"><span>⛽</span> Bunks</a></li>
-        <li><a href="#" onclick="showPage('profile')"><span>👤</span> Profile</a></li>
-        <li style="margin-top: auto; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-          <a href="#" onclick="logout()" style="color: #ef4444;"><span>🚪</span> Logout</a>
+        <li><a href="#" onclick="showPage('dashboard')" class="active"><span>📈</span>Dashboard</a></li>
+        <li><a href="#" onclick="showPage('vehicles')"><span>🚗</span>Vehicles</a></li>
+        <li><a href="#" onclick="showPage('bunks')"><span>⛽</span>Bunks</a></li>
+        <li><a href="#" onclick="showPage('profile')"><span>👤</span>Profile</a></li>
+        <li style="margin-top: auto; padding-top: 24px; border-top: 1px solid #e2e8f0;">
+          <a href="#" onclick="showPage('create')" style="color: #ef4444;"><span>➕</span>Create Voucher</a>
+          <a href="#" onclick="logout()" style="color: #ef4444; border-top: 1px solid #e2e8f0; margin-top: 8px; padding-top: 16px;"><span>🚪</span>Logout</a>
         </li>
       </ul>
     </nav>
 
-    <!-- Hamburger -->
-    <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
-
-    <!-- Main Content -->
-    <main class="main-content" id="mainContent">
-      <div class="container">
-        <!-- Dashboard Page -->
-        <div id="dashboard" class="page-section active">
-          <div class="analytics-card">
-            <h2 style="margin: 0 0 8px 0;">Total Spend</h2>
-            <div class="stat-number" id="totalSpend">₹0</div>
-            <p class="stat-label" id="totalFills">0 fills</p>
-          </div>
-          
-          <div class="analytics-card">
-            <h2>Favorite Vehicle</h2>
-            <div class="stat-number" id="topVehicle">-</div>
-            <p class="stat-label" id="topVehicleSpend">₹0</p>
-          </div>
-
-          <div class="bunk-stats">
-            <div class="analytics-card">
-              <h3 style="font-size: 14px; margin-bottom: 4px;">Top Bunk</h3>
-              <div class="stat-number" style="font-size: 24px;" id="topBunk">-</div>
-            </div>
-            <div class="analytics-card">
-              <h3 style="font-size: 14px; margin-bottom: 4px;">Avg Fill</h3>
-              <div class="stat-number" style="font-size: 24px;" id="avgFill">₹0</div>
-            </div>
-          </div>
+    <!-- Dashboard Page -->
+    <div id="dashboard" class="page-section active">
+      <h2 style="margin-bottom: 20px;">📊 Your Fuel Analytics</h2>
+      <div class="analytics-grid">
+        <div class="analytics-card">
+          <div class="stat-number" id="totalSpend">₹0</div>
+          <div class="stat-label">Total Spend</div>
         </div>
-
-        <!-- Vehicles Page -->
-        <div id="vehicles" class="page-section">
-          <h3>🚗 My Vehicles</h3>
-          <div id="vehicleList" style="margin-top: 16px;"></div>
+        <div class="analytics-card">
+          <div class="stat-number" id="totalFills">0</div>
+          <div class="stat-label">Total Fills</div>
         </div>
-
-        <!-- Bunks Page -->
-        <div id="bunks" class="page-section">
-          <h3>⛽ Bunk Usage</h3>
-          <div id="bunkList" style="margin-top: 16px;"></div>
+        <div class="analytics-card">
+          <div class="stat-number" id="avgFill">₹0</div>
+          <div class="stat-label">Avg Fill</div>
         </div>
-
-        <!-- Profile Page -->
-        <div id="profile" class="page-section">
-          <h3>👤 Profile</h3>
-          <div id="profileInfo"></div>
-        </div>
-
-        <!-- Create Voucher (existing) -->
-        <div id="createBox" class="card" style="display:none;">
-          <!-- [Same vehicle section + create voucher form as before] -->
-          <h3>➕ Create New Voucher</h3>
-          <div class="vehicle-section">
-            <h4>Select Vehicle</h4>
-            <div class="vehicle-grid">
-              <div class="form-group">
-                <label class="label">Vehicle Type</label>
-                <select id="vehicleType">
-                  <option value="Bike">🏍️ Bike</option>
-                  <option value="Car">🚗 Car</option>
-                  <option value="Auto">🛺 Auto</option>
-                  <option value="Truck">🚛 Truck</option>
-                  <option value="Other">🚙 Other</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="label">Vehicle No</label>
-                <input id="vehicleNo" type="text" placeholder="AP05AB1234" />
-              </div>
-            </div>
-          </div>
-          <!-- Rest of create voucher form... -->
+        <div class="analytics-card">
+          <div class="stat-number" id="topVehicle">-</div>
+          <div class="stat-label">Top Vehicle</div>
         </div>
       </div>
-    </main>
+    </div>
+
+    <!-- Vehicles Page -->
+    <div id="vehicles" class="page-section">
+      <h2>🚗 My Vehicles</h2>
+      <div id="vehicleList" class="card" style="padding: 24px; text-align: center; color: #6b7280;">
+        Loading vehicle data...
+      </div>
+    </div>
+
+    <!-- Bunks Page -->
+    <div id="bunks" class="page-section">
+      <h2>⛽ Bunk Usage</h2>
+      <div id="bunkList" class="card" style="padding: 24px; text-align: center; color: #6b7280;">
+        Loading bunk data...
+      </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div id="profile" class="page-section">
+      <h2>👤 Profile</h2>
+      <div id="profileInfo" class="card">
+        <div style="text-align: center; padding: 24px; color: #6b7280;">
+          Profile info loading...
+        </div>
+      </div>
+    </div>
+
+    <!-- Your existing Create/Login sections -->
+    <div id="create" class="page-section">
+      <!-- Header -->
+      <div class="header">
+        <h1>🚗 FuelSkip</h1>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="userDisplay" style="font-size:14px; color:#4a5568; font-weight:500;"></span>
+        </div>
+      </div>
+
+      <!-- Login -->
+      <div class="card" id="loginBox">
+        <h3>👋 Get Started</h3>
+        <div class="form-group">
+          <label class="label">Phone Number</label>
+          <input id="phone" type="tel" placeholder="98XXXXXXXX" />
+        </div>
+        <div class="form-group">
+          <label class="label">Name (optional)</label>
+          <input id="name" placeholder="Your Name" />
+        </div>
+        <button class="btn-primary" onclick="login()">Continue</button>
+      </div>
+
+      <!-- Create voucher (your existing code) -->
+      <div class="card" id="createBox" style="display:none;">
+        <h3>➕ Create New Voucher</h3>
+        <div class="vehicle-section">
+          <h4 style="margin:0 0 12px 0; color:#2d3748;">Select Vehicle</h4>
+          <div class="vehicle-grid">
+            <div class="form-group">
+              <label class="label">Vehicle Type</label>
+              <select id="vehicleType">
+                <option value="Bike">🏍️ Bike</option>
+                <option value="Car">🚗 Car</option>
+                <option value="Auto">🛺 Auto</option>
+                <option value="Truck">🚛 Truck</option>
+                <option value="Other">🚙 Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="label">Vehicle No</label>
+              <input id="vehicleNo" type="text" placeholder="AP05AB1234" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label">Select Bunk</label>
+          <select id="bunkSelect">
+            <option value="BUNK-1">BPCL Siripuram</option>
+            <option value="BUNK-2">Gajuwaka Expressway</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="label">Fuel Amount (₹)</label>
+          <input id="amount" type="number" min="50" placeholder="500" />
+        </div>
+        <div class="form-group">
+          <label class="label">OR Litres (approx)</label>
+          <input id="litres" type="number" min="5" step="0.1" placeholder="25" />
+        </div>
+        <button class="btn-primary" onclick="createVoucher()">Create Voucher</button>
+        <p id="msg" style="font-size:14px; color:#6b7280; margin:0; text-align:center;"></p>
+      </div>
+
+      <!-- Your existing voucher/QR/history sections -->
+      <div class="card" id="voucherBox" style="display: none;">
+        <h3>✅ Voucher Ready</h3>
+        <div id="voucherDetails" style="font-size:16px; margin-bottom:16px; padding:12px; background:#f0fff4; border-radius:10px; border-left:4px solid #10b981;"></div>
+        <button type="button" class="btn-primary" id="payBtn" onclick="payNow()">💳 Pay Now</button>
+        <div id="qrSection" style="margin-top:24px; display:none;">
+          <h4 style="text-align:center; color:#10b981; margin-bottom:12px;">Show QR at Pump</h4>
+          <div id="qrContainer" style="background:#fff; padding:16px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+          <p style="text-align:center; margin:12px 0 0 0; font-size:14px; color:#4a5568;">
+            Voucher ID: <strong id="voucherIdDisplay"></strong>
+          </p>
+        </div>
+      </div>
+
+      <div class="card" id="expenseTracker" style="display:none;">
+        <div class="expense-tracker">
+          <h4>📊 Vehicle Fuel Tracker</h4>
+          <p class="total-expense" id="totalExpense">₹0</p>
+          <p style="margin:8px 0 0 0; font-size:14px;" id="recentFills">No fills yet</p>
+        </div>
+      </div>
+
+      <div class="card" id="historyBox" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h3>My Vouchers</h3>
+          <button class="btn-secondary btn-small" onclick="loadMyVouchers()">⟲ Refresh</button>
+        </div>
+        <div id="myVouchers" style="font-size:14px; color:#4b7280;">
+          Login to see history.
+        </div>
+      </div>
+    </div>
   </div>
 
 <script>
+const API = "https://fuelskip-production.up.railway.app";
+let lastVoucherId = null;
+let razorpayOrderId = null;
+let razorpayKeyId = null;
+let pollTimer = null;
+let currentVehicle = null;
 let sidebarOpen = false;
 
-// Toggle sidebar
+// --- Sidebar Functions ---
 function toggleSidebar() {
   sidebarOpen = !sidebarOpen;
   document.getElementById('sidebar').classList.toggle('open');
   document.getElementById('hamburger').classList.toggle('open');
-  document.getElementById('mainContent').classList.toggle('shifted');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
 }
 
-// Show page sections
+function closeSidebar() {
+  sidebarOpen = false;
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
 function showPage(pageId) {
   document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
   
-  // Update sidebar active state
   document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
-  event.target.classList.add('active');
+  event.target.closest('a').classList.add('active');
   
-  toggleSidebar(); // Close sidebar
+  closeSidebar();
+  loadAnalytics();
 }
 
-// Load analytics data (from localStorage + API)
+// --- Analytics Functions ---
 function loadAnalytics() {
   const history = JSON.parse(localStorage.getItem('fuelskip_vehicle_history') || '[]');
-  
   if (history.length === 0) return;
-  
-  // Total spend
+
+  // Total stats
   const total = history.reduce((sum, f) => sum + parseFloat(f.amount || 0), 0);
   document.getElementById('totalSpend').textContent = `₹${total.toLocaleString()}`;
-  document.getElementById('totalFills').textContent = `${history.length} fills`;
-  
+  document.getElementById('totalFills').textContent = history.length;
+  document.getElementById('avgFill').textContent = `₹${(total/history.length).toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+
   // Top vehicle
   const vehicleStats = {};
   history.forEach(f => {
     const key = `${f.vehicleType} ${f.vehicleNo}`;
     vehicleStats[key] = (vehicleStats[key] || 0) + parseFloat(f.amount || 0);
   });
-  const topVehicle = Object.entries(vehicleStats).reduce((a, b) => a[1] > b[1] ? a : b);
-  document.getElementById('topVehicle').textContent = topVehicle[0];
-  document.getElementById('topVehicleSpend').textContent = `₹${topVehicle[1].toLocaleString()}`;
+  const topVehicle = Object.entries(vehicleStats).reduce((a, b) => a[1] > b[1] ? a : b, ['', 0]);
+  document.getElementById('topVehicle').textContent = topVehicle[0] || '-';
+
+  // Load vehicles list
+  const vehicleList = document.getElementById('vehicleList');
+  if (Object.keys(vehicleStats).length > 0) {
+    vehicleList.innerHTML = Object.entries(vehicleStats).map(([vehicle, spend]) => `
+      <div style="padding: 16px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-weight: 600; color: #2d3748;">${vehicle}</div>
+          <div style="font-size: 14px; color: #6b7280;">${history.filter(f => `${f.vehicleType} ${f.vehicleNo}` === vehicle).length} fills</div>
+        </div>
+        <div style="font-weight: bold; color: #c53030;">₹${spend.toLocaleString()}</div>
+      </div>
+    `).join('') + '<div style="padding: 20px; text-align: center; color: #6b7280; font-size: 14px;">Total fills across all vehicles</div>';
+  }
+
+  // Profile
+  const profileInfo = document.getElementById('profileInfo');
+  const name = localStorage.getItem('fuelskip_user_name') || '';
+  const phone = localStorage.getItem('fuelskip_user_phone') || '';
+  profileInfo.innerHTML = `
+    <div style="text-align: center; padding: 24px;">
+      <div style="font-size: 24px; font-weight: bold; color: #2d3748; margin-bottom: 8px;">${name || 'User'}</div>
+      <div style="font-size: 16px; color: #6b7280; margin-bottom: 20px;">${phone}</div>
+      <div style="display: flex; gap: 12px;">
+        <button class="btn-secondary btn-small" onclick="editProfile()" style="flex: 1;">Edit</button>
+        <button class="btn-primary btn-small" onclick="downloadReport()" style="flex: 1;">Export Data</button>
+      </div>
+    </div>
+  `;
   
-  // Average fill
-  const avg = total / history.length;
-  document.getElementById('avgFill').textContent = `₹${avg.toLocaleString('en-IN', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+  document.getElementById('sidebarUser').innerHTML = `
+    <div>${name || 'User'}</div>
+    <div style="font-size: 12px;">${phone}</div>
+  `;
 }
 
-// Initialize
-window.addEventListener('load', loadAnalytics);
-</script>
-</body>
-</html>
+// --- Your existing functions (unchanged) ---
+function getUserId() { return window.localStorage.getItem("fuelskip_user_id"); }
+function setUserId(id) { window.localStorage.setItem("fuelskip_user_id", id); }
+function setUserName(name) { window.localStorage.setItem("fuelskip_user_name", name || ""); }
+function setUserPhone(phone) { window.localStorage.setItem("fuelskip_user_phone", phone || ""); }
+
+function refreshUserDisplay() {
+  const name = window.localStorage.getItem("fuelskip_user_name") || "";
+  const phone = window.localStorage.getItem("fuelskip_user_phone") || "";
+  document.getElementById("userDisplay").textContent = name ? `${name} (${phone})` : phone;
+}
+
+function showAfterLogin() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("createBox").style.display = "block";
+  document.getElementById("historyBox").style.display = "block";
+  document.getElementById("expenseTracker").style.display = "block";
+  refreshUserDisplay();
+  loadMyVouchers();
+  loadVehicleHistory();
+  loadAnalytics();
+  showPage('create');
+}
+
+// [All your existing functions: loadVehicleHistory, updateExpenseTracker, saveVehicleFill, logout, login, createVoucher, payNow, etc. remain EXACTLY SAME]
+
+function loadVehicleHistory() {
+  const history = JSON.parse(localStorage.getItem('fuelskip_vehicle_history') || '[]');
+  if (history.length > 0) {
+    const last = history[0];
+    document.getElementById('vehicleType').value = last.vehicleType || 'Car';
+    document.getElementById('vehicleNo').value = last.vehicleNo || '';
+    updateExpenseTracker(last.vehicleNo);
+  }
+}
+
+function updateExpenseTracker(vehicleNo = null) {
+  const history = JSON.parse(localStorage.getItem('fuelskip_vehicle_history') || '[]');
+  const vehicleFills = vehicleNo ? history.filter(f => f.vehicleNo === vehicleNo) : history;
+  const total = vehicleFills.reduce((sum, f) => sum + (parseFloat(f.amount) || 0), 0);
+  document.getElementById('totalExpense').textContent = `₹${total.toLocaleString()}`;
+  const recent = vehicleFills.slice(-5).reverse().map(f => 
+    `₹${f.amount || 0} (${new Date(f.timestamp).toLocaleDateString('en-IN')})`
+  ).join(', ');
+  document.getElementById('recentFills').textContent = recent || 'No fills yet';
+}
+
+function saveVehicleFill(voucherData) {
+  const history = JSON.parse(localStorage.getItem('fuelskip_vehicle_history') || '[]');
+  history.unshift({
+    vehicleType: voucherData.vehicleType,
+    vehicleNo: voucherData.vehicleNo,
+    amount: voucherData.amount
