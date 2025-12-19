@@ -50,6 +50,15 @@ class VoucherDB(Base):
     user_id = Column(Integer, index=True, nullable=True)    # link to users
 
 
+class ErrorLogDB(Base):
+    __tablename__ = "error_logs"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    where = Column(String)
+    message = Column(String)
+    created_at = Column(DateTime)
+
+
 def get_db():
     db = SessionLocal()
     try:
@@ -156,6 +165,20 @@ def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return R * c
 
 
+def log_error(db: Session, where: str, message: str):
+    try:
+        entry = ErrorLogDB(
+            where=where,
+            message=message[:1000],
+            created_at=datetime.datetime.utcnow(),
+        )
+        db.add(entry)
+        db.commit()
+    except Exception:
+        # avoid breaking main flow on logging failure
+        pass
+
+
 # ---------- Pydantic models ----------
 class CreateVoucher(BaseModel):
     bunk_id: str
@@ -179,6 +202,11 @@ class LoginResponse(BaseModel):
     phone: str
     name: str | None = None
 # ------------------------------------
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.post("/login", response_model=LoginResponse)
@@ -254,7 +282,8 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
             }
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Razorpay order error: {e}")
+        log_error(db, "create-voucher", str(e))
+        raise HTTPException(status_code=500, detail="Razorpay order error")
     # ---------------------------------------------
 
     now = datetime.datetime.utcnow()
@@ -356,7 +385,8 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
             signature,
             WEBHOOK_SECRET,
         )
-    except Exception:
+    except Exception as e:
+        log_error(db, "webhook-verify", str(e))
         raise HTTPException(status_code=400, detail="Invalid signature")
 
     payload = await request.json()
@@ -409,3 +439,13 @@ def my_vouchers(user_id: int, db: Session = Depends(get_db)):
 def list_users(db: Session = Depends(get_db)):
     users = db.query(UserDB).order_by(UserDB.created_at.desc()).all()
     return [u.__dict__ for u in users]
+
+
+@app.get("/admin/errors")
+def list_errors(limit: int = 100, db: Session = Depends(get_db)):
+    q = (
+        db.query(ErrorLogDB)
+        .order_by(ErrorLogDB.created_at.desc())
+        .limit(limit)
+    )
+    return [e.__dict__ for e in q.all()]
