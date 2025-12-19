@@ -20,19 +20,36 @@
       color: #333;
       line-height: 1.4;
       display: flex;
+      justify-content: center;
     }
 
-    /* Sidebar */
+    /* MAIN LAYOUT WRAPPER (so drawer overlays whole screen) */
+    .app-shell {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    /* Sidebar drawer */
     .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 260px;
+      max-width: 80%;
+      height: 100vh;
       background: #f9fafb;
-      border-radius: 16px;
+      border-radius: 0 16px 16px 0;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.3);
       padding: 20px 0;
-      box-shadow: 0 10px 30px rgba(15,23,42,0.15);
-      margin-right: 16px;
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 40px);
+      transform: translateX(-100%);
+      transition: transform 0.2s ease-out;
+      z-index: 50;
+    }
+    .sidebar.open {
+      transform: translateX(0);
     }
     .sidebar-header {
       padding: 0 20px 16px;
@@ -86,14 +103,28 @@
       font-weight: 500;
     }
 
-    /* Sidebar hidden (used before login) */
+    /* Backdrop behind drawer */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease-out;
+      z-index: 40;
+    }
+    .backdrop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Hide sidebar+backdrop before login */
     .sidebar-hidden {
-      display: none !important;
+      display: none;
     }
 
     /* Main container */
     .container {
-      flex: 1;
       max-width: 520px;
       margin: 0 auto;
       background: rgba(255,255,255,0.95);
@@ -125,6 +156,16 @@
     .user-pill {
       font-size: 13px;
       color: #4b5563;
+    }
+
+    .hamburger {
+      border: none;
+      background: #111827;
+      color: #f9fafb;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 18px;
+      cursor: pointer;
     }
 
     .card {
@@ -216,21 +257,11 @@
 
     @media (max-width: 900px) {
       body {
-        flex-direction: column;
         padding: 10px;
       }
-
-      .sidebar {
-        width: 100%;
-        height: auto;
-        margin: 0 0 10px 0;
-        border-radius: 16px;
-      }
-
       .container {
         width: 100%;
         max-width: 100%;
-        margin: 0;
         padding: 16px 12px 24px;
         box-shadow: 0 10px 20px rgba(0,0,0,0.08);
       }
@@ -238,19 +269,23 @@
   </style>
 </head>
 <body>
+<div class="app-shell">
 
-  <!-- LEFT ANALYTICS SIDEBAR -->
+  <!-- Backdrop for drawer -->
+  <div id="backdrop" class="backdrop sidebar-hidden" onclick="closeSidebar()"></div>
+
+  <!-- LEFT ANALYTICS SIDEBAR (drawer) -->
   <aside class="sidebar sidebar-hidden" id="sidebar">
     <div class="sidebar-header">
       <h2>📊 Analytics</h2>
       <small id="sidebarUser">Not logged in</small>
     </div>
     <ul class="sidebar-menu">
-      <li><a href="#" onclick="openSection('create');return false;">Home</a></li>
-      <li><a href="#" id="navDashboard" onclick="openSection('dashboard');return false;">Dashboard</a></li>
-      <li><a href="#" id="navVehicles" onclick="openSection('vehicles');return false;">Vehicles</a></li>
-      <li><a href="#" id="navBunks" onclick="openSection('bunks');return false;">Bunks</a></li>
-      <li><a href="#" id="navProfile" onclick="openSection('profile');return false;">Profile</a></li>
+      <li><a href="#" onclick="openSection('create');closeSidebar();return false;">Home</a></li>
+      <li><a href="#" onclick="openSection('dashboard');closeSidebar();return false;">Dashboard</a></li>
+      <li><a href="#" onclick="openSection('vehicles');closeSidebar();return false;">Vehicles</a></li>
+      <li><a href="#" onclick="openSection('bunks');closeSidebar();return false;">Bunks</a></li>
+      <li><a href="#" onclick="openSection('profile');closeSidebar();return false;">Profile</a></li>
     </ul>
     <div class="sidebar-footer">
       <button onclick="logout()">Logout</button>
@@ -263,6 +298,7 @@
       <h1>🚗 FuelSkip</h1>
       <div class="header-right">
         <div class="user-pill" id="userDisplay"></div>
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
       </div>
     </div>
 
@@ -392,6 +428,7 @@
     </div>
 
   </div>
+</div>
 
 <script>
 const API = "https://fuelskip-production.up.railway.app";
@@ -421,6 +458,33 @@ const BUNK_NAMES = {
 };
 function bunkName(id){
   return BUNK_NAMES[id] || id || "Unknown bunk";
+}
+
+/* Drawer controls */
+function toggleSidebar(){
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
+  if(sidebar.classList.contains("sidebar-hidden")){
+    sidebar.classList.remove("sidebar-hidden");
+    backdrop.classList.remove("sidebar-hidden");
+    requestAnimationFrame(()=>{
+      sidebar.classList.add("open");
+      backdrop.classList.add("show");
+    });
+  } else {
+    closeSidebar();
+  }
+}
+
+function closeSidebar(){
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
+  sidebar.classList.remove("open");
+  backdrop.classList.remove("show");
+  setTimeout(()=>{
+    sidebar.classList.add("sidebar-hidden");
+    backdrop.classList.add("sidebar-hidden");
+  },200);
 }
 
 function refreshUserDisplay(){
@@ -458,7 +522,12 @@ function logout(){
   document.getElementById("voucherBox").style.display="none";
   document.getElementById("historyBox").style.display="none";
 
-  document.getElementById("sidebar").classList.add("sidebar-hidden");
+  const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
+  sidebar.classList.add("sidebar-hidden");
+  backdrop.classList.add("sidebar-hidden");
+  sidebar.classList.remove("open");
+  backdrop.classList.remove("show");
 
   openSection("create");
   refreshUserDisplay();
@@ -491,8 +560,13 @@ async function login(){
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
 
-    // show sidebar after login
-    document.getElementById("sidebar").classList.remove("sidebar-hidden");
+    // enable drawer (sidebar/backdrop visible but closed)
+    const sidebar = document.getElementById("sidebar");
+    const backdrop = document.getElementById("backdrop");
+    sidebar.classList.remove("sidebar-hidden");
+    backdrop.classList.add("sidebar-hidden");
+    sidebar.classList.remove("open");
+    backdrop.classList.remove("show");
 
     refreshUserDisplay();
     loadVehicleHistory();
@@ -734,9 +808,11 @@ function openProfileEdit(){
 
 window.addEventListener("load",()=>{
   const sidebar = document.getElementById("sidebar");
+  const backdrop = document.getElementById("backdrop");
 
   if(getUserId()){
     sidebar.classList.remove("sidebar-hidden");
+    backdrop.classList.add("sidebar-hidden");
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
@@ -745,6 +821,7 @@ window.addEventListener("load",()=>{
     loadMyVouchers();
   } else {
     sidebar.classList.add("sidebar-hidden");
+    backdrop.classList.add("sidebar-hidden");
   }
 });
 </script>
