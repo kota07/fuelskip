@@ -407,8 +407,8 @@ button:disabled {
   border-radius: 12px;
 }
 .status-success { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
-.status-error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-.status-info  { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+.status-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
 
 /* Profile cards */
 .profile-grid {
@@ -423,6 +423,28 @@ button:disabled {
   padding: 20px;
   background: #f8fafc;
   border-radius: 16px;
+}
+
+/* Nearby bunks */
+.near-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  padding:8px 0;
+  border-bottom:1px solid #e5e7eb;
+}
+.near-item:last-child { border-bottom:none; }
+.near-name { font-weight:600; font-size:14px; color:#111827; }
+.near-addr { font-size:12px; color:#6b7280; }
+.near-dist { font-size:12px; color:#22c55e; margin-top:2px; }
+.near-btn {
+  padding:8px 10px;
+  font-size:12px;
+  border-radius:999px;
+  background:#eef2ff;
+  color:#4f46e5;
+  border:none;
+  cursor:pointer;
 }
 
 /* Mobile optimizations */
@@ -532,7 +554,18 @@ button:disabled {
         </select>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+      <!-- Nearby bunks card -->
+      <div class="card" style="margin-top:8px; padding:18px;">
+        <h4 style="margin:0 0 10px 0; font-size:16px;">📍 Nearby Bunks</h4>
+        <button class="btn-primary" style="margin-top:4px;" onclick="findNearbyBunks()">
+          📡 Find nearby bunks
+        </button>
+        <div id="nearbyList" style="margin-top:10px; font-size:13px; color:#4b5563;">
+          Allow location to see nearby petrol bunks.
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; margin-top:12px;">
         <div class="form-group">
           <span class="label">💰 Amount (₹)</span>
           <input id="amount" type="number" min="50" max="5000" placeholder="500">
@@ -907,7 +940,6 @@ async function createVoucher(){
     document.getElementById("voucherBox").style.display = "block";
     document.getElementById("qrSection").style.display  = "none";
 
-    // RESET PAY BUTTON FOR NEW VOUCHER
     const payBtn = document.getElementById("payBtn");
     payBtn.disabled = false;
     payBtn.style.display = "block";
@@ -962,8 +994,6 @@ async function checkVoucherStatus(){
       showQr();
       loadMyVouchers();
       loadAnalytics();
-
-      // HIDE PAY BUTTON AFTER SUCCESS
       const btn = document.getElementById("payBtn");
       btn.style.display = "none";
     }
@@ -1114,6 +1144,57 @@ function openProfileEdit(){
   
   refreshUserDisplay();
   loadProfile();
+}
+
+/* Nearby bunks using backend /nearby-bunks */
+function findNearbyBunks() {
+  const list = document.getElementById("nearbyList");
+
+  if (!navigator.geolocation) {
+    list.textContent = "Location not supported on this device.";
+    return;
+  }
+
+  list.textContent = "Getting your location...";
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+
+    try {
+      const res = await fetch(`${API}/nearby-bunks?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+      if (!res.ok) {
+        list.textContent = "Could not load nearby bunks.";
+        return;
+      }
+      const bunks = await res.json();
+      if (!bunks.length) {
+        list.textContent = "No bunks found nearby.";
+        return;
+      }
+      list.innerHTML = bunks.slice(0,5).map(b => `
+        <div class="near-item">
+          <div>
+            <div class="near-name">${b.name}</div>
+            <div class="near-addr">${b.address || ''}</div>
+            <div class="near-dist">${(b.distance_km || 0).toFixed(1)} km away</div>
+          </div>
+          <button class="near-btn" onclick="useNearbyBunk('${b.name.replace(/'/g,"\\'")}')">
+            Use
+          </button>
+        </div>
+      `).join("");
+    } catch (e) {
+      list.textContent = "Error loading nearby bunks.";
+    }
+  }, (err) => {
+    list.textContent = "Location permission denied.";
+  }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+function useNearbyBunk(name) {
+  // Just show info to user; mapping to real bunk IDs is your decision
+  showStatus("createMsg", `Using nearby bunk: ${name}`, "info");
 }
 
 window.addEventListener("load", () => {
