@@ -989,7 +989,7 @@ async function checkVoucherStatus(){
     const res = await fetch(`${API}/voucher-status/${lastVoucherId}`);
     if(!res.ok) return;
     const data = await res.json();
-    if(data.status === "paid"){
+    if(data.status === "paid" || data.status === "used"){
       clearInterval(pollTimer);
       showQr();
       loadMyVouchers();
@@ -1159,10 +1159,10 @@ function findNearbyBunks() {
 
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
+    const lon = pos.coords.longitude;
 
     try {
-      const res = await fetch(`${API}/nearby-bunks?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
+      const res = await fetch(`${API}/nearby-bunks?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
       if (!res.ok) {
         list.textContent = "Could not load nearby bunks.";
         return;
@@ -1189,7 +1189,7 @@ function findNearbyBunks() {
     }
   }, (err) => {
     list.textContent = "Location permission denied.";
-  }, { enableHighAccuracy: true, timeout: 8000 });
+  }, { enableHighAccuracy: false, timeout: 8000 });
 }
 
 function useNearbyBunk(name) {
