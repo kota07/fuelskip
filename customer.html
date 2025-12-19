@@ -7,9 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-<!-- QRCode.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<!-- Razorpay Checkout -->
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <style>
@@ -17,7 +15,6 @@
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
 }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -29,16 +26,12 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
-
-/* MAIN LAYOUT WRAPPER */
 .app-shell {
   position: relative;
   width: 100%;
   max-width: 400px;
   margin: 0 auto;
 }
-
-/* Sidebar drawer - Mobile optimized */
 .sidebar {
   position: fixed;
   top: 0;
@@ -57,9 +50,7 @@ body {
   z-index: 1000;
   backdrop-filter: blur(20px);
 }
-.sidebar.open {
-  transform: translateX(0);
-}
+.sidebar.open { transform: translateX(0); }
 .sidebar-header {
   padding: 24px;
   border-bottom: 1px solid #f1f5f9;
@@ -71,11 +62,7 @@ body {
   font-weight: 700;
   color: #1e293b;
 }
-.sidebar-header small {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 500;
-}
+.sidebar-header small { font-size: 13px; color: #64748b; font-weight: 500; }
 .sidebar-menu {
   list-style: none;
   padding: 0;
@@ -83,9 +70,7 @@ body {
   flex: 1;
   overflow-y: auto;
 }
-.sidebar-menu li {
-  margin: 0;
-}
+.sidebar-menu li { margin: 0; }
 .sidebar-menu a {
   display: flex;
   align-items: center;
@@ -97,7 +82,6 @@ body {
   text-decoration: none;
   border-left: 4px solid transparent;
   transition: all 0.2s ease;
-  position: relative;
 }
 .sidebar-menu a:hover,
 .sidebar-menu a.active {
@@ -128,8 +112,6 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 10px 25px rgba(239,68,68,0.3);
 }
-
-/* Backdrop */
 .backdrop {
   position: fixed;
   inset: 0;
@@ -140,15 +122,9 @@ body {
   z-index: 999;
   backdrop-filter: blur(8px);
 }
-.backdrop.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-.sidebar-hidden {
-  display: none !important;
-}
+.backdrop.show { opacity: 1; pointer-events: auto; }
+.sidebar-hidden { display: none !important; }
 
-/* Main container - Mobile first */
 .container {
   max-width: 100%;
   background: rgba(255,255,255,0.97);
@@ -159,7 +135,6 @@ body {
   border: 1px solid rgba(255,255,255,0.3);
   margin-bottom: 20px;
 }
-
 .header {
   display: flex;
   justify-content: space-between;
@@ -168,7 +143,6 @@ body {
   padding-bottom: 16px;
   border-bottom: 1px solid #f1f5f9;
 }
-
 h1 {
   margin: 0;
   font-size: 24px;
@@ -178,13 +152,7 @@ h1 {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+.header-right { display: flex; align-items: center; gap: 8px; }
 .user-pill {
   font-size: 13px;
   font-weight: 600;
@@ -197,7 +165,6 @@ h1 {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .hamburger {
   border: none;
   background: linear-gradient(135deg, #1e293b, #334155);
@@ -214,9 +181,7 @@ h1 {
   align-items: center;
   justify-content: center;
 }
-.hamburger:active {
-  transform: scale(0.95);
-}
+.hamburger:active { transform: scale(0.95); }
 
 .card {
   background: rgba(255,255,255,0.9);
@@ -225,16 +190,8 @@ h1 {
   margin-bottom: 20px;
   box-shadow: 0 8px 25px rgba(0,0,0,0.08);
   border: 1px solid rgba(248,250,252,0.8);
-  transition: all 0.2s ease;
 }
-.card:last-child {
-  margin-bottom: 0;
-}
-
-.form-group { 
-  margin-bottom: 20px;
-  position: relative;
-}
+.form-group { margin-bottom: 20px; }
 .label {
   display: block;
   margin-bottom: 8px;
@@ -251,7 +208,6 @@ input, select {
   box-sizing: border-box;
   background: #fafbfc;
   font-weight: 500;
-  transition: all 0.2s ease;
 }
 input:focus, select:focus {
   outline: none;
@@ -259,11 +215,6 @@ input:focus, select:focus {
   box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
   background: white;
 }
-
-input:invalid {
-  border-color: #f87171;
-}
-
 .vehicle-section {
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   padding: 20px;
@@ -277,7 +228,6 @@ input:invalid {
   gap: 14px;
   margin-top: 12px;
 }
-
 button {
   border: none;
   border-radius: 14px;
@@ -286,21 +236,13 @@ button {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
   min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-button:active { 
-  transform: scale(0.97); 
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
+button:active { transform: scale(0.97); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-primary {
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
@@ -313,30 +255,16 @@ button:disabled {
   box-shadow: 0 12px 35px rgba(22,163,74,0.4);
   transform: translateY(-1px);
 }
-
-.badge { 
-  padding: 6px 12px; 
-  border-radius: 20px; 
-  font-size:12px; 
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size:12px;
   font-weight:600;
 }
-.badge-pending { 
-  background: linear-gradient(135deg, #fef3c7, #fde68a); 
-  color: #92400e; 
-}
-.badge-paid { 
-  background: linear-gradient(135deg, #dcfce7, #bbf7d0); 
-  color: #166534; 
-}
-.badge-used { 
-  background: linear-gradient(135deg, #f1f5f9, #e2e8f0); 
-  color: #475569; 
-}
-.badge-failed { 
-  background: linear-gradient(135deg, #fee2e2, #fecaca); 
-  color: #b91c1c; 
-}
-
+.badge-pending { background: linear-gradient(135deg,#fef3c7,#fde68a); color:#92400e; }
+.badge-paid    { background: linear-gradient(135deg,#dcfce7,#bbf7d0); color:#166534; }
+.badge-used    { background: linear-gradient(135deg,#f1f5f9,#e2e8f0); color:#475569; }
+.badge-failed  { background: linear-gradient(135deg,#fee2e2,#fecaca); color:#b91c1c; }
 .history-item {
   border-bottom: 1px solid #f1f5f9;
   padding: 16px 0;
@@ -344,88 +272,63 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   font-size: 14px;
-  transition: all 0.2s ease;
 }
-.history-item:hover {
-  background: #f8fafc;
-  padding-left: 8px;
-  border-radius: 8px;
-}
-.history-item:last-child {
-  border-bottom: none;
-}
+.history-item:last-child { border-bottom: none; }
 
-#voucherBox { display: none; }
-#qrContainer { 
-  margin-top: 16px; 
-  display: flex; 
-  justify-content: center; 
+#voucherBox { display:none; }
+#qrContainer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
   padding: 20px;
   background: #f8fafc;
   border-radius: 16px;
 }
-
 #voucherDetails {
-  font-size: 15px; 
-  margin-bottom: 20px; 
-  padding: 24px; 
-  background: linear-gradient(135deg, #ecfdf5, #d1fae5); 
-  border-radius: 20px; 
+  font-size: 15px;
+  margin-bottom: 20px;
+  padding: 24px;
+  background: linear-gradient(135deg,#ecfdf5,#d1fae5);
+  border-radius: 20px;
   border-left: 5px solid #22c55e;
   text-align: center;
 }
-
-.page-section { display: none; }
-.page-section.active { display: block; }
-
+.page-section { display:none; }
+.page-section.active { display:block; }
 .dash-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:16px;
+  margin-bottom:24px;
 }
 .dash-card {
-  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-  border: none;
-  padding: 20px;
-  border-radius: 16px;
-  text-align: center;
-  transition: all 0.2s ease;
+  background:linear-gradient(135deg,#eef2ff,#e0e7ff);
+  padding:20px;
+  border-radius:16px;
+  text-align:center;
 }
-.dash-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(99,102,241,0.2);
-}
-
-/* Status messages */
 .status-msg {
-  font-size: 13px;
-  margin-top: 12px;
-  text-align: center;
-  font-weight: 500;
-  padding: 12px;
-  border-radius: 12px;
+  font-size:13px;
+  margin-top:12px;
+  text-align:center;
+  font-weight:500;
+  padding:12px;
+  border-radius:12px;
 }
-.status-success { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
-.status-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+.status-success { background:#ecfdf5; color:#166534; border:1px solid #bbf7d0; }
+.status-error   { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+.status-info    { background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe; }
 
-/* Profile cards */
-.profile-grid {
-  display: grid;
-  gap: 16px;
-  margin-bottom: 28px;
-}
+.profile-grid { display:grid; gap:16px; margin-bottom:28px; }
 .profile-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 16px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:20px;
+  background:#f8fafc;
+  border-radius:16px;
 }
 
-/* Nearby bunks */
 .near-item {
   display:flex;
   justify-content:space-between;
@@ -433,10 +336,10 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
   padding:8px 0;
   border-bottom:1px solid #e5e7eb;
 }
-.near-item:last-child { border-bottom:none; }
-.near-name { font-weight:600; font-size:14px; color:#111827; }
-.near-addr { font-size:12px; color:#6b7280; }
-.near-dist { font-size:12px; color:#22c55e; margin-top:2px; }
+.near-item:last-child{border-bottom:none;}
+.near-name {font-weight:600;font-size:14px;color:#111827;}
+.near-addr {font-size:12px;color:#6b7280;}
+.near-dist {font-size:12px;color:#22c55e;margin-top:2px;}
 .near-btn {
   padding:8px 10px;
   font-size:12px;
@@ -444,34 +347,22 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
   background:#eef2ff;
   color:#4f46e5;
   border:none;
-  cursor:pointer;
 }
-
-/* Mobile optimizations */
-@media (min-width: 480px) {
-  .vehicle-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .container {
-    max-width: 420px;
-    padding: 28px 24px 32px;
-  }
+@media (min-width:480px){
+  .vehicle-grid{grid-template-columns:1fr 1fr;}
+  .container{max-width:420px;padding:28px 24px 32px;}
 }
-
-@media (max-width: 360px) {
-  body { padding: 8px; }
-  .container { padding: 20px 16px 24px; }
-  .card { padding: 20px 16px; }
+@media (max-width:360px){
+  body{padding:8px;}
+  .container{padding:20px 16px 24px;}
+  .card{padding:20px 16px;}
 }
 </style>
 </head>
 <body>
 <div class="app-shell">
-
-<!-- Backdrop -->
 <div id="backdrop" class="backdrop sidebar-hidden" onclick="closeSidebar()"></div>
 
-<!-- Sidebar -->
 <aside class="sidebar sidebar-hidden" id="sidebar">
   <div class="sidebar-header">
     <h2>📊 Analytics</h2>
@@ -490,45 +381,39 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
   </div>
 </aside>
 
-<!-- Main Container -->
 <div class="container">
   <div class="header">
     <h1>🚗 FuelSkip</h1>
     <div class="header-right">
       <div class="user-pill" id="userDisplay"></div>
-      <button class="hamburger" onclick="toggleSidebar()" title="Menu">☰</button>
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
     </div>
   </div>
 
-  <!-- LOGIN + CREATE VOUCHER (DEFAULT) -->
+  <!-- Create / Login -->
   <div id="create" class="page-section active">
-    <!-- Login -->
     <div class="card" id="loginBox">
-      <h3 style="margin:0 0 24px 0; font-size:22px; color:#1e293b;">👋 Get Started</h3>
+      <h3 style="margin:0 0 24px 0;font-size:22px;">👋 Get Started</h3>
       <div class="form-group">
-        <span class="label">📱 Phone number <span style="color:#ef4444;">*</span></span>
-        <input id="phone" type="tel" placeholder="98XXXXXXXX" maxlength="10" required>
+        <span class="label">📱 Phone number *</span>
+        <input id="phone" type="tel" maxlength="10" placeholder="98XXXXXXXX">
       </div>
       <div class="form-group">
-        <span class="label">👤 Full Name <span style="color:#ef4444;">*</span></span>
-        <input id="name" placeholder="Enter your full name" required>
+        <span class="label">👤 Full Name *</span>
+        <input id="name" placeholder="Enter your full name">
       </div>
       <div class="form-group">
         <span class="label">📧 Email (optional)</span>
         <input id="email" type="email" placeholder="you@gmail.com">
       </div>
-      <button class="btn-primary" onclick="login()">
-        🚀 Continue
-      </button>
+      <button class="btn-primary" onclick="login()">🚀 Continue</button>
       <div id="loginMsg" class="status-msg" style="display:none;"></div>
     </div>
 
-    <!-- Create voucher -->
     <div class="card" id="createBox" style="display:none;">
-      <h3 style="margin:0 0 24px 0; font-size:22px;">➕ Create Voucher</h3>
-      
+      <h3 style="margin:0 0 24px 0;font-size:22px;">➕ Create Voucher</h3>
       <div class="vehicle-section">
-        <strong style="font-size:14px; font-weight:700;">Vehicle</strong>
+        <strong style="font-size:14px;">Vehicle</strong>
         <div class="vehicle-grid">
           <div class="form-group">
             <span class="label">Type</span>
@@ -542,7 +427,7 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
           </div>
           <div class="form-group">
             <span class="label">Number</span>
-            <input id="vehicleNo" type="text" placeholder="AP05AB1234" maxlength="12">
+            <input id="vehicleNo" maxlength="12" placeholder="AP05AB1234">
           </div>
         </div>
       </div>
@@ -555,18 +440,15 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
         </select>
       </div>
 
-      <!-- Nearby bunks card -->
-      <div class="card" style="margin-top:8px; padding:18px;">
-        <h4 style="margin:0 0 10px 0; font-size:16px;">📍 Nearby Bunks</h4>
-        <button class="btn-primary" style="margin-top:4px;" onclick="findNearbyBunks()">
-          📡 Find nearby bunks
-        </button>
-        <div id="nearbyList" style="margin-top:10px; font-size:13px; color:#4b5563;">
+      <div class="card" style="margin-top:8px;padding:18px;">
+        <h4 style="margin:0 0 10px 0;font-size:16px;">📍 Nearby Bunks</h4>
+        <button class="btn-primary" style="margin-top:4px;" onclick="findNearbyBunks()">📡 Find nearby bunks</button>
+        <div id="nearbyList" style="margin-top:10px;font-size:13px;color:#4b5563;">
           Allow location to see nearby petrol bunks.
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; margin-top:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0 20px;">
         <div class="form-group">
           <span class="label">💰 Amount (₹)</span>
           <input id="amount" type="number" min="50" max="5000" placeholder="500">
@@ -577,99 +459,77 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
         </div>
       </div>
 
-      <button class="btn-primary" onclick="createVoucher()">
-        ✨ Generate Voucher
-      </button>
+      <button class="btn-primary" onclick="createVoucher()">✨ Generate Voucher</button>
       <div id="createMsg" class="status-msg" style="display:none;"></div>
     </div>
 
-    <!-- Voucher -->
     <div class="card" id="voucherBox" style="display:none;">
-      <h3 style="margin:0 0 24px 0; font-size:22px;">✅ Voucher Ready!</h3>
+      <h3 style="margin:0 0 24px 0;font-size:22px;">✅ Voucher Ready!</h3>
       <div id="voucherDetails"></div>
-      <button class="btn-primary" id="payBtn" onclick="payNow()">
-        💳 Pay Now
-      </button>
+      <button class="btn-primary" id="payBtn" onclick="payNow()">💳 Pay Now</button>
       <div id="qrSection" style="display:none;">
-        <p style="font-size:14px; text-align:center; margin-bottom:16px; color:#374151;">Show QR to attendant</p>
+        <p style="font-size:14px;text-align:center;margin-bottom:16px;">Show QR to attendant</p>
         <div id="qrContainer"></div>
-        <div style="text-align:center; margin-top:20px; padding:16px; background:#f8fafc; border-radius:12px;">
+        <div style="text-align:center;margin-top:20px;padding:16px;background:#f8fafc;border-radius:12px;">
           <strong>Voucher ID:</strong><br>
-          <span id="voucherIdDisplay" style="font-family:monospace; font-size:18px; color:#6366f1;"></span>
+          <span id="voucherIdDisplay" style="font-family:monospace;font-size:18px;color:#6366f1;"></span>
         </div>
       </div>
     </div>
 
-    <!-- History -->
     <div class="card" id="historyBox" style="display:none;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3 style="margin:0; font-size:22px;">📋 My Vouchers</h3>
-        <button class="btn-primary" style="width:auto; padding:10px 16px; font-size:14px;" onclick="loadMyVouchers()">
-          ⟲ Refresh
-        </button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;font-size:22px;">📋 My Vouchers</h3>
+        <button class="btn-primary" style="width:auto;padding:10px 16px;font-size:14px;" onclick="loadMyVouchers()">⟲ Refresh</button>
       </div>
-      <div id="myVouchers" style="font-size:14px; color:#64748b;">Loading...</div>
+      <div id="myVouchers" style="font-size:14px;color:#64748b;">Loading...</div>
     </div>
   </div>
 
-  <!-- Dashboard -->
   <div id="dashboard" class="page-section">
-    <h3 style="font-size:26px; margin:0 0 28px 0;">📊 Analytics</h3>
+    <h3 style="font-size:26px;margin:0 0 28px 0;">📊 Analytics</h3>
     <div class="dash-grid">
       <div class="dash-card">
-        <div style="font-size:11px; text-transform:uppercase; color:#64748b;">Total Spend</div>
-        <div style="font-size:24px; font-weight:800; color:#1e293b;" id="dashTotalSpend">₹0</div>
-        <div style="font-size:12px; color:#6366f1;">Lifetime</div>
+        <div style="font-size:11px;text-transform:uppercase;color:#64748b;">Total Spend</div>
+        <div style="font-size:24px;font-weight:800;" id="dashTotalSpend">₹0</div>
+        <div style="font-size:12px;color:#6366f1;">Lifetime</div>
       </div>
       <div class="dash-card" style="background:linear-gradient(135deg,#e0f2fe,#bfdbfe);">
-        <div style="font-size:11px; text-transform:uppercase; color:#64748b;">Total Fills</div>
-        <div style="font-size:24px; font-weight:800; color:#1e293b;" id="dashTotalFills">0</div>
-        <div style="font-size:12px; color:#0ea5e9;">Transactions</div>
+        <div style="font-size:11px;text-transform:uppercase;color:#64748b;">Total Fills</div>
+        <div style="font-size:24px;font-weight:800;" id="dashTotalFills">0</div>
+        <div style="font-size:12px;color:#0ea5e9;">Transactions</div>
       </div>
       <div class="dash-card" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);">
-        <div style="font-size:11px; text-transform:uppercase; color:#64748b;">Avg Fill</div>
-        <div style="font-size:24px; font-weight:800; color:#1e293b;" id="dashAvgFill">₹0</div>
-        <div style="font-size:12px; color:#22c55e;">Per Fill</div>
+        <div style="font-size:11px;text-transform:uppercase;color:#64748b;">Avg Fill</div>
+        <div style="font-size:24px;font-weight:800;" id="dashAvgFill">₹0</div>
+        <div style="font-size:12px;color:#22c55e;">Per Fill</div>
       </div>
     </div>
     <div class="card">
-      <p style="font-size:14px; margin:0; color:#64748b;">
-        🚗 Top vehicle: <strong id="dashTopVehicle" style="color:#1e293b;">-</strong>
-      </p>
+      <p style="font-size:14px;margin:0;color:#64748b;">🚗 Top vehicle: <strong id="dashTopVehicle" style="color:#1e293b;">-</strong></p>
     </div>
   </div>
 
-  <!-- Vouchers analytics -->
   <div id="vouchers" class="page-section">
-    <h3 style="font-size:26px; margin:0 0 28px 0;">🎫 Vouchers</h3>
-    <div id="voucherStats" class="card" style="padding:24px; color:#64748b;">
-      No data available
-    </div>
+    <h3 style="font-size:26px;margin:0 0 28px 0;">🎫 Vouchers</h3>
+    <div id="voucherStats" class="card" style="padding:24px;color:#64748b;">No data available</div>
   </div>
 
-  <!-- Vehicles -->
   <div id="vehicles" class="page-section">
-    <h3 style="font-size:26px; margin:0 0 28px 0;">🚗 Vehicles</h3>
-    <div id="vehicleList" class="card" style="padding:32px; text-align:center; color:#64748b;">
-      No data available
-    </div>
+    <h3 style="font-size:26px;margin:0 0 28px 0;">🚗 Vehicles</h3>
+    <div id="vehicleList" class="card" style="padding:32px;text-align:center;color:#64748b;">No data available</div>
   </div>
 
-  <!-- Bunks -->
   <div id="bunks" class="page-section">
-    <h3 style="font-size:26px; margin:0 0 28px 0;">⛽ Stations</h3>
-    <div id="bunkList" class="card" style="padding:32px; text-align:center; color:#64748b;">
-      No data available
-    </div>
+    <h3 style="font-size:26px;margin:0 0 28px 0;">⛽ Stations</h3>
+    <div id="bunkList" class="card" style="padding:32px;text-align:center;color:#64748b;">No data available</div>
   </div>
 
-  <!-- Profile -->
   <div id="profile" class="page-section">
-    <h3 style="font-size:26px; margin:0 0 28px 0;">👤 Profile</h3>
-    <div id="profileInfo" class="card" style="padding:32px; text-align:center; color:#64748b;">
-      Loading...
-    </div>
+    <h3 style="font-size:26px;margin:0 0 28px 0;">👤 Profile</h3>
+    <div id="profileInfo" class="card" style="padding:32px;text-align:center;color:#64748b;">Loading...</div>
   </div>
+</div>
 </div>
 
 <script>
@@ -679,7 +539,6 @@ let lastVoucherId = null;
 let razorpayOrderId = null;
 let razorpayKeyId = null;
 let pollTimer = null;
-let currentVehicle = null;
 
 function getUserId(){ return localStorage.getItem("fuelskip_user_id"); }
 function setUserId(id){ localStorage.setItem("fuelskip_user_id", id); }
@@ -693,633 +552,426 @@ function getAnalyticsKey(){
   return uid ? `fuelskip_analytics_${uid}` : null;
 }
 
-function showStatus(elementId, message, type = 'info') {
-  const el = document.getElementById(elementId);
-  el.textContent = message;
-  el.className = `status-msg status-${type}`;
-  el.style.display = 'block';
-  setTimeout(() => { el.style.display = 'none'; }, 5000);
+function showStatus(id,msg,type="info"){
+  const el=document.getElementById(id);
+  el.textContent=msg;
+  el.className=`status-msg status-${type}`;
+  el.style.display="block";
+  setTimeout(()=>{el.style.display="none";},5000);
 }
 
 function bunkName(id){
-  const names = {
-    "BUNK-1": "BPCL Siripuram",
-    "BUNK-2": "Gajuwaka Expressway"
-  };
-  return names[id] || id || "Unknown";
+  const map={"BUNK-1":"BPCL Siripuram","BUNK-2":"Gajuwaka Expressway"};
+  return map[id]||id||"Unknown";
 }
 
 function toggleSidebar(){
-  const sidebar = document.getElementById("sidebar");
-  const backdrop = document.getElementById("backdrop");
-  if(sidebar.classList.contains("sidebar-hidden")){
-    sidebar.classList.remove("sidebar-hidden");
-    backdrop.classList.remove("sidebar-hidden");
-    requestAnimationFrame(() => {
-      sidebar.classList.add("open");
-      backdrop.classList.add("show");
-    });
-  } else {
-    closeSidebar();
-  }
+  const s=document.getElementById("sidebar");
+  const b=document.getElementById("backdrop");
+  if(s.classList.contains("sidebar-hidden")){
+    s.classList.remove("sidebar-hidden"); b.classList.remove("sidebar-hidden");
+    requestAnimationFrame(()=>{s.classList.add("open");b.classList.add("show");});
+  }else closeSidebar();
 }
-
 function closeSidebar(){
-  const sidebar = document.getElementById("sidebar");
-  const backdrop = document.getElementById("backdrop");
-  sidebar.classList.remove("open");
-  backdrop.classList.remove("show");
-  setTimeout(() => {
-    sidebar.classList.add("sidebar-hidden");
-    backdrop.classList.add("sidebar-hidden");
-  }, 300);
+  const s=document.getElementById("sidebar");
+  const b=document.getElementById("backdrop");
+  s.classList.remove("open"); b.classList.remove("show");
+  setTimeout(()=>{s.classList.add("sidebar-hidden");b.classList.add("sidebar-hidden");},300);
 }
 
 function refreshUserDisplay(){
-  const n = localStorage.getItem("fuelskip_user_name") || "";
-  const p = localStorage.getItem("fuelskip_user_phone") || "";
-  const displayText = p ? (n ? `${n.slice(0,15)}${n.length>15?'...':''}` : p.slice(-10)) : "";
-  document.getElementById("userDisplay").textContent = displayText;
-  document.getElementById("sidebarUser").textContent = p ? (n ? `${n} • ${p}` : p) : "Not logged in";
+  const n=localStorage.getItem("fuelskip_user_name")||"";
+  const p=localStorage.getItem("fuelskip_user_phone")||"";
+  const text=p?(n?`${n.slice(0,15)}${n.length>15?'...':''}`:p.slice(-10)):"";
+  document.getElementById("userDisplay").textContent=text;
+  document.getElementById("sidebarUser").textContent=p?(n?`${n} • ${p}`:p):"Not logged in";
 }
 
 function updateActiveMenu(section){
-  document.querySelectorAll('.sidebar-menu a').forEach(link => link.classList.remove('active'));
-  const activeLink = {
-    'create': 'homeLink',
-    'dashboard': 'dashLink',
-    'vouchers': 'vouchLink',
-    'vehicles': 'vehLink',
-    'bunks': 'bunkLink',
-    'profile': 'profLink'
+  document.querySelectorAll('.sidebar-menu a').forEach(a=>a.classList.remove('active'));
+  const id={
+    create:"homeLink",
+    dashboard:"dashLink",
+    vouchers:"vouchLink",
+    vehicles:"vehLink",
+    bunks:"bunkLink",
+    profile:"profLink"
   }[section];
-  if(activeLink) document.getElementById(activeLink).classList.add('active');
+  if(id) document.getElementById(id).classList.add("active");
 }
 
 function openSection(id){
-  document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".page-section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   updateActiveMenu(id);
-  if(id === "profile") loadProfile();
-  else if(id !== "create") loadAnalytics();
+  if(id==="profile") loadProfile();
+  else if(id!=="create") loadAnalytics();
 }
 
 function logout(){
   if(!confirm("Logout? All local data will be cleared.")) return;
-  
-  localStorage.removeItem("fuelskip_user_id");
-  localStorage.removeItem("fuelskip_user_name");
-  localStorage.removeItem("fuelskip_user_phone");
-  localStorage.removeItem("fuelskip_user_email");
-  
-  Object.keys(localStorage).forEach(key => {
-    if(key.includes('fuelskip_')) localStorage.removeItem(key);
-  });
-
-  document.getElementById("phone").value   = "";
-  document.getElementById("name").value    = "";
-  document.getElementById("email").value   = "";
-  document.getElementById("amount").value  = "";
-  document.getElementById("litres").value  = "";
-  document.getElementById("vehicleNo").value = "";
-
-  document.getElementById("loginBox").style.display   = "block";
-  document.getElementById("createBox").style.display  = "none";
-  document.getElementById("voucherBox").style.display = "none";
-  document.getElementById("historyBox").style.display = "none";
-
-  const sidebar  = document.getElementById("sidebar");
-  const backdrop = document.getElementById("backdrop");
-  sidebar.classList.add("sidebar-hidden");
-  backdrop.classList.add("sidebar-hidden");
-
+  ["fuelskip_user_id","fuelskip_user_name","fuelskip_user_phone","fuelskip_user_email"]
+    .forEach(k=>localStorage.removeItem(k));
+  Object.keys(localStorage).forEach(k=>{if(k.startsWith("fuelskip_"))localStorage.removeItem(k);});
+  ["phone","name","email","amount","litres","vehicleNo"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("loginBox").style.display="block";
+  document.getElementById("createBox").style.display="none";
+  document.getElementById("voucherBox").style.display="none";
+  document.getElementById("historyBox").style.display="none";
+  document.getElementById("sidebar").classList.add("sidebar-hidden");
+  document.getElementById("backdrop").classList.add("sidebar-hidden");
   openSection("create");
   refreshUserDisplay();
   if(pollTimer) clearInterval(pollTimer);
 }
 
 async function login(){
-  const phone = document.getElementById("phone").value.trim().replace(/\D/g,'');
-  const name  = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim() || null;
-
-  if(!phone || phone.length !== 10){ 
-    showStatus("loginMsg", "Enter valid 10-digit phone number", "error");
-    document.getElementById("phone").focus();
-    return; 
-  }
-  if(!name || name.length < 2){ 
-    showStatus("loginMsg", "Enter your full name (min 2 chars)", "error");
-    document.getElementById("name").focus();
-    return; 
-  }
-
-  showStatus("loginMsg", "🔄 Logging in...", "info");
-
+  const phone=document.getElementById("phone").value.trim().replace(/\D/g,"");
+  const name=document.getElementById("name").value.trim();
+  const email=document.getElementById("email").value.trim()||null;
+  if(!phone||phone.length!==10){showStatus("loginMsg","Enter valid 10-digit phone number","error");return;}
+  if(!name||name.length<2){showStatus("loginMsg","Enter your full name","error");return;}
+  showStatus("loginMsg","🔄 Logging in...","info");
   try{
-    const res = await fetch(`${API}/login`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({phone, name, email})
+    const res=await fetch(`${API}/login`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({phone,name,email})
     });
-    
-    if(!res.ok){
-      const err = await res.json();
-      throw new Error(err.detail || `HTTP ${res.status}`);
-    }
-    
-    const data = await res.json();
-
-    const oldUid = getUserId();
-
-    setUserId(data.user_id);
-    setUserName(name);
-    setUserPhone(phone);
-    setUserEmail(email || "");
-
-    if (oldUid && String(oldUid) !== String(data.user_id)) {
+    if(!res.ok){const err=await res.json();throw new Error(err.detail||`HTTP ${res.status}`);}
+    const data=await res.json();
+    const oldUid=getUserId();
+    setUserId(data.user_id); setUserName(name); setUserPhone(phone); setUserEmail(email||"");
+    if(oldUid && String(oldUid)!==String(data.user_id)){
       localStorage.removeItem(`fuelskip_vehicle_history_${oldUid}`);
       localStorage.removeItem(`fuelskip_analytics_${oldUid}`);
     }
-
-    document.getElementById("loginBox").style.display   = "none";
-    document.getElementById("createBox").style.display  = "block";
-    document.getElementById("historyBox").style.display = "block";
-
-    const sidebar  = document.getElementById("sidebar");
-    const backdrop = document.getElementById("backdrop");
-    sidebar.classList.remove("sidebar-hidden");
-    backdrop.classList.add("sidebar-hidden");
-
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("createBox").style.display="block";
+    document.getElementById("historyBox").style.display="block";
+    document.getElementById("sidebar").classList.remove("sidebar-hidden");
+    document.getElementById("backdrop").classList.add("sidebar-hidden");
     refreshUserDisplay();
     loadMyVouchers();
     loadAnalytics();
-    showStatus("loginMsg", `✅ Welcome ${name}!`, "success");
-    
-  } catch(e){
-    showStatus("loginMsg", `❌ ${e.message}`, "error");
+    showStatus("loginMsg",`✅ Welcome ${name}!`,"success");
+  }catch(e){
+    showStatus("loginMsg",`❌ ${e.message}`,"error");
   }
 }
 
-function saveVehicleToAnalytics(vehicle){
-  const key = getAnalyticsKey();
-  if(!key) return;
-  
-  try {
-    let analytics = JSON.parse(localStorage.getItem(key) || "[]");
-    analytics.unshift(vehicle);
-    analytics = analytics.slice(0, 100);
-    localStorage.setItem(key, JSON.stringify(analytics));
-  } catch(e) {
-    console.error("Save analytics error:", e);
-  }
+function saveVehicleToAnalytics(v){
+  const key=getAnalyticsKey(); if(!key) return;
+  let arr=JSON.parse(localStorage.getItem(key)||"[]");
+  arr.unshift(v); arr=arr.slice(0,100);
+  localStorage.setItem(key,JSON.stringify(arr));
 }
 
-function updateAnalyticsStatus(voucherId, newStatus) {
-  const key = getAnalyticsKey();
-  if (!key) return;
-  let analytics = JSON.parse(localStorage.getItem(key) || "[]");
-  analytics = analytics.map(f =>
-    f.voucher_id === voucherId ? {...f, status: newStatus} : f
-  );
-  localStorage.setItem(key, JSON.stringify(analytics));
+function updateAnalyticsStatus(voucherId,status){
+  const key=getAnalyticsKey(); if(!key) return;
+  let arr=JSON.parse(localStorage.getItem(key)||"[]");
+  arr=arr.map(f=>f.voucher_id===voucherId?{...f,status}:f);
+  localStorage.setItem(key,JSON.stringify(arr));
 }
 
 async function createVoucher(){
-  const amountVal   = document.getElementById("amount").value;
-  const litresVal   = document.getElementById("litres").value;
-  const vehicleType = document.getElementById("vehicleType").value;
-  const vehicleNo   = document.getElementById("vehicleNo").value.trim().toUpperCase();
-  const bunkId      = document.getElementById("bunkSelect").value;
-  const userId      = getUserId();
-
-  if(!amountVal && !litresVal){ 
-    showStatus("createMsg", "Enter amount OR litres", "error");
-    return; 
-  }
-  if(!vehicleNo || vehicleNo.length < 3){ 
-    showStatus("createMsg", "Enter valid vehicle number", "error");
-    return; 
-  }
-
-  showStatus("createMsg", "✨ Creating voucher...", "info");
-
+  const amountVal=document.getElementById("amount").value;
+  const litresVal=document.getElementById("litres").value;
+  const vehicleType=document.getElementById("vehicleType").value;
+  const vehicleNo=document.getElementById("vehicleNo").value.trim().toUpperCase();
+  const bunkId=document.getElementById("bunkSelect").value;
+  const userId=getUserId();
+  if(!amountVal && !litresVal){showStatus("createMsg","Enter amount OR litres","error");return;}
+  if(!vehicleNo || vehicleNo.length<3){showStatus("createMsg","Enter valid vehicle number","error");return;}
+  showStatus("createMsg","✨ Creating voucher...","info");
   try{
-    const res = await fetch(`${API}/create-voucher`, {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        bunk_id: bunkId,
-        amount: amountVal ? Number(amountVal) : null,
-        litres: litresVal ? Number(litresVal) : null,
-        user_id: userId ? Number(userId) : null,
-        vehicle_type: vehicleType,
-        vehicle_no: vehicleNo
+    const res=await fetch(`${API}/create-voucher`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        bunk_id:bunkId,
+        amount:amountVal?Number(amountVal):null,
+        litres:litresVal?Number(litresVal):null,
+        user_id:userId?Number(userId):null,
+        vehicle_type:vehicleType,
+        vehicle_no:vehicleNo
       })
     });
-    
-    if(!res.ok){
-      const err = await res.json();
-      throw new Error(err.detail || `HTTP ${res.status}`);
-    }
-    
-    const data = await res.json();
-    lastVoucherId   = data.voucher_id;
-    razorpayOrderId = data.razorpay_order_id;
-    razorpayKeyId   = data.razorpay_key_id;
-    
-    currentVehicle = {
+    if(!res.ok){const err=await res.json();throw new Error(err.detail||`HTTP ${res.status}`);}
+    const data=await res.json();
+    lastVoucherId=data.voucher_id;
+    razorpayOrderId=data.razorpay_order_id;
+    razorpayKeyId=data.razorpay_key_id;
+    saveVehicleToAnalytics({
       vehicleType,
       vehicleNo,
-      amount: data.amount,
-      litres: data.litres,
-      bunk_id: bunkId,
-      voucher_id: data.voucher_id,
-      created_at: new Date().toISOString(),
-      status: "pending"
-    };
-
-    saveVehicleToAnalytics(currentVehicle);
-
-    document.getElementById("voucherDetails").innerHTML = `
-      <div style="font-size:18px; font-weight:800; color:#166534; margin-bottom:12px;">
+      amount:data.amount,
+      litres:data.litres,
+      bunk_id:bunkId,
+      voucher_id:data.voucher_id,
+      created_at:new Date().toISOString(),
+      status:"pending"
+    });
+    document.getElementById("voucherDetails").innerHTML=`
+      <div style="font-size:18px;font-weight:800;color:#166534;margin-bottom:12px;">
         ${data.voucher_id}
       </div>
-      <div style="display:grid; gap:8px; font-size:15px; color:#374151;">
-        <div>💰 ₹<strong>${data.amount?.toLocaleString() || 'TBD'}</strong></div>
-        <div>⛽ <strong>${data.litres || 'TBD'} L</strong></div>
-        <div style="font-size:13px; color:#64748b;">
+      <div style="display:grid;gap:8px;font-size:15px;color:#374151;">
+        <div>💰 ₹<strong>${data.amount?.toLocaleString()||"TBD"}</strong></div>
+        <div>⛽ <strong>${data.litres||"TBD"} L</strong></div>
+        <div style="font-size:13px;color:#64748b;">
           ${vehicleType} ${vehicleNo} • ${bunkName(bunkId)}
         </div>
-      </div>
-    `;
-    
-    document.getElementById("voucherIdDisplay").textContent = data.voucher_id;
-    document.getElementById("voucherBox").style.display = "block";
-    document.getElementById("qrSection").style.display  = "none";
-
-    const payBtn = document.getElementById("payBtn");
-    payBtn.disabled = false;
-    payBtn.style.display = "block";
-    payBtn.innerHTML = "💳 Pay Now";
-    
-    showStatus("createMsg", "✅ Voucher created! Tap Pay Now", "success");
-    
-  } catch(e){
-    showStatus("createMsg", `❌ ${e.message}`, "error");
+      </div>`;
+    document.getElementById("voucherIdDisplay").textContent=data.voucher_id;
+    document.getElementById("voucherBox").style.display="block";
+    document.getElementById("qrSection").style.display="none";
+    const btn=document.getElementById("payBtn");
+    btn.disabled=false; btn.style.display="block"; btn.textContent="💳 Pay Now";
+    showStatus("createMsg","✅ Voucher created! Tap Pay Now","success");
+  }catch(e){
+    showStatus("createMsg",`❌ ${e.message}`,"error");
   }
 }
 
 function payNow(){
-  if(!razorpayOrderId || !razorpayKeyId){ 
-    alert("Create voucher first");
-    return; 
-  }
-  
-  const options = {
-    key:        razorpayKeyId,
-    order_id:   razorpayOrderId,
-    name:       "FuelSkip",
+  if(!razorpayOrderId || !razorpayKeyId){alert("Create voucher first");return;}
+  const opts={
+    key:razorpayKeyId,
+    order_id:razorpayOrderId,
+    name:"FuelSkip",
     description:`Voucher ${lastVoucherId}`,
-    currency:   "INR",
-    theme:      { color: "#22c55e" },
-    redirect:   false,
-    handler:    function(response){ startPollingStatus(); },
-    modal:      { ondismiss: function(){} }
+    currency:"INR",
+    theme:{color:"#22c55e"},
+    redirect:false,
+    handler:()=>startPollingStatus(),
+    modal:{ondismiss:()=>{}}
   };
-  
-  const rzp = new Razorpay(options);
-  rzp.open();
+  new Razorpay(opts).open();
 }
 
 function startPollingStatus(){
   if(!lastVoucherId) return;
   if(pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(checkVoucherStatus, 2500);
-  const btn = document.getElementById("payBtn");
-  btn.innerHTML = "⏳ Processing...";
-  btn.disabled = true;
+  pollTimer=setInterval(checkVoucherStatus,2500);
+  const btn=document.getElementById("payBtn");
+  btn.textContent="⏳ Processing..."; btn.disabled=true;
 }
 
 async function checkVoucherStatus(){
   if(!lastVoucherId) return;
   try{
-    const res = await fetch(`${API}/voucher-status/${lastVoucherId}`);
+    const res=await fetch(`${API}/voucher-status/${lastVoucherId}`);
     if(!res.ok) return;
-    const data = await res.json();
-    if(data.status === "paid" || data.status === "used"){
+    const data=await res.json();
+    if(data.status==="paid"||data.status==="used"){
       clearInterval(pollTimer);
-      updateAnalyticsStatus(lastVoucherId, data.status);
+      updateAnalyticsStatus(lastVoucherId,data.status);
       showQr();
       loadMyVouchers();
       loadAnalytics();
-      const btn = document.getElementById("payBtn");
-      btn.style.display = "none";
+      document.getElementById("payBtn").style.display="none";
     }
-  } catch(e){
-    console.log("Poll error:", e);
-  }
+  }catch(e){console.log("Poll error:",e);}
 }
 
 function showQr(){
-  document.getElementById("qrSection").style.display = "block";
-  document.getElementById("qrContainer").innerHTML  = "";
-  const url = `https://fuelskip-production.up.railway.app/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
-  new QRCode(document.getElementById("qrContainer"), {
-    text:  url,
-    width: 200,
-    height:200,
-    colorDark:  "#1e293b",
-    colorLight: "#f8fafc"
+  document.getElementById("qrSection").style.display="block";
+  document.getElementById("qrContainer").innerHTML="";
+  const url=`${API.replace("/production","")}/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
+  new QRCode(document.getElementById("qrContainer"),{
+    text:url,width:200,height:200,colorDark:"#1e293b",colorLight:"#f8fafc"
   });
 }
 
 function statusBadge(status){
-  status = (status || "").toLowerCase();
-  const badges = {
-    "paid":   '<span class="badge badge-paid">✅ Paid</span>',
-    "used":   '<span class="badge badge-used">✔️ Used</span>',
-    "failed": '<span class="badge badge-failed">❌ Failed</span>'
+  status=(status||"").toLowerCase();
+  const map={
+    paid:'<span class="badge badge-paid">✅ Paid</span>',
+    used:'<span class="badge badge-used">✔️ Used</span>',
+    failed:'<span class="badge badge-failed">❌ Failed</span>'
   };
-  return badges[status] || '<span class="badge badge-pending">⏳ Pending</span>';
+  return map[status]||'<span class="badge badge-pending">⏳ Pending</span>';
 }
 
 async function loadMyVouchers(){
-  const userId   = getUserId();
-  const container = document.getElementById("myVouchers");
-  if(!userId){ 
-    container.innerHTML = 'Login required';
-    return; 
-  }
-  
+  const uid=getUserId();
+  const box=document.getElementById("myVouchers");
+  if(!uid){box.textContent="Login required";return;}
   try{
-    const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(userId)}`);
-    if(!res.ok){ 
-      container.innerHTML = 'Loading failed';
-      return; 
-    }
-    const vouchers = await res.json();
-    if(!vouchers.length){ 
-      container.innerHTML = 'No vouchers yet';
-      return; 
-    }
-    container.innerHTML = vouchers.map(v => `
+    const res=await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(uid)}`);
+    if(!res.ok){box.textContent="Loading failed";return;}
+    const arr=await res.json();
+    if(!arr.length){box.textContent="No vouchers yet";return;}
+    box.innerHTML=arr.map(v=>`
       <div class="history-item">
         <div>
-          <div style="font-weight:700; font-size:15px;">${v.id} • ₹${parseFloat(v.amount||0).toLocaleString()}</div>
-          <div style="font-size:13px; color:#64748b;">${new Date(v.created_at).toLocaleString()}</div>
+          <div style="font-weight:700;font-size:15px;">${v.id} • ₹${parseFloat(v.amount||0).toLocaleString()}</div>
+          <div style="font-size:13px;color:#64748b;">${new Date(v.created_at).toLocaleString()}</div>
         </div>
         <div>${statusBadge(v.status)}</div>
-      </div>
-    `).join("");
-  } catch(e){
-    container.innerHTML = 'Error loading';
-  }
+      </div>`).join("");
+  }catch(e){box.textContent="Error loading";}
 }
 
 function loadAnalytics(){
-  const key = getAnalyticsKey();
-  if(!key) return;
-  
-  try {
-    const analytics = JSON.parse(localStorage.getItem(key) || "[]");
-    if(!analytics.length) return;
-
-    // totals for dashboard
-    const total = analytics.reduce((s, f) => s + parseFloat(f.amount || 0), 0);
-    document.getElementById("dashTotalSpend").textContent = `₹${total.toLocaleString()}`;
-    document.getElementById("dashTotalFills").textContent = analytics.length;
-    document.getElementById("dashAvgFill").textContent   = `₹${Math.round(total / analytics.length)}`;
-
-    // vehicle stats
-    const vehicleStats = {};
-    analytics.forEach(f => {
-      const vKey = `${f.vehicleType} ${f.vehicleNo}`;
-      vehicleStats[vKey] = (vehicleStats[vKey] || 0) + parseFloat(f.amount || 0);
+  const key=getAnalyticsKey(); if(!key) return;
+  try{
+    const a=JSON.parse(localStorage.getItem(key)||"[]");
+    if(!a.length) return;
+    const total=a.reduce((s,f)=>s+parseFloat(f.amount||0),0);
+    document.getElementById("dashTotalSpend").textContent=`₹${total.toLocaleString()}`;
+    document.getElementById("dashTotalFills").textContent=a.length;
+    document.getElementById("dashAvgFill").textContent=`₹${Math.round(total/a.length)}`;
+    const vehicleStats={};
+    a.forEach(f=>{
+      const k=`${f.vehicleType} ${f.vehicleNo}`;
+      vehicleStats[k]=(vehicleStats[k]||0)+parseFloat(f.amount||0);
     });
-    const topVehicle = Object.entries(vehicleStats).sort(([,a],[,b]) => b-a)[0];
-    document.getElementById("dashTopVehicle").textContent = topVehicle ? topVehicle[0] : "-";
-
-    // bunk-wise stats
-    const bunkStats = {};
-    analytics.forEach(f => {
-      const id = f.bunk_id || "UNKNOWN";
-      if (!bunkStats[id]) {
-        bunkStats[id] = { amount: 0, used: 0, unused: 0 };
-      }
-      bunkStats[id].amount += parseFloat(f.amount || 0);
-      if (f.status === "used") bunkStats[id].used += 1;
-      else bunkStats[id].unused += 1;
+    const top=Object.entries(vehicleStats).sort(([,x],[,y])=>y-x)[0];
+    document.getElementById("dashTopVehicle").textContent=top?top[0]:"-";
+    const bunkStats={};
+    a.forEach(f=>{
+      const id=f.bunk_id||"UNKNOWN";
+      if(!bunkStats[id]) bunkStats[id]={amount:0,used:0,unused:0};
+      bunkStats[id].amount+=parseFloat(f.amount||0);
+      if(f.status==="used") bunkStats[id].used++; else bunkStats[id].unused++;
     });
-
-    // vouchers analytics page
-    if (document.getElementById("vouchers").classList.contains("active")) {
-      const used = analytics.filter(f => f.status === "used");
-      const unused = analytics.filter(f => f.status !== "used");
-
-      const box = document.getElementById("voucherStats");
-      box.innerHTML = `
-        <div style="margin-bottom:12px; font-size:14px;">
+    if(document.getElementById("vouchers").classList.contains("active")){
+      const used=a.filter(f=>f.status==="used");
+      const unused=a.filter(f=>f.status!=="used");
+      const box=document.getElementById("voucherStats");
+      box.innerHTML=`
+        <div style="margin-bottom:12px;font-size:14px;">
           <strong>${used.length}</strong> used • <strong>${unused.length}</strong> pending/unused
         </div>
-        <div style="border-top:1px solid #e5e7eb; margin-top:8px; padding-top:8px;">
-          ${analytics.map(f => `
+        <div style="border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px;">
+          ${a.map(f=>`
             <div class="history-item">
               <div>
-                <div style="font-weight:600; font-size:14px;">${f.voucher_id || '-'}</div>
-                <div style="font-size:12px; color:#64748b;">
+                <div style="font-weight:600;font-size:14px;">${f.voucher_id||'-'}</div>
+                <div style="font-size:12px;color:#64748b;">
                   ${bunkName(f.bunk_id)} • ${f.vehicleType} ${f.vehicleNo}
                 </div>
               </div>
-              <div style="text-align:right; font-size:13px;">
-                <div>₹${parseFloat(f.amount || 0).toLocaleString()}</div>
-                <div style="font-size:12px; color:${f.status==='used' ? '#16a34a' : '#f97316'};">
-                  ${f.status === 'used' ? 'Used' : 'Pending/Unused'}
+              <div style="text-align:right;font-size:13px;">
+                <div>₹${parseFloat(f.amount||0).toLocaleString()}</div>
+                <div style="font-size:12px;color:${f.status==='used'?'#16a34a':'#f97316'};">
+                  ${f.status==='used'?'Used':'Pending/Unused'}
                 </div>
               </div>
-            </div>
-          `).join("")}
-        </div>
-      `;
+            </div>`).join("")}
+        </div>`;
     }
-
-    // vehicles tab
     if(document.getElementById("vehicles").classList.contains("active")){
-      const vehicleList = document.getElementById("vehicleList");
-      vehicleList.innerHTML = Object.entries(vehicleStats).length ? 
-        Object.entries(vehicleStats).map(([name, amt]) => 
-          `<div class="history-item"><div>${name}</div><div>₹${amt.toLocaleString()}</div></div>`
-        ).join("") : 
-        '<div style="padding:24px; text-align:center; color:#64748b;">No vehicles tracked</div>';
+      const box=document.getElementById("vehicleList");
+      box.innerHTML=Object.keys(vehicleStats).length?
+        Object.entries(vehicleStats).map(([n,amt])=>`
+          <div class="history-item">
+            <div>${n}</div>
+            <div>₹${amt.toLocaleString()}</div>
+          </div>`).join(""):
+        '<div style="padding:24px;text-align:center;color:#64748b;">No vehicles tracked</div>';
     }
-
-    // bunks tab
-    if (document.getElementById("bunks").classList.contains("active")) {
-      const bunkList = document.getElementById("bunkList");
-      bunkList.innerHTML = Object.keys(bunkStats).length
-        ? Object.entries(bunkStats).map(([id, s]) => `
-            <div class="history-item">
-              <div>
-                <div style="font-weight:700;">${bunkName(id)}</div>
-                <div style="font-size:12px; color:#64748b;">ID: ${id}</div>
-              </div>
-              <div style="text-align:right; font-size:13px;">
-                <div>₹${s.amount.toLocaleString()}</div>
-                <div style="font-size:12px; color:#16a34a;">${s.used} used</div>
-                <div style="font-size:12px; color:#f97316;">${s.unused} unused</div>
-              </div>
+    if(document.getElementById("bunks").classList.contains("active")){
+      const box=document.getElementById("bunkList");
+      box.innerHTML=Object.keys(bunkStats).length?
+        Object.entries(bunkStats).map(([id,s])=>`
+          <div class="history-item">
+            <div>
+              <div style="font-weight:700;">${bunkName(id)}</div>
+              <div style="font-size:12px;color:#64748b;">ID: ${id}</div>
             </div>
-          `).join("")
-        : '<div style="padding:24px; text-align:center; color:#64748b;">No stations yet</div>';
+            <div style="text-align:right;font-size:13px;">
+              <div>₹${s.amount.toLocaleString()}</div>
+              <div style="font-size:12px;color:#16a34a;">${s.used} used</div>
+              <div style="font-size:12px;color:#f97316;">${s.unused} unused</div>
+            </div>
+          </div>`).join(""):
+        '<div style="padding:24px;text-align:center;color:#64748b;">No stations yet</div>';
     }
-
-  } catch(e) {
-    console.error("Analytics error:", e);
-  }
+  }catch(e){console.error("Analytics error",e);}
 }
 
 function loadProfile(){
-  const container = document.getElementById("profileInfo");
-  const uid   = getUserId();
-  const name  = localStorage.getItem("fuelskip_user_name")  || "";
-  const phone = localStorage.getItem("fuelskip_user_phone") || "";
-  const email = getUserEmail();
-
-  if(!uid){
-    container.innerHTML = 'Login required';
-    return;
-  }
-
-  container.innerHTML = `
+  const box=document.getElementById("profileInfo");
+  const uid=getUserId();
+  if(!uid){box.textContent="Login required";return;}
+  const n=localStorage.getItem("fuelskip_user_name")||"";
+  const p=localStorage.getItem("fuelskip_user_phone")||"";
+  const e=getUserEmail();
+  box.innerHTML=`
     <div class="profile-grid">
       <div class="profile-card">
-        <div style="font-size:13px; color:#64748b;">Name</div>
-        <div style="font-size:18px; font-weight:700;">${name}</div>
+        <div style="font-size:13px;color:#64748b;">Name</div>
+        <div style="font-size:18px;font-weight:700;">${n}</div>
       </div>
       <div class="profile-card">
-        <div style="font-size:13px; color:#64748b;">Phone</div>
-        <div style="font-size:18px; font-weight:700;">${phone}</div>
+        <div style="font-size:13px;color:#64748b;">Phone</div>
+        <div style="font-size:18px;font-weight:700;">${p}</div>
       </div>
       <div class="profile-card">
-        <div style="font-size:13px; color:#64748b;">Email</div>
-        <div style="font-size:18px; font-weight:700;">${email || 'Not set'}</div>
+        <div style="font-size:13px;color:#64748b;">Email</div>
+        <div style="font-size:18px;font-weight:700;">${e||"Not set"}</div>
       </div>
     </div>
-    <button class="btn-primary" onclick="openProfileEdit()">✏️ Edit Profile</button>
-  `;
+    <button class="btn-primary" onclick="openProfileEdit()">✏️ Edit Profile</button>`;
 }
 
 function openProfileEdit(){
-  const nameOld  = localStorage.getItem("fuelskip_user_name")  || "";
-  const phoneOld = localStorage.getItem("fuelskip_user_phone") || "";
-  const emailOld = getUserEmail();
-
-  const name  = prompt("Name:",  nameOld);
-  if(!name || name.length < 2) return;
-  
-  const phone = prompt("Phone:", phoneOld);
-  if(!phone || phone.replace(/\D/g,'').length !== 10) return;
-  
-  const email = prompt("Email:", emailOld) || "";
-  
-  setUserName(name.trim());
-  setUserPhone(phone.replace(/\D/g,''));
-  setUserEmail(email.trim());
-  
-  refreshUserDisplay();
-  loadProfile();
+  const nOld=localStorage.getItem("fuelskip_user_name")||"";
+  const pOld=localStorage.getItem("fuelskip_user_phone")||"";
+  const eOld=getUserEmail();
+  const n=prompt("Name:",nOld); if(!n||n.length<2) return;
+  const p=prompt("Phone:",pOld); if(!p||p.replace(/\D/g,"").length!==10) return;
+  const e=prompt("Email:",eOld)||"";
+  setUserName(n.trim()); setUserPhone(p.replace(/\D/g,"")); setUserEmail(e.trim());
+  refreshUserDisplay(); loadProfile();
 }
 
-/* Nearby bunks using backend /nearby-bunks */
-function findNearbyBunks() {
-  const list = document.getElementById("nearbyList");
-
-  if (!navigator.geolocation) {
-    list.textContent = "Location not supported on this device.";
-    return;
-  }
-
-  list.textContent = "Getting your location...";
-
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
-
-    try {
-      const res = await fetch(`${API}/nearby-bunks?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
-      if (!res.ok) {
-        list.textContent = "Could not load nearby bunks.";
-        return;
-      }
-      const bunks = await res.json();
-      if (!bunks.length) {
-        list.textContent = "No bunks found nearby.";
-        return;
-      }
-      list.innerHTML = bunks.slice(0,5).map(b => `
+function findNearbyBunks(){
+  const list=document.getElementById("nearbyList");
+  if(!navigator.geolocation){list.textContent="Location not supported.";return;}
+  list.textContent="Getting your location...";
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat=pos.coords.latitude, lon=pos.coords.longitude;
+    try{
+      const res=await fetch(`${API}/nearby-bunks?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
+      if(!res.ok){list.textContent="Could not load nearby bunks.";return;}
+      const arr=await res.json();
+      if(!arr.length){list.textContent="No bunks found nearby.";return;}
+      list.innerHTML=arr.slice(0,5).map(b=>`
         <div class="near-item">
           <div>
             <div class="near-name">${b.name}</div>
-            <div class="near-addr">${b.address || ''}</div>
-            <div class="near-dist">${(b.distance_km || 0).toFixed(1)} km away</div>
+            <div class="near-addr">${b.address||""}</div>
+            <div class="near-dist">${(b.distance_km||0).toFixed(1)} km away</div>
           </div>
-          <button class="near-btn" onclick="useNearbyBunk('${b.name.replace(/'/g,"\\'")}')">
-            Use
-          </button>
-        </div>
-      `).join("");
-    } catch (e) {
-      list.textContent = "Error loading nearby bunks.";
-    }
-  }, (err) => {
-    list.textContent = "Location permission denied.";
-  }, { enableHighAccuracy: false, timeout: 8000 });
+          <button class="near-btn" onclick="useNearbyBunk('${b.name.replace(/'/g,"\\'")}')">Use</button>
+        </div>`).join("");
+    }catch(e){list.textContent="Error loading nearby bunks.";}
+  },()=>{list.textContent="Location permission denied.";},{timeout:8000});
+}
+function useNearbyBunk(name){
+  const map={"BPCL Siripuram":"BUNK-1","Gajuwaka Expressway":"BUNK-2"};
+  const id=map[name]||null;
+  if(id){document.getElementById("bunkSelect").value=id;}
+  showStatus("createMsg",`Using nearby bunk: ${name}`,"info");
 }
 
-function useNearbyBunk(name) {
-  const map = {
-    "BPCL Siripuram": "BUNK-1",
-    "Gajuwaka Expressway": "BUNK-2"
-  };
-  const bunkId = map[name] || null;
-
-  if (bunkId) {
-    const sel = document.getElementById("bunkSelect");
-    sel.value = bunkId;
-    showStatus("createMsg", `Using nearby bunk: ${name}`, "info");
-  } else {
-    showStatus("createMsg", `Using nearby bunk: ${name}`, "info");
-  }
-}
-
-window.addEventListener("load", () => {
-  const sidebar  = document.getElementById("sidebar");
-  const backdrop = document.getElementById("backdrop");
-
+window.addEventListener("load",()=>{
+  const s=document.getElementById("sidebar");
+  const b=document.getElementById("backdrop");
   if(getUserId()){
-    sidebar.classList.remove("sidebar-hidden");
-    backdrop.classList.add("sidebar-hidden");
-    document.getElementById("loginBox").style.display  = "none";
-    document.getElementById("createBox").style.display = "block";
-    document.getElementById("historyBox").style.display= "block";
-    refreshUserDisplay();
-    loadMyVouchers();
-    loadAnalytics();
-  } else {
-    sidebar.classList.add("sidebar-hidden");
-    backdrop.classList.add("sidebar-hidden");
+    s.classList.remove("sidebar-hidden"); b.classList.add("sidebar-hidden");
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("createBox").style.display="block";
+    document.getElementById("historyBox").style.display="block";
+    refreshUserDisplay(); loadMyVouchers(); loadAnalytics();
+  }else{
+    s.classList.add("sidebar-hidden"); b.classList.add("sidebar-hidden");
   }
-  
-  document.addEventListener('touchstart', function(event) {
-    if (event.touches.length > 1) event.preventDefault();
-  }, { passive: false });
-  
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', function(event) {
-    const now = (new Date()).getTime();
-    if (now - lastTouchEnd <= 300) event.preventDefault();
-    lastTouchEnd = now;
-  }, false);
 });
 </script>
 </body>
