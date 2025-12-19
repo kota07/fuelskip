@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, List
-import uuid, datetime, os
+import uuid, datetime, os, math
 
 from dotenv import load_dotenv
 load_dotenv()   # this reads .env into environment
@@ -23,7 +23,6 @@ engine = create_engine(
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
 
 
 class UserDB(Base):
@@ -81,6 +80,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 def root():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
 
+
 @app.get("/index.html")
 def index_page():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
@@ -107,7 +107,6 @@ def on_startup():
     Base.metadata.create_all(bind=engine)
 
 
-
 # ----- Razorpay setup -----
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
@@ -128,11 +127,33 @@ bunks = {
         "name": "BPCL Siripuram",
         "lat": 17.6868,
         "lon": 83.2185,
+        "address": "Siripuram, Visakhapatnam",
         "vpa": "bunk1@icici",
         "pumps": [1, 2, 3],
         "price_per_litre": 108.16,
-    }
+    },
+    "BUNK-2": {
+        "id": "BUNK-2",
+        "name": "Gajuwaka Expressway",
+        "lat": 17.6860,
+        "lon": 83.1470,
+        "address": "Gajuwaka, Visakhapatnam",
+        "vpa": "bunk2@icici",
+        "pumps": [1, 2],
+        "price_per_litre": 108.16,
+    },
 }
+
+# simple haversine in km
+def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    R = 6371.0
+    p1 = math.radians(lat1)
+    p2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dl = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
 
 
 # ---------- Pydantic models ----------
@@ -177,16 +198,25 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 @app.get("/nearby-bunks")
 def nearby_bunks(lat: float, lon: float) -> List[dict]:
-    return [
-        {
-            "id": bunk["id"],
-            "name": bunk["name"],
-            "distance": 200,
-            "pumps": bunk["pumps"],
-        }
-        for bunk in bunks.values()
-    ]
-
+    """
+    Simple nearby bunk list using static bunks dict.
+    Vouchers never depend on this; it is only for UX in customer.html.
+    """
+    results = []
+    for bunk in bunks.values():
+        dist = distance_km(lat, lon, bunk["lat"], bunk["lon"])
+        results.append(
+            {
+                "id": bunk["id"],
+                "name": bunk["name"],
+                "address": bunk.get("address"),
+                "distance_km": dist,
+                "pumps": bunk["pumps"],
+            }
+        )
+    # sort by distance
+    results.sort(key=lambda x: x["distance_km"])
+    return results
 
 
 @app.post("/create-voucher")
@@ -228,6 +258,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     # ---------------------------------------------
 
     now = datetime.datetime.utcnow()
+    # keep expires_at field but it's not enforced anywhere now
     expires = now + datetime.timedelta(minutes=30)
 
     voucher_db = VoucherDB(
@@ -255,22 +286,6 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         "razorpay_order_id": order["id"],
         "razorpay_key_id": RAZORPAY_KEY_ID,
     }
-
-
-# --- TEMP: manual update, can remove later ---
-# @app.post("/payment-update")
-# def payment_update(update: PaymentUpdate, db: Session = Depends(get_db)):
-#     v = db.query(VoucherDB).filter(VoucherDB.id == update.voucher_id).first()
-#     if not v:
-#         raise HTTPException(status_code=404, detail="Voucher not found")
-
-#     if update.status not in ("paid", "failed"):
-#         raise HTTPException(status_code=400, detail="Invalid status")
-
-#     v.status = update.status
-#     db.commit()
-#     return {"ok": True, "voucher": v.__dict__}
-# --------------------------------------------------------------
 
 
 @app.get("/voucher/{voucher_id}")
@@ -311,6 +326,7 @@ def validate_voucher(voucher_id: str, db: Session = Depends(get_db)):
     if v.used:
         raise HTTPException(status_code=400, detail="Voucher already used")
 
+    # NOTE: no time-based expiry check here → voucher valid anytime
     v.used = True
     v.status = "used"
     db.commit()
@@ -328,7 +344,7 @@ def validate_voucher(voucher_id: str, db: Session = Depends(get_db)):
 @app.post("/razorpay-webhook")
 async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
     body_bytes = await request.body()
-    print("WEBHOOK BODY:", body_bytes)   
+    print("WEBHOOK BODY:", body_bytes)
     signature = request.headers.get("x-razorpay-signature")
 
     if not WEBHOOK_SECRET:
@@ -388,11 +404,8 @@ def my_vouchers(user_id: int, db: Session = Depends(get_db)):
     )
     return [v.__dict__ for v in q.all()]
 
-# in main.py
+
 @app.get("/admin/users")
 def list_users(db: Session = Depends(get_db)):
     users = db.query(UserDB).order_by(UserDB.created_at.desc()).all()
     return [u.__dict__ for u in users]
-
-
-
