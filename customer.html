@@ -820,10 +820,14 @@ function loadAnalytics(){
   try{
     const a=JSON.parse(localStorage.getItem(key)||"[]");
     if(!a.length) return;
+
+    // dashboard totals
     const total=a.reduce((s,f)=>s+parseFloat(f.amount||0),0);
     document.getElementById("dashTotalSpend").textContent=`₹${total.toLocaleString()}`;
     document.getElementById("dashTotalFills").textContent=a.length;
     document.getElementById("dashAvgFill").textContent=`₹${Math.round(total/a.length)}`;
+
+    // vehicles
     const vehicleStats={};
     a.forEach(f=>{
       const k=`${f.vehicleType} ${f.vehicleNo}`;
@@ -831,6 +835,8 @@ function loadAnalytics(){
     });
     const top=Object.entries(vehicleStats).sort(([,x],[,y])=>y-x)[0];
     document.getElementById("dashTopVehicle").textContent=top?top[0]:"-";
+
+    // bunks
     const bunkStats={};
     a.forEach(f=>{
       const id=f.bunk_id||"UNKNOWN";
@@ -838,7 +844,9 @@ function loadAnalytics(){
       bunkStats[id].amount+=parseFloat(f.amount||0);
       if(f.status==="used") bunkStats[id].used++; else bunkStats[id].unused++;
     });
-    if(document.getElementById("vouchers").classList.contains("active")){
+
+    // vouchers tab (always render)
+    {
       const used=a.filter(f=>f.status==="used");
       const unused=a.filter(f=>f.status!=="used");
       const box=document.getElementById("voucherStats");
@@ -864,7 +872,9 @@ function loadAnalytics(){
             </div>`).join("")}
         </div>`;
     }
-    if(document.getElementById("vehicles").classList.contains("active")){
+
+    // vehicles tab (always render)
+    {
       const box=document.getElementById("vehicleList");
       box.innerHTML=Object.keys(vehicleStats).length?
         Object.entries(vehicleStats).map(([n,amt])=>`
@@ -874,7 +884,9 @@ function loadAnalytics(){
           </div>`).join(""):
         '<div style="padding:24px;text-align:center;color:#64748b;">No vehicles tracked</div>';
     }
-    if(document.getElementById("bunks").classList.contains("active")){
+
+    // bunks tab (always render)
+    {
       const box=document.getElementById("bunkList");
       box.innerHTML=Object.keys(bunkStats).length?
         Object.entries(bunkStats).map(([id,s])=>`
@@ -891,6 +903,7 @@ function loadAnalytics(){
           </div>`).join(""):
         '<div style="padding:24px;text-align:center;color:#64748b;">No stations yet</div>';
     }
+
   }catch(e){console.error("Analytics error",e);}
 }
 
