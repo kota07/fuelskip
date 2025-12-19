@@ -97,7 +97,6 @@
     }
     .status-paid   { background: #16a34a; }
     .status-used   { background: #6b7280; }
-    .status-exp    { background: #f59e0b; }
     .status-pend   { background: #f97316; }
     .status-invalid{ background: #ef4444; }
 
@@ -159,16 +158,10 @@ window.addEventListener("load", () => {
   }
 });
 
-function formatStatusChip(status, used, expiresAt) {
-  const now = new Date();
-  const exp = expiresAt ? new Date(expiresAt) : null;
-  const isExpired = exp && exp < now;
-
+// NO EXPIRY: status chip only depends on status + used
+function formatStatusChip(status, used) {
   if (used) {
     return '<span class="status-chip status-used">USED</span>';
-  }
-  if (status === 'paid' && isExpired) {
-    return '<span class="status-chip status-exp">EXPIRED</span>';
   }
   if (status === 'paid') {
     return '<span class="status-chip status-paid">PAID</span>';
@@ -186,14 +179,14 @@ async function loadVoucher() {
     return;
   }
 
-  const infoBox    = document.getElementById('voucherInfo');
-  const dataDiv    = document.getElementById('voucherData');
-  const statusDiv  = document.getElementById('statusMsg');
-  const dispenseBtn= document.getElementById('dispenseBtn');
+  const infoBox     = document.getElementById('voucherInfo');
+  const dataDiv     = document.getElementById('voucherData');
+  const statusDiv   = document.getElementById('statusMsg');
+  const dispenseBtn = document.getElementById('dispenseBtn');
 
-  infoBox.style.display  = 'none';
-  dataDiv.innerHTML      = '';
-  statusDiv.textContent  = '';
+  infoBox.style.display     = 'none';
+  dataDiv.innerHTML         = '';
+  statusDiv.textContent     = '';
   dispenseBtn.style.display = 'none';
 
   try {
@@ -204,7 +197,7 @@ async function loadVoucher() {
     currentVoucherId     = voucherId;
     currentVoucherStatus = voucher.status;
 
-    const statusChip = formatStatusChip(voucher.status, voucher.used, voucher.expires_at);
+    const statusChip = formatStatusChip(voucher.status, voucher.used);
 
     dataDiv.innerHTML = `
       <p><strong>ID:</strong> ${voucher.id}</p>
@@ -216,16 +209,13 @@ async function loadVoucher() {
       <p><strong>Amount:</strong> ₹${voucher.amount}</p>
       <p><strong>Litres:</strong> ${voucher.litres} L</p>
       <p><strong>Status:</strong> ${statusChip}</p>
-      <p><strong>Expires:</strong> ${
-        voucher.expires_at ? new Date(voucher.expires_at).toLocaleString() : '—'
-      }</p>
+      <p><strong>Expires:</strong> Never</p>
     `;
 
     infoBox.style.display = 'block';
 
-    const now   = new Date();
-    const exp   = voucher.expires_at ? new Date(voucher.expires_at) : null;
-    const valid = voucher.status === 'paid' && !voucher.used && (!exp || exp >= now);
+    // VALID ONLY BY STATUS, NO TIME LIMIT
+    const valid = voucher.status === 'paid' && !voucher.used;
 
     if (valid) {
       statusDiv.innerHTML =
@@ -236,8 +226,6 @@ async function loadVoucher() {
       dispenseBtn.style.display = 'block';
     } else if (voucher.used) {
       statusDiv.innerHTML = '<p style="color:#6b7280;">⚠️ This voucher is already used.</p>';
-    } else if (exp && exp < now) {
-      statusDiv.innerHTML = '<p style="color:#f97316;">⚠️ Voucher expired – cannot dispense.</p>';
     } else if (voucher.status === 'pending') {
       statusDiv.innerHTML = '<p style="color:#f97316;">⏳ Payment pending – ask customer to complete payment.</p>';
     } else {
