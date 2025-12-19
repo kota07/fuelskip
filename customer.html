@@ -416,6 +416,15 @@ function historyKey(){
   return uid ? `fuelskip_vehicle_history_${uid}` : null;
 }
 
+// bunk id -> display name
+const BUNK_NAMES = {
+  "BUNK-1": "BPCL Siripuram",
+  "BUNK-2": "Gajuwaka Expressway"
+};
+function bunkName(id){
+  return BUNK_NAMES[id] || id || "Unknown bunk";
+}
+
 function refreshUserDisplay(){
   const n = localStorage.getItem("fuelskip_user_name") || "";
   const p = localStorage.getItem("fuelskip_user_phone") || "";
@@ -673,8 +682,14 @@ function loadAnalytics(){
   const bunkStats={};
   history.forEach(f=>{
     const vKey=`${f.vehicleType} ${f.vehicleNo}`;
-    vehicleStats[vKey]=(vehicleStats[vKey]||0)+parseFloat(f.amount||0);
-    bunkStats[f.bunkId]=(bunkStats[f.bunkId]||0)+parseFloat(f.amount||0);
+    const amt=parseFloat(f.amount||0);
+    const lit=parseFloat(f.litres||0);
+
+    vehicleStats[vKey]=(vehicleStats[vKey]||0)+amt;
+
+    if(!bunkStats[f.bunkId]) bunkStats[f.bunkId]={amount:0,litres:0};
+    bunkStats[f.bunkId].amount += amt;
+    bunkStats[f.bunkId].litres += lit;
   });
   const topVehicle=Object.entries(vehicleStats).sort((a,b)=>b[1]-a[1])[0];
   document.getElementById("dashTopVehicle").textContent=topVehicle?topVehicle[0]:"-";
@@ -687,10 +702,16 @@ function loadAnalytics(){
     </div>`).join("");
 
   const bunkList=document.getElementById("bunkList");
-  bunkList.innerHTML=Object.entries(bunkStats).map(([b,val])=>`
+  bunkList.innerHTML=Object.entries(bunkStats).map(([id,stat])=>`
     <div class="history-item">
-      <div>${b}</div>
-      <div>₹${val.toLocaleString()}</div>
+      <div>
+        <div style="font-weight:600;">${bunkName(id)}</div>
+        <div style="font-size:11px; color:#9ca3af;">${id}</div>
+      </div>
+      <div style="text-align:right;">
+        <div>₹${stat.amount.toLocaleString()}</div>
+        <div style="font-size:11px; color:#9ca3af;">${stat.litres.toFixed(1)} L</div>
+      </div>
     </div>`).join("");
 }
 
