@@ -390,7 +390,7 @@ button:disabled {
   padding: 20px;
   border-radius: 16px;
   text-align: center;
-  transition: all 0.2s ease;
+  transition: all 0.2s.ease;
 }
 .dash-card:hover {
   transform: translateY(-2px);
@@ -408,7 +408,7 @@ button:disabled {
 }
 .status-success { background: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
 .status-error   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-.status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
 
 /* Profile cards */
 .profile-grid {
@@ -869,6 +869,17 @@ function saveVehicleToAnalytics(vehicle){
   }
 }
 
+// NEW: update status of a stored voucher (used vs unused)
+function updateAnalyticsStatus(voucherId, newStatus) {
+  const key = getAnalyticsKey();
+  if (!key) return;
+  let analytics = JSON.parse(localStorage.getItem(key) || "[]");
+  analytics = analytics.map(f =>
+    f.voucher_id === voucherId ? {...f, status: newStatus} : f
+  );
+  localStorage.setItem(key, JSON.stringify(analytics));
+}
+
 async function createVoucher(){
   const amountVal   = document.getElementById("amount").value;
   const litresVal   = document.getElementById("litres").value;
@@ -913,12 +924,14 @@ async function createVoucher(){
     razorpayKeyId   = data.razorpay_key_id;
     
     currentVehicle = {
-      vehicleType, vehicleNo, 
-      amount: data.amount, 
-      litres: data.litres, 
-      bunk_id: bunkId, 
+      vehicleType,
+      vehicleNo,
+      amount: data.amount,
+      litres: data.litres,
+      bunk_id: bunkId,
       voucher_id: data.voucher_id,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      status: "pending"
     };
 
     saveVehicleToAnalytics(currentVehicle);
@@ -991,6 +1004,7 @@ async function checkVoucherStatus(){
     const data = await res.json();
     if(data.status === "paid" || data.status === "used"){
       clearInterval(pollTimer);
+      updateAnalyticsStatus(lastVoucherId, data.status);   // NEW
       showQr();
       loadMyVouchers();
       loadAnalytics();
@@ -1193,8 +1207,19 @@ function findNearbyBunks() {
 }
 
 function useNearbyBunk(name) {
-  // Just show info to user; mapping to real bunk IDs is your decision
-  showStatus("createMsg", `Using nearby bunk: ${name}`, "info");
+  const map = {
+    "BPCL Siripuram": "BUNK-1",
+    "Gajuwaka Expressway": "BUNK-2"
+  };
+  const bunkId = map[name] || null;
+
+  if (bunkId) {
+    const sel = document.getElementById("bunkSelect");
+    sel.value = bunkId;
+    showStatus("createMsg", `Using nearby bunk: ${name}`, "info");
+  } else {
+    showStatus("createMsg", `Using nearby bunk: ${name}`, "info");
+  }
 }
 
 window.addEventListener("load", () => {
