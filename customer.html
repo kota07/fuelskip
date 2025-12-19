@@ -1,273 +1,573 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>FuelSkip Customer - Enhanced UI</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-        }
-        h1 {
-            text-align: center;
-            color: #4a5568;
-            margin-bottom: 30px;
-            font-size: 28px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #2d3748;
-        }
-        input, select {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            box-sizing: border-box;
-        }
-        input:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        .vehicle-section {
-            background: linear-gradient(135deg, #f7fafc, #edf2f7);
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 25px;
-            border-left: 5px solid #667eea;
-        }
-        .vehicle-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 15px;
-        }
-        button {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #48bb78, #38a169);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
-        }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
-        }
-        button:disabled {
-            background: #a0aec0;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .qr-section {
-            text-align: center;
-            background: #f0fff4;
-            padding: 25px;
-            border-radius: 15px;
-            border: 3px solid #9ae6b4;
-        }
-        #qrCode {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 20px;
-        }
-        .expense-tracker {
-            background: linear-gradient(135deg, #fed7d7, #feb2b6);
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        .total-expense {
-            font-size: 24px;
-            font-weight: bold;
-            color: #c53030;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>FuelSkip - Customer (Enhanced)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- QRCode.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Razorpay Checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      line-height: 1.4;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      text-align: center;
+      color: #4a5568;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+    h2 { 
+      margin-bottom: 12px; 
+      font-size: 22px; 
+      color: #2d3748;
+    }
+    h3 { 
+      margin-top: 0; 
+      margin-bottom: 8px; 
+      font-size: 18px; 
+      color: #4a5568;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .label { 
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2d3748;
+      font-size: 14px;
+    }
+    input, select {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .vehicle-section {
+      background: linear-gradient(135deg, #f7fafc, #edf2f7);
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 25px;
+      border-left: 5px solid #667eea;
+    }
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    button, .btn-secondary, .btn-primary {
+      border: none;
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    button:hover, .btn-primary:hover, .btn-secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+    }
+    button:active { transform: scale(0.99); }
+    .btn-primary {
+      background: linear-gradient(135deg, #48bb78, #38a169);
+      color: white;
+    }
+    .btn-primary:hover { background: linear-gradient(135deg, #38a169, #2f855a); }
+    .btn-secondary {
+      background: linear-gradient(135deg, #4299e1, #3182ce);
+      color: white;
+    }
+    .btn-secondary:hover { background: linear-gradient(135deg, #3182ce, #2b6cb0); }
+    .btn-small { 
+      padding: 8px 12px; 
+      font-size: 13px; 
+      width: auto;
+      margin: 0 4px 0 0;
+    }
+    
+    /* Cards */
+    .card {
+      background: rgba(255,255,255,0.8);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    #voucherBox { display: none; }
+    #qrContainer { 
+      margin-top: 12px; 
+      display: flex; 
+      justify-content: center; 
+    }
+    
+    /* Vehicle Tracker */
+    .expense-tracker {
+      background: linear-gradient(135deg, #fed7d7, #feb2b6);
+      padding: 20px;
+      border-radius: 15px;
+      margin-top: 20px;
+      text-align: center;
+      border: 2px solid #fc8181;
+    }
+    .total-expense {
+      font-size: 24px;
+      font-weight: bold;
+      color: #c53030;
+      margin: 0;
+    }
+    
+    /* History */
+    .history-item {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-pending { background: #fef3c7; color:#92400e; }
+    .badge-paid { background: #dcfce7; color:#166534; }
+    .badge-used { background: #e5e7eb; color:#374151; }
+    .badge-failed { background: #fee2e2; color:#b91c1c; }
+    
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid rgba(255,255,255,0.3);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚗 FuelSkip</h1>
-        
-        <div id="loginSection">
-            <div class="form-group">
-                <label>Phone Number</label>
-                <input type="tel" id="phone" placeholder="98XXXXXXXX">
-            </div>
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="name" placeholder="Your Name">
-            </div>
-            <button onclick="login()">Continue</button>
-        </div>
-        
-        <div id="voucherSection" style="display:none;">
-            <div class="vehicle-section">
-                <h3>Select Vehicle</h3>
-                <div class="vehicle-grid">
-                    <div class="form-group">
-                        <label>Vehicle Type</label>
-                        <select id="vehicleType">
-                            <option value="Bike">🏍️ Bike</option>
-                            <option value="Car">🚗 Car</option>
-                            <option value="Auto">🛺 Auto</option>
-                            <option value="Truck">🚛 Truck</option>
-                            <option value="Other">🚙 Other</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Vehicle No</label>
-                        <input type="text" id="vehicleNo" placeholder="AP05AB1234">
-                    </div>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Select Bunk</label>
-                <select id="bunkSelect">
-                    <option value="BUNK-1">Visakhapatnam Main Bunk</option>
-                    <option value="BUNK-2">Gajuwaka Expressway</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Fuel Amount</label>
-                <input type="number" id="amount" placeholder="₹500" min="50">
-            </div>
-            
-            <div class="form-group">
-                <label>OR Litres (approx)</label>
-                <input type="number" id="litres" placeholder="25 L" min="5" step="0.1">
-            </div>
-            
-            <button id="createVoucherBtn" onclick="createVoucher()">Create Voucher</button>
-        </div>
-        
-        <div id="qrSection" style="display:none;">
-            <div class="qr-section">
-                <h3>✅ Payment Complete!</h3>
-                <p>Show this QR to attendant</p>
-                <canvas id="qrCode"></canvas>
-                <p>Voucher ID: <span id="voucherId"></span></p>
-                <button onclick="printReceipt()">📱 Share/Print</button>
-            </div>
-            <div class="expense-tracker">
-                <h4>Vehicle Expense Tracker</h4>
-                <p>This vehicle: <span id="totalExpense">₹0</span></p>
-                <p>Last 5 fills: <span id="recentFills">Loading...</span></p>
-            </div>
-        </div>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🚗 FuelSkip</h1>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span id="userDisplay" style="font-size:14px; color:#4a5568; font-weight:500;"></span>
+        <button class="btn-secondary btn-small" onclick="logout()">Logout</button>
+      </div>
     </div>
+
+    <!-- Login -->
+    <div class="card" id="loginBox">
+      <h3>👋 Get Started</h3>
+      <div class="form-group">
+        <label class="label">Phone Number</label>
+        <input id="phone" type="tel" placeholder="98XXXXXXXX" />
+      </div>
+      <div class="form-group">
+        <label class="label">Name (optional)</label>
+        <input id="name" placeholder="Your Name" />
+      </div>
+      <button class="btn-primary" onclick="login()">Continue</button>
+    </div>
+
+    <!-- Create voucher -->
+    <div class="card" id="createBox" style="display:none;">
+      <h3>➕ Create New Voucher</h3>
+      
+      <!-- Vehicle Section -->
+      <div class="vehicle-section">
+        <h4 style="margin:0 0 12px 0; color:#2d3748;">Select Vehicle</h4>
+        <div class="vehicle-grid">
+          <div class="form-group">
+            <label class="label">Vehicle Type</label>
+            <select id="vehicleType">
+              <option value="Bike">🏍️ Bike</option>
+              <option value="Car">🚗 Car</option>
+              <option value="Auto">🛺 Auto</option>
+              <option value="Truck">🚛 Truck</option>
+              <option value="Other">🚙 Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="label">Vehicle No</label>
+            <input id="vehicleNo" type="text" placeholder="AP05AB1234" />
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="label">Select Bunk</label>
+        <select id="bunkSelect">
+          <option value="BUNK-1">BPCL Siripuram</option>
+          <option value="BUNK-2">Gajuwaka Expressway</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label class="label">Fuel Amount (₹)</label>
+        <input id="amount" type="number" min="50" placeholder="500" />
+      </div>
+      
+      <div class="form-group">
+        <label class="label">OR Litres (approx)</label>
+        <input id="litres" type="number" min="5" step="0.1" placeholder="25" />
+      </div>
+      
+      <button class="btn-primary" onclick="createVoucher()">Create Voucher</button>
+      <p id="msg" style="font-size:14px; color:#6b7280; margin:0; text-align:center;"></p>
+    </div>
+
+    <!-- Voucher + QR -->
+    <div class="card" id="voucherBox">
+      <h3>✅ Voucher Ready</h3>
+      <div id="voucherDetails" style="font-size:16px; margin-bottom:16px; padding:12px; background:#f0fff4; border-radius:10px; border-left:4px solid #10b981;"></div>
+      <button type="button" class="btn-primary" id="payBtn" onclick="payNow()">💳 Pay Now</button>
+      
+      <div id="qrSection" style="margin-top:24px; display:none;">
+        <h4 style="text-align:center; color:#10b981; margin-bottom:12px;">Show QR at Pump</h4>
+        <div id="qrContainer" style="background:#fff; padding:16px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+        <p style="text-align:center; margin:12px 0 0 0; font-size:14px; color:#4a5568;">
+          Voucher ID: <strong id="voucherIdDisplay"></strong>
+        </p>
+      </div>
+    </div>
+
+    <!-- Expense Tracker -->
+    <div class="card" id="expenseTracker" style="display:none;">
+      <div class="expense-tracker">
+        <h4>📊 Vehicle Fuel Tracker</h4>
+        <p class="total-expense" id="totalExpense">₹0</p>
+        <p style="margin:8px 0 0 0; font-size:14px;" id="recentFills">No fills yet</p>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="card" id="historyBox" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3>My Vouchers</h3>
+        <button class="btn-secondary btn-small" onclick="loadMyVouchers()">⟲ Refresh</button>
+      </div>
+      <div id="myVouchers" style="font-size:14px; color:#4b5563;">
+        Login to see history.
+      </div>
+    </div>
+  </div>
+
+<script>
+const API = "https://fuelskip-production.up.railway.app";
+
+let lastVoucherId = null;
+let razorpayOrderId = null;
+let razorpayKeyId = null;
+let pollTimer = null;
+let currentVehicle = null;
+
+// --- User Management (existing + vehicle tracking) ---
+function getUserId() { return window.localStorage.getItem("fuelskip_user_id"); }
+function setUserId(id) { window.localStorage.setItem("fuelskip_user_id", id); }
+function setUserName(name) { window.localStorage.setItem("fuelskip_user_name", name || ""); }
+function setUserPhone(phone) { window.localStorage.setItem("fuelskip_user_phone", phone || ""); }
+
+function refreshUserDisplay() {
+  const name = window.localStorage.getItem("fuelskip_user_name") || "";
+  const phone = window.localStorage.getItem("fuelskip_user_phone") || "";
+  const span = document.getElementById("userDisplay");
+  span.textContent = name ? `${name} (${phone})` : phone;
+}
+
+function showAfterLogin() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("createBox").style.display = "block";
+  document.getElementById("historyBox").style.display = "block";
+  document.getElementById("expenseTracker").style.display = "block";
+  refreshUserDisplay();
+  loadMyVouchers();
+  loadVehicleHistory();
+}
+
+// --- Vehicle History ---
+function loadVehicleHistory() {
+  const history = JSON.parse(localStorage.getItem('fuelskip_vehicle_history') || '[]');
+  if (history.length > 0) {
+    const last = history[0];
+    document.getElementById('vehicleType').value = last.vehicleType || 'Car';
+    document.getElementById('vehicleNo').value = last.vehicleNo || '';
+    updateExpenseTracker(last.vehicleNo);
+  }
+}
+
+function updateExpenseTracker(vehicleNo = null) {
+  const history = JSON.parse(localStorage.getItem('fuelskip_vehicle_history') || '[]');
+  const vehicleFills = vehicleNo ? history.filter(f => f.vehicleNo === vehicleNo) : history;
+  
+  const total = vehicleFills.reduce((sum, f) => sum + (parseFloat(f.amount) || 0), 0);
+  document.getElementById('totalExpense').textContent = `₹${total.toLocaleString()}`;
+  
+  const recent = vehicleFills.slice(-5).reverse().map(f => 
+    `₹${f.amount || 0} (${new Date(f.timestamp).toLocaleDateString('en-IN')})`
+  ).join(', ');
+  document.getElementById('recentFills').textContent = recent || 'No fills yet';
+}
+
+// Save vehicle fill to history
+function saveVehicleFill(voucherData) {
+  const history = JSON.parse(localStorage.getItem('fuelskip_vehicle_history') || '[]');
+  history.unshift({
+    vehicleType: voucherData.vehicleType,
+    vehicleNo: voucherData.vehicleNo,
+    amount: voucherData.amount,
+    litres: voucherData.litres,
+    voucherId: voucherData.voucher_id,
+    timestamp: new Date().toISOString()
+  });
+  localStorage.setItem('fuelskip_vehicle_history', JSON.stringify(history.slice(0, 100)));
+  updateExpenseTracker(voucherData.vehicleNo);
+}
+
+// --- Existing functions (login, logout, createVoucher, etc.) remain SAME ---
+function logout() {
+  window.localStorage.removeItem("fuelskip_user_id");
+  window.localStorage.removeItem("fuelskip_user_name");
+  window.localStorage.removeItem("fuelskip_user_phone");
+  
+  document.getElementById("phone").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("amount").value = "";
+  document.getElementById("litres").value = "";
+  document.getElementById("vehicleNo").value = "";
+  document.getElementById("msg").textContent = "";
+  
+  document.getElementById("loginBox").style.display = "block";
+  document.getElementById("createBox").style.display = "none";
+  document.getElementById("historyBox").style.display = "none";
+  document.getElementById("voucherBox").style.display = "none";
+  document.getElementById("expenseTracker").style.display = "none";
+  document.getElementById("userDisplay").textContent = "";
+  
+  if (pollTimer) clearInterval(pollTimer);
+}
+
+async function login() {
+  const phone = document.getElementById("phone").value.trim();
+  const name = document.getElementById("name").value.trim() || null;
+  if (!phone) { alert("Enter phone"); return; }
+  
+  try {
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, name })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert("Login failed: " + (err.detail || res.status));
+      return;
+    }
+    const data = await res.json();
+    setUserId(data.user_id);
+    setUserName(data.name || "");
+    setUserPhone(data.phone || "");
+    showAfterLogin();
+  } catch (e) {
+    alert("Error: " + e.message);
+  }
+}
+
+async function createVoucher() {
+  const amountVal = document.getElementById("amount").value;
+  const litresVal = document.getElementById("litres").value;
+  const vehicleType = document.getElementById("vehicleType").value;
+  const vehicleNo = document.getElementById("vehicleNo").value.trim();
+  const userId = getUserId();
+
+  if (!amountVal && !litresVal) { alert("Enter amount or litres"); return; }
+  if (!vehicleNo) { alert("Enter vehicle number"); return; }
+
+  const msg = document.getElementById("msg");
+  msg.textContent = "Creating voucher...";
+
+  try {
+    const res = await fetch(`${API}/create-voucher`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        bunk_id: document.getElementById("bunkSelect").value,
+        amount: amountVal ? Number(amountVal) : null,
+        litres: litresVal ? Number(litresVal) : null,
+        user_id: userId ? Number(userId) : null,
+        vehicle_type: vehicleType,
+        vehicle_no: vehicleNo
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      msg.textContent = "Error: " + (err.detail || res.status);
+      return;
+    }
+    const data = await res.json();
+    lastVoucherId = data.voucher_id;
+    razorpayOrderId = data.razorpay_order_id;
+    razorpayKeyId = data.razorpay_key_id;
     
-    <!-- QR Code Library -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script>
-        let currentUser = null;
-        let currentVoucher = null;
-        
-        function login() {
-            const phone = document.getElementById('phone').value;
-            const name = document.getElementById('name').value;
-            if (phone && name) {
-                currentUser = {phone, name};
-                localStorage.setItem('fuelskip_user', JSON.stringify(currentUser));
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('voucherSection').style.display = 'block';
-                loadVehicleHistory();
-            }
-        }
-        
-        function createVoucher() {
-            const vehicleType = document.getElementById('vehicleType').value;
-            const vehicleNo = document.getElementById('vehicleNo').value;
-            const bunk = document.getElementById('bunkSelect').value;
-            const amount = document.getElementById('amount').value;
-            
-            currentVoucher = {
-                id: 'VCH-' + Date.now(),
-                bunk, amount, vehicleType, vehicleNo,
-                userPhone: currentUser.phone,
-                timestamp: new Date().toISOString()
-            };
-            
-            document.getElementById('createVoucherBtn').innerHTML = 'Processing...';
-            document.getElementById('createVoucherBtn').disabled = true;
-            
-            setTimeout(() => {
-                showQR();
-            }, 2000);
-        }
-        
-        function showQR() {
-            document.getElementById('voucherSection').style.display = 'none';
-            document.getElementById('qrSection').style.display = 'block';
-            
-            const qrData = `https://fuelskip-production.up.railway.app/attendant.html?voucher=${currentVoucher.id}`;
-            QRCode.toCanvas(document.getElementById('qrCode'), qrData, {
-                width: 200,
-                margin: 2,
-                color: { dark: '#000', light: '#FFF' }
-            });
-            
-            document.getElementById('voucherId').textContent = currentVoucher.id;
-            updateExpenseTracker();
-        }
-        
-        function loadVehicleHistory() {
-            const history = JSON.parse(localStorage.getItem('vehicle_history') || '[]');
-            document.getElementById('vehicleNo').value = history[0]?.vehicleNo || '';
-            document.getElementById('vehicleType').value = history[0]?.vehicleType || 'Car';
-        }
-        
-        function updateExpenseTracker() {
-            const history = JSON.parse(localStorage.getItem('vehicle_history') || '[]');
-            const vehicleKey = document.getElementById('vehicleNo').value;
-            const vehicleFills = history.filter(f => f.vehicleNo === vehicleKey);
-            
-            const total = vehicleFills.reduce((sum, f) => sum + parseFloat(f.amount), 0);
-            document.getElementById('totalExpense').textContent = `₹${total.toLocaleString()}`;
-            
-            const recent = vehicleFills.slice(-5).reverse().map(f => 
-                `₹${f.amount} (${new Date(f.timestamp).toLocaleDateString()})`
-            ).join(', ');
-            document.getElementById('recentFills').textContent = recent || 'No previous fills';
-            
-            history.unshift(currentVoucher);
-            localStorage.setItem('vehicle_history', JSON.stringify(history.slice(0, 50)));
-        }
-        
-        const savedUser = localStorage.getItem('fuelskip_user');
-        if (savedUser) {
-            currentUser = JSON.parse(savedUser);
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('voucherSection').style.display = 'block';
-            loadVehicleHistory();
-        }
-    </script>
+    // Save vehicle data for tracking
+    currentVehicle = { vehicleType, vehicleNo, amount: data.amount, litres: data.litres };
+    
+    document.getElementById("voucherDetails").innerHTML = `
+      <strong>Voucher ID:</strong> ${data.voucher_id}<br>
+      <strong>Amount:</strong> ₹${data.amount}<br>
+      <strong>Litres:</strong> ${data.litres} L<br>
+      <strong>Vehicle:</strong> ${vehicleType} ${vehicleNo}<br>
+      <strong>Rate:</strong> ₹${data.price_per_litre}/L
+    `;
+
+    document.getElementById("voucherBox").style.display = "block";
+    document.getElementById("qrSection").style.display = "none";
+    document.getElementById("voucherIdDisplay").textContent = data.voucher_id;
+    msg.textContent = "Complete payment to get QR code";
+  } catch (e) {
+    msg.textContent = "Error: " + e.message;
+  }
+}
+
+function payNow() {
+  if (!razorpayOrderId || !razorpayKeyId) {
+    alert("Payment not ready; create voucher again.");
+    return;
+  }
+  const options = {
+    key: razorpayKeyId,
+    order_id: razorpayOrderId,
+    name: "FuelSkip",
+    description: `Fuel voucher ${lastVoucherId}`,
+    redirect: false,
+    handler: function (response) {
+      startPollingStatus();
+    }
+  };
+  const rzp = new Razorpay(options);
+  rzp.open();
+}
+
+function startPollingStatus() {
+  if (!lastVoucherId) return;
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(checkVoucherStatus, 3000);
+}
+
+async function checkVoucherStatus() {
+  if (!lastVoucherId) return;
+  try {
+    const res = await fetch(`${API}/voucher-status/${lastVoucherId}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.status === "paid") {
+      clearInterval(pollTimer);
+      showQr();
+      loadMyVouchers();
+      // Save to vehicle history when paid
+      if (currentVehicle) saveVehicleFill({...currentVehicle, voucher_id: lastVoucherId});
+    }
+  } catch (e) {
+    console.log("Status poll error:", e);
+  }
+}
+
+function showQr() {
+  const qrSection = document.getElementById("qrSection");
+  const qrContainer = document.getElementById("qrContainer");
+  qrSection.style.display = "block";
+  qrContainer.innerHTML = "";
+  const attendantUrl = `https://fuelskip-production.up.railway.app/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
+  new QRCode(qrContainer, { text: attendantUrl, width: 220, height: 220 });
+}
+
+// History (unchanged)
+function statusBadge(status) {
+  status = (status || "").toLowerCase();
+  if (status === "paid") return '<span class="badge badge-paid">Paid</span>';
+  if (status === "used") return '<span class="badge badge-used">Used</span>';
+  if (status === "failed") return '<span class="badge badge-failed">Failed</span>';
+  return '<span class="badge badge-pending">Pending</span>';
+}
+
+async function loadMyVouchers() {
+  const userId = getUserId();
+  const container = document.getElementById("myVouchers");
+  if (!userId) {
+    container.textContent = "Login to see history.";
+    return;
+  }
+  try {
+    const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(userId)}`);
+    if (!res.ok) {
+      container.textContent = "Could not load history.";
+      return;
+    }
+    const vouchers = await res.json();
+    if (!vouchers.length) {
+      container.textContent = "No vouchers yet.";
+      return;
+    }
+    container.innerHTML = vouchers.map(v => `
+      <div class="history-item">
+        <div>
+          <div><strong>${v.id}</strong> • ₹${v.amount} • ${v.litres} L</div>
+          <div style="font-size:12px; color:#9ca3af;">${v.created_at || ''}</div>
+        </div>
+        <div>${statusBadge(v.status)}</div>
+      </div>
+    `).join("");
+  } catch (e) {
+    container.textContent = "Error loading history.";
+  }
+}
+
+// Auto-login
+window.addEventListener("load", () => {
+  if (getUserId()) {
+    showAfterLogin();
+  } else {
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("createBox").style.display = "none";
+    document.getElementById("historyBox").style.display = "none";
+    document.getElementById("voucherBox").style.display = "none";
+    document.getElementById("expenseTracker").style.display = "none";
+  }
+});
+</script>
 </body>
 </html>
