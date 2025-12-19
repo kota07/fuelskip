@@ -272,6 +272,10 @@
           <span class="label">Name (optional)</span>
           <input id="name" placeholder="Your name">
         </div>
+        <div class="form-group">
+          <span class="label">Email (optional)</span>
+          <input id="email" type="email" placeholder="you@gmail.com">
+        </div>
         <button class="btn-primary" onclick="login()">Continue</button>
       </div>
 
@@ -404,6 +408,8 @@ function getUserId(){ return localStorage.getItem("fuelskip_user_id"); }
 function setUserId(id){ localStorage.setItem("fuelskip_user_id", id); }
 function setUserName(n){ localStorage.setItem("fuelskip_user_name", n || ""); }
 function setUserPhone(p){ localStorage.setItem("fuelskip_user_phone", p || ""); }
+function setUserEmail(e){ localStorage.setItem("fuelskip_user_email", e || ""); }
+function getUserEmail(){ return localStorage.getItem("fuelskip_user_email") || ""; }
 
 function historyKey(){
   const uid = getUserId();
@@ -420,16 +426,22 @@ function refreshUserDisplay(){
 function openSection(id){
   document.querySelectorAll(".page-section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  if(id!=="create"){ loadAnalytics(); }
+  if(id === "profile"){
+    loadProfile();
+  } else if(id !== "create"){
+    loadAnalytics();
+  }
 }
 
 function logout(){
   localStorage.removeItem("fuelskip_user_id");
   localStorage.removeItem("fuelskip_user_name");
   localStorage.removeItem("fuelskip_user_phone");
+  localStorage.removeItem("fuelskip_user_email");
 
   document.getElementById("phone").value="";
   document.getElementById("name").value="";
+  document.getElementById("email").value="";
   document.getElementById("amount").value="";
   document.getElementById("litres").value="";
   document.getElementById("vehicleNo").value="";
@@ -450,12 +462,13 @@ function logout(){
 async function login(){
   const phone=document.getElementById("phone").value.trim();
   const name=document.getElementById("name").value.trim() || null;
+  const email=document.getElementById("email").value.trim() || null;
   if(!phone){ alert("Enter phone"); return; }
   try{
     const res=await fetch(`${API}/login`,{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({phone,name})
+      body:JSON.stringify({phone,name,email})
     });
     if(!res.ok){
       const err=await res.json();
@@ -464,8 +477,9 @@ async function login(){
     }
     const data=await res.json();
     setUserId(data.user_id);
-    setUserName(data.name||"");
-    setUserPhone(data.phone||"");
+    setUserName(data.name || name || "");
+    setUserPhone(data.phone || phone || "");
+    setUserEmail(data.email || email || "");
 
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
@@ -678,6 +692,58 @@ function loadAnalytics(){
       <div>${b}</div>
       <div>₹${val.toLocaleString()}</div>
     </div>`).join("");
+}
+
+function loadProfile(){
+  const c = document.getElementById("profileInfo");
+  const uid   = getUserId();
+  const name  = localStorage.getItem("fuelskip_user_name")  || "";
+  const phone = localStorage.getItem("fuelskip_user_phone") || "";
+  const email = getUserEmail();
+
+  if(!uid){
+    c.innerHTML = '<div style="padding:20px; font-size:13px; color:#6b7280;">Login to view profile.</div>';
+    return;
+  }
+
+  c.innerHTML = `
+    <div style="padding:20px; display:flex; flex-direction:column; gap:12px;">
+      <div>
+        <div style="font-size:12px; color:#9ca3af;">Name</div>
+        <div style="font-size:15px; font-weight:600; color:#111827;">${name || '-'}</div>
+      </div>
+      <div>
+        <div style="font-size:12px; color:#9ca3af;">Phone</div>
+        <div style="font-size:15px; font-weight:600; color:#111827;">${phone || '-'}</div>
+      </div>
+      <div>
+        <div style="font-size:12px; color:#9ca3af;">Email</div>
+        <div style="font-size:15px; font-weight:600; color:#111827;">${email || '-'}</div>
+      </div>
+      <button onclick="openProfileEdit()" style="margin-top:8px; padding:10px 14px; border-radius:10px; border:none; background:#2563eb; color:white; font-weight:600; cursor:pointer;">
+        Edit profile
+      </button>
+    </div>
+  `;
+}
+
+function openProfileEdit(){
+  const nameOld  = localStorage.getItem("fuelskip_user_name")  || "";
+  const phoneOld = localStorage.getItem("fuelskip_user_phone") || "";
+  const emailOld = getUserEmail();
+
+  const nameNew  = prompt("Enter name",  nameOld);
+  if(nameNew === null) return;
+  const phoneNew = prompt("Enter phone", phoneOld);
+  if(phoneNew === null) return;
+  const emailNew = prompt("Enter email", emailOld);
+
+  setUserName(nameNew);
+  setUserPhone(phoneNew);
+  setUserEmail(emailNew);
+
+  refreshUserDisplay();
+  loadProfile();
 }
 
 window.addEventListener("load",()=>{
