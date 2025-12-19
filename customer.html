@@ -90,6 +90,12 @@
     .sidebar-hidden {
       display: none !important;
     }
+    /* on big screens, always show sidebar even if class is present */
+    @media (min-width: 901px) {
+      .sidebar-hidden {
+        display: flex !important;
+      }
+    }
 
     /* Main container */
     .container {
@@ -292,7 +298,6 @@
       <h1>🚗 FuelSkip</h1>
       <div class="header-right">
         <div class="user-pill" id="userDisplay"></div>
-        <!-- button to show/hide Analytics sidebar on mobile -->
         <button class="hamburger" onclick="toggleSidebar()">☰</button>
       </div>
     </div>
@@ -538,8 +543,10 @@ async function login(){
     document.getElementById("historyBox").style.display="block";
     document.getElementById("expenseTracker").style.display="block";
 
-    // keep sidebar hidden; user can open with ☰
-    document.getElementById("sidebar").classList.add("sidebar-hidden");
+    const sidebar = document.getElementById("sidebar");
+    const isMobile = window.innerWidth <= 900;
+    if(isMobile) sidebar.classList.add("sidebar-hidden");
+    else sidebar.classList.remove("sidebar-hidden");
 
     refreshUserDisplay();
     loadVehicleHistory();
@@ -812,8 +819,13 @@ function openProfileEdit(){
 }
 
 window.addEventListener("load",()=>{
+  const sidebar = document.getElementById("sidebar");
+  const isMobile = window.innerWidth <= 900;
+
   if(getUserId()){
-    document.getElementById("sidebar").classList.add("sidebar-hidden");
+    if(isMobile) sidebar.classList.add("sidebar-hidden");
+    else sidebar.classList.remove("sidebar-hidden");
+
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
@@ -822,7 +834,8 @@ window.addEventListener("load",()=>{
     loadVehicleHistory();
     loadMyVouchers();
   } else {
-    document.getElementById("sidebar").classList.add("sidebar-hidden");
+    if(isMobile) sidebar.classList.add("sidebar-hidden");
+    else sidebar.classList.remove("sidebar-hidden");
   }
 });
 </script>
