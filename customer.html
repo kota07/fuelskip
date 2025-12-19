@@ -227,20 +227,6 @@
     #voucherBox { display: none; }
     #qrContainer { margin-top: 10px; display:flex; justify-content:center; }
 
-    .expense-tracker {
-      background: linear-gradient(135deg, #fee2e2, #fecaca);
-      padding: 14px;
-      border-radius: 12px;
-      text-align: center;
-      margin-top: 6px;
-    }
-    .expense-tracker .total-expense {
-      font-size: 18px;
-      font-weight: 700;
-      color:#b91c1c;
-      margin: 4px 0;
-    }
-
     /* Analytics sections (hidden by default) */
     .page-section { display: none; }
     .page-section.active { display: block; }
@@ -281,13 +267,13 @@
       <small id="sidebarUser">Not logged in</small>
     </div>
     <ul class="sidebar-menu">
+      <li><a href="#" onclick="openSection('create');return false;">Home</a></li>
       <li><a href="#" id="navDashboard" onclick="openSection('dashboard');return false;">Dashboard</a></li>
       <li><a href="#" id="navVehicles" onclick="openSection('vehicles');return false;">Vehicles</a></li>
       <li><a href="#" id="navBunks" onclick="openSection('bunks');return false;">Bunks</a></li>
       <li><a href="#" id="navProfile" onclick="openSection('profile');return false;">Profile</a></li>
     </ul>
     <div class="sidebar-footer">
-      <button onclick="openSection('create')">+ Create Voucher</button>
       <button onclick="logout()">Logout</button>
     </div>
   </aside>
@@ -376,15 +362,6 @@
           <p style="font-size:13px; text-align:center; margin-bottom:8px;">Show this QR to attendant</p>
           <div id="qrContainer"></div>
           <p style="text-align:center; font-size:12px; margin-top:8px;">Voucher ID: <strong id="voucherIdDisplay"></strong></p>
-        </div>
-      </div>
-
-      <!-- Simple tracker below (same vehicle) -->
-      <div class="card" id="expenseTracker" style="display:none;">
-        <div class="expense-tracker">
-          <h4 style="margin:0;">Vehicle tracker</h4>
-          <p class="total-expense" id="totalExpense">₹0</p>
-          <p id="recentFills" style="font-size:12px; margin:4px 0 0;">No fills yet</p>
         </div>
       </div>
 
@@ -507,7 +484,6 @@ function logout(){
   document.getElementById("createBox").style.display="none";
   document.getElementById("voucherBox").style.display="none";
   document.getElementById("historyBox").style.display="none";
-  document.getElementById("expenseTracker").style.display="none";
 
   document.getElementById("sidebar").classList.add("sidebar-hidden");
 
@@ -541,7 +517,6 @@ async function login(){
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
-    document.getElementById("expenseTracker").style.display="block";
 
     const sidebar = document.getElementById("sidebar");
     const isMobile = window.innerWidth <= 900;
@@ -562,40 +537,9 @@ function loadVehicleHistory(){
     const last=history[0];
     document.getElementById("vehicleType").value=last.vehicleType||"Car";
     document.getElementById("vehicleNo").value=last.vehicleNo||"";
-    updateExpenseTracker(last.vehicleNo);
   } else {
     document.getElementById("vehicleNo").value="";
-    document.getElementById("totalExpense").textContent="₹0";
-    document.getElementById("recentFills").textContent="No fills yet";
   }
-}
-
-function updateExpenseTracker(vehicleNo=null){
-  const key = historyKey();
-  if (!key) return;
-  const history = JSON.parse(localStorage.getItem(key) || "[]");
-  const fills=vehicleNo?history.filter(f=>f.vehicleNo===vehicleNo):history;
-  const total=fills.reduce((s,f)=>s+(parseFloat(f.amount)||0),0);
-  document.getElementById("totalExpense").textContent="₹"+total.toLocaleString();
-  const recent=fills.slice(-5).reverse().map(f=>`₹${f.amount} (${new Date(f.timestamp).toLocaleDateString("en-IN")})`).join(", ");
-  document.getElementById("recentFills").textContent=recent||"No fills yet";
-}
-
-function saveVehicleFill(v){
-  const key = historyKey();
-  if (!key) return;
-  const history = JSON.parse(localStorage.getItem(key) || "[]");
-  history.unshift({
-    vehicleType:v.vehicleType,
-    vehicleNo:v.vehicleNo,
-    amount:v.amount,
-    litres:v.litres,
-    voucherId:v.voucher_id,
-    bunkId:v.bunk_id,
-    timestamp:new Date().toISOString()
-  });
-  localStorage.setItem(key,JSON.stringify(history.slice(0,200)));
-  updateExpenseTracker(v.vehicleNo);
 }
 
 async function createVoucher(){
@@ -677,7 +621,6 @@ async function checkVoucherStatus(){
       clearInterval(pollTimer);
       showQr();
       loadMyVouchers();
-      if(currentVehicle) saveVehicleFill(currentVehicle);
     }
   }catch(e){ console.log("poll error",e); }
 }
@@ -829,7 +772,6 @@ window.addEventListener("load",()=>{
     document.getElementById("loginBox").style.display="none";
     document.getElementById("createBox").style.display="block";
     document.getElementById("historyBox").style.display="block";
-    document.getElementById("expenseTracker").style.display="block";
     refreshUserDisplay();
     loadVehicleHistory();
     loadMyVouchers();
