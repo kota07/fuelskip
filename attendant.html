@@ -256,12 +256,14 @@ async function validateAndDispense() {
       btn.className   = 'btn-dispense secondary';
     } else {
       const err = await res.json();
-      alert('Validation failed: ' + (err.detail || 'Unknown error'));
+      statusDiv.innerHTML =
+        `<p style="color:#ef4444;">❌ Validation failed: ${err.detail || 'Unknown error'}</p>`;
       btn.disabled  = false;
       btn.textContent = '✅ Dispense Fuel';
     }
   } catch (e) {
-    alert('Error: ' + e.message);
+    statusDiv.innerHTML =
+      `<p style="color:#ef4444;">❌ Error: ${e.message}</p>`;
     btn.disabled  = false;
     btn.textContent = '✅ Dispense Fuel';
   }
