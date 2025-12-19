@@ -879,11 +879,9 @@ function updateAnalyticsStatus(voucherId, newStatus) {
   const key = getAnalyticsKey();
   if (!key) return;
   let analytics = JSON.parse(localStorage.getItem(key) || "[]");
-  console.log("updateAnalyticsStatus for", voucherId, "->", newStatus, "before:", analytics);
   analytics = analytics.map(f =>
     f.voucher_id === voucherId ? {...f, status: newStatus} : f
   );
-  console.log("after:", analytics);
   localStorage.setItem(key, JSON.stringify(analytics));
 }
 
@@ -926,8 +924,7 @@ async function createVoucher(){
     }
     
     const data = await res.json();
-    // IMPORTANT: use data.id everywhere (matches /my-vouchers)
-    lastVoucherId   = data.id;
+    lastVoucherId   = data.voucher_id;
     razorpayOrderId = data.razorpay_order_id;
     razorpayKeyId   = data.razorpay_key_id;
     
@@ -937,7 +934,7 @@ async function createVoucher(){
       amount: data.amount,
       litres: data.litres,
       bunk_id: bunkId,
-      voucher_id: data.id,
+      voucher_id: data.voucher_id,
       created_at: new Date().toISOString(),
       status: "pending"
     };
@@ -946,7 +943,7 @@ async function createVoucher(){
 
     document.getElementById("voucherDetails").innerHTML = `
       <div style="font-size:18px; font-weight:800; color:#166534; margin-bottom:12px;">
-        ${data.id}
+        ${data.voucher_id}
       </div>
       <div style="display:grid; gap:8px; font-size:15px; color:#374151;">
         <div>💰 ₹<strong>${data.amount?.toLocaleString() || 'TBD'}</strong></div>
@@ -957,7 +954,7 @@ async function createVoucher(){
       </div>
     `;
     
-    document.getElementById("voucherIdDisplay").textContent = data.id;
+    document.getElementById("voucherIdDisplay").textContent = data.voucher_id;
     document.getElementById("voucherBox").style.display = "block";
     document.getElementById("qrSection").style.display  = "none";
 
