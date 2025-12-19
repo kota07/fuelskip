@@ -480,6 +480,7 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
   <ul class="sidebar-menu">
     <li><a href="#" onclick="openSection('create');closeSidebar();return false;" id="homeLink">🏠 Home</a></li>
     <li><a href="#" onclick="openSection('dashboard');closeSidebar();return false;" id="dashLink">📈 Dashboard</a></li>
+    <li><a href="#" onclick="openSection('vouchers');closeSidebar();return false;" id="vouchLink">🎫 Vouchers</a></li>
     <li><a href="#" onclick="openSection('vehicles');closeSidebar();return false;" id="vehLink">🚗 Vehicles</a></li>
     <li><a href="#" onclick="openSection('bunks');closeSidebar();return false;" id="bunkLink">⛽ Bunks</a></li>
     <li><a href="#" onclick="openSection('profile');closeSidebar();return false;" id="profLink">👤 Profile</a></li>
@@ -633,9 +634,16 @@ status-info    { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe;
     </div>
     <div class="card">
       <p style="font-size:14px; margin:0; color:#64748b;">
-        🚗 Top vehicle: <strong id="dashTopVehicle" style="color:#1e293b;">-</strong><br>
-        <span id="dashVoucherSummary" style="font-size:13px; color:#6b7280;"></span>
+        🚗 Top vehicle: <strong id="dashTopVehicle" style="color:#1e293b;">-</strong>
       </p>
+    </div>
+  </div>
+
+  <!-- Vouchers analytics -->
+  <div id="vouchers" class="page-section">
+    <h3 style="font-size:26px; margin:0 0 28px 0;">🎫 Vouchers</h3>
+    <div id="voucherStats" class="card" style="padding:24px; color:#64748b;">
+      No data available
     </div>
   </div>
 
@@ -672,7 +680,6 @@ let razorpayOrderId = null;
 let razorpayKeyId = null;
 let pollTimer = null;
 let currentVehicle = null;
-let isFirstLogin = false;
 
 function getUserId(){ return localStorage.getItem("fuelskip_user_id"); }
 function setUserId(id){ localStorage.setItem("fuelskip_user_id", id); }
@@ -684,15 +691,6 @@ function getUserEmail(){ return localStorage.getItem("fuelskip_user_email") || "
 function getAnalyticsKey(){
   const uid = getUserId();
   return uid ? `fuelskip_analytics_${uid}` : null;
-}
-
-function clearFreshUserData(){
-  const uid = getUserId();
-  if(uid){
-    localStorage.removeItem(`fuelskip_vehicle_history_${uid}`);
-    localStorage.removeItem(`fuelskip_analytics_${uid}`);
-    isFirstLogin = true;
-  }
 }
 
 function showStatus(elementId, message, type = 'info') {
@@ -750,6 +748,7 @@ function updateActiveMenu(section){
   const activeLink = {
     'create': 'homeLink',
     'dashboard': 'dashLink',
+    'vouchers': 'vouchLink',
     'vehicles': 'vehLink',
     'bunks': 'bunkLink',
     'profile': 'profLink'
@@ -830,13 +829,18 @@ async function login(){
     }
     
     const data = await res.json();
-    
+
+    const oldUid = getUserId();
+
     setUserId(data.user_id);
     setUserName(name);
     setUserPhone(phone);
     setUserEmail(email || "");
 
-    clearFreshUserData();
+    if (oldUid && String(oldUid) !== String(data.user_id)) {
+      localStorage.removeItem(`fuelskip_vehicle_history_${oldUid}`);
+      localStorage.removeItem(`fuelskip_analytics_${oldUid}`);
+    }
 
     document.getElementById("loginBox").style.display   = "none";
     document.getElementById("createBox").style.display  = "block";
@@ -849,6 +853,7 @@ async function login(){
 
     refreshUserDisplay();
     loadMyVouchers();
+    loadAnalytics();
     showStatus("loginMsg", `✅ Welcome ${name}!`, "success");
     
   } catch(e){
@@ -870,7 +875,6 @@ function saveVehicleToAnalytics(vehicle){
   }
 }
 
-// update status of a stored voucher (used vs unused)
 function updateAnalyticsStatus(voucherId, newStatus) {
   const key = getAnalyticsKey();
   if (!key) return;
@@ -1081,7 +1085,7 @@ function loadAnalytics(){
     const analytics = JSON.parse(localStorage.getItem(key) || "[]");
     if(!analytics.length) return;
 
-    // totals
+    // totals for dashboard
     const total = analytics.reduce((s, f) => s + parseFloat(f.amount || 0), 0);
     document.getElementById("dashTotalSpend").textContent = `₹${total.toLocaleString()}`;
     document.getElementById("dashTotalFills").textContent = analytics.length;
@@ -1096,14 +1100,6 @@ function loadAnalytics(){
     const topVehicle = Object.entries(vehicleStats).sort(([,a],[,b]) => b-a)[0];
     document.getElementById("dashTopVehicle").textContent = topVehicle ? topVehicle[0] : "-";
 
-    // used / unused summary
-    const usedCount   = analytics.filter(f => f.status === "used").length;
-    const unusedCount = analytics.filter(f => f.status !== "used").length;
-    const summaryEl = document.getElementById("dashVoucherSummary");
-    if (summaryEl) {
-      summaryEl.textContent = `${usedCount} used • ${unusedCount} pending/unused`;
-    }
-
     // bunk-wise stats
     const bunkStats = {};
     analytics.forEach(f => {
@@ -1116,7 +1112,38 @@ function loadAnalytics(){
       else bunkStats[id].unused += 1;
     });
 
-    // vehicles tab render
+    // vouchers analytics page
+    if (document.getElementById("vouchers").classList.contains("active")) {
+      const used = analytics.filter(f => f.status === "used");
+      const unused = analytics.filter(f => f.status !== "used");
+
+      const box = document.getElementById("voucherStats");
+      box.innerHTML = `
+        <div style="margin-bottom:12px; font-size:14px;">
+          <strong>${used.length}</strong> used • <strong>${unused.length}</strong> pending/unused
+        </div>
+        <div style="border-top:1px solid #e5e7eb; margin-top:8px; padding-top:8px;">
+          ${analytics.map(f => `
+            <div class="history-item">
+              <div>
+                <div style="font-weight:600; font-size:14px;">${f.voucher_id || '-'}</div>
+                <div style="font-size:12px; color:#64748b;">
+                  ${bunkName(f.bunk_id)} • ${f.vehicleType} ${f.vehicleNo}
+                </div>
+              </div>
+              <div style="text-align:right; font-size:13px;">
+                <div>₹${parseFloat(f.amount || 0).toLocaleString()}</div>
+                <div style="font-size:12px; color:${f.status==='used' ? '#16a34a' : '#f97316'};">
+                  ${f.status === 'used' ? 'Used' : 'Pending/Unused'}
+                </div>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    // vehicles tab
     if(document.getElementById("vehicles").classList.contains("active")){
       const vehicleList = document.getElementById("vehicleList");
       vehicleList.innerHTML = Object.entries(vehicleStats).length ? 
@@ -1126,7 +1153,7 @@ function loadAnalytics(){
         '<div style="padding:24px; text-align:center; color:#64748b;">No vehicles tracked</div>';
     }
 
-    // bunks tab render
+    // bunks tab
     if (document.getElementById("bunks").classList.contains("active")) {
       const bunkList = document.getElementById("bunkList");
       bunkList.innerHTML = Object.keys(bunkStats).length
