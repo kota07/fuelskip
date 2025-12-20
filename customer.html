@@ -5,106 +5,77 @@
   <title>FuelSkip – Customer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- QR display -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- Razorpay checkout -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
     * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      margin: 0; padding: 16px;
-      background: #0f172a; color: #e5e7eb;
-      display:flex; justify-content:center;
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      margin:0;padding:16px;background:#0f172a;color:#e5e7eb;
+      display:flex;justify-content:center;
     }
-    .wrap { width:100%; max-width: 420px; }
-    h2 { margin: 0 0 14px 0; text-align:center; }
-    .card {
-      background: #020617;
-      border: 1px solid #111827;
-      border-radius: 16px;
-      padding: 14px;
-      box-shadow: 0 10px 25px rgba(15,23,42,0.35);
-      margin-bottom: 12px;
+    .wrap{width:100%;max-width:420px;}
+    h2{margin:0 0 14px 0;text-align:center;}
+    .card{
+      background:#020617;border:1px solid #111827;border-radius:16px;
+      padding:14px;box-shadow:0 10px 25px rgba(15,23,42,0.35);
+      margin-bottom:12px;
     }
-    label { display:block; font-size: 12px; color:#93a4b8; margin: 10px 0 6px; font-weight:700; }
-    input, select {
-      width:100%;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid #1f2937;
-      background: #0b1220;
-      color: #e5e7eb;
-      font-size: 14px;
-      outline: none;
+    label{display:block;font-size:12px;color:#93a4b8;margin:10px 0 6px;font-weight:800;}
+    input,select{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid #1f2937;
+      background:#0b1220;color:#e5e7eb;font-size:14px;outline:none;
     }
-    .row { display:flex; gap:10px; }
-    .row > div { flex:1; }
-    button {
-      width:100%;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: none;
-      cursor: pointer;
-      font-weight: 800;
-      font-size: 14px;
-      margin-top: 10px;
+    .row{display:flex;gap:10px;}
+    .row>div{flex:1;}
+    button{
+      width:100%;padding:10px 12px;border-radius:12px;border:none;cursor:pointer;
+      font-weight:900;font-size:14px;margin-top:10px;
     }
-    button:active { transform: scale(0.99); }
-    .btn-green { background:#22c55e; color:#06240f; }
-    .btn-blue  { background:#3b82f6; color:#061628; }
-    .btn-gray  { background:#334155; color:#e5e7eb; }
-    .btn-red   { background:#ef4444; color:#2a0b0b; }
+    button:active{transform:scale(0.99);}
+    button:disabled{opacity:0.6;cursor:not-allowed;}
+    .btn-green{background:#22c55e;color:#06240f;}
+    .btn-blue{background:#3b82f6;color:#061628;}
+    .btn-gray{background:#334155;color:#e5e7eb;}
+    .btn-red{background:#ef4444;color:#2a0b0b;}
+    .btn-dark{background:#111827;color:#e5e7eb;}
 
-    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .chip {
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid #1f2937;
-      background: #0b1220;
-      color:#e5e7eb;
-      font-weight:800;
-      font-size: 13px;
-      cursor:pointer;
-      user-select:none;
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+    .chip{
+      padding:8px 10px;border-radius:999px;border:1px solid #1f2937;background:#0b1220;
+      color:#e5e7eb;font-weight:900;font-size:13px;cursor:pointer;user-select:none;
     }
-    .chip:hover { border-color:#334155; }
-    .muted { font-size:12px; color:#94a3b8; margin-top: 6px; line-height:1.4; }
+    .chip:hover{border-color:#334155;}
+    .muted{font-size:12px;color:#94a3b8;margin-top:6px;line-height:1.4;}
+    .ok{color:#86efac;font-weight:900;}
+    .warn{color:#fca5a5;font-weight:900;}
+    .balance{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:10px 12px;border-radius:14px;background:#0b1220;border:1px solid #1f2937;
+      margin-top:10px;
+    }
+    .bal-amt{font-size:18px;font-weight:1000;color:#86efac;}
+    .small{font-size:12px;color:#94a3b8;font-weight:800;}
+    .toggle{display:flex;gap:10px;margin-top:10px;}
+    .toggle button{margin-top:0;width:50%;}
+    .activePay{outline:2px solid rgba(34,197,94,0.65);}
+    code{color:#93c5fd;word-break:break-all;}
 
-    .balance {
-      display:flex; justify-content:space-between; align-items:center;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background:#0b1220;
-      border:1px solid #1f2937;
-      margin-top: 10px;
+    #qrWrap{display:none;}
+    #qrBox{
+      background:#ffffff;border-radius:16px;padding:12px;display:flex;justify-content:center;margin-top:10px;
     }
-    .bal-amt { font-size: 18px; font-weight: 900; color:#86efac; }
-    .small { font-size:12px; color:#94a3b8; font-weight:700; }
 
-    #qrWrap { display:none; }
-    #qrBox {
-      background:#ffffff;
-      border-radius: 16px;
-      padding: 12px;
-      display:flex;
-      justify-content:center;
-      margin-top: 10px;
+    .list { margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+    .item {
+      padding:10px 12px;border-radius:14px;border:1px solid #1f2937;background:#0b1220;
+      display:flex;justify-content:space-between;gap:10px;align-items:center;
     }
-    code { color:#93c5fd; word-break:break-all; }
-    .ok { color:#86efac; font-weight:900; }
-    .warn { color:#fca5a5; font-weight:900; }
-    .toggle {
-      display:flex; gap:10px; margin-top: 10px;
-    }
-    .toggle button {
-      margin-top:0;
-      width:50%;
-    }
-    .activePay {
-      outline: 2px solid rgba(34,197,94,0.65);
-    }
+    .item .meta { display:flex; flex-direction:column; gap:4px; }
+    .item .meta .t { font-weight:1000; }
+    .item .meta .s { font-size:12px; color:#94a3b8; font-weight:800; }
+    .item button { width:auto; margin-top:0; padding:8px 10px; border-radius:12px; }
   </style>
 </head>
 
@@ -115,7 +86,7 @@
   <!-- LOGIN -->
   <div class="card" id="loginCard">
     <div class="muted" style="margin-top:0;">
-      Login once. Wallet balance will be linked to your phone.
+      Login once. Wallet links to your phone. (MVP: no OTP)
     </div>
 
     <label>Phone</label>
@@ -127,15 +98,15 @@
     <button class="btn-blue" onclick="login()">Login</button>
 
     <div class="muted">
-      (MVP note: no OTP. For production later we can add silent verification.)
+      Tip: For fastest use, later you can “Add to Home Screen” on mobile.
     </div>
   </div>
 
   <!-- WALLET -->
   <div class="card" id="walletCard" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-      <div style="font-weight:900;">Wallet</div>
-      <button class="btn-gray" style="width:auto;margin-top:0;padding:8px 10px;" onclick="refreshBalance()">Refresh</button>
+      <div style="font-weight:1000;">Wallet</div>
+      <button class="btn-gray" style="width:auto;margin-top:0;padding:8px 10px;" onclick="refreshAll()">Refresh</button>
     </div>
 
     <div class="balance">
@@ -158,16 +129,28 @@
     <button class="btn-green" onclick="topupWallet()">Add Money</button>
 
     <div class="muted">
-      Tip: Load once during non-peak time. At bunk, voucher becomes instant (no payment screen).
+      Load once during non-peak time. At bunk, voucher becomes instant.
+    </div>
+  </div>
+
+  <!-- QUICK ACTIONS -->
+  <div class="card" id="quickCard" style="display:none;">
+    <div style="font-weight:1000;">Quick</div>
+    <div class="muted">Repeat last voucher in 1 tap.</div>
+
+    <button class="btn-dark" onclick="repeatLast()">⚡ Repeat Last Voucher</button>
+
+    <div class="muted" id="lastInfo"></div>
+
+    <div class="muted" style="margin-top:10px;">
+      iPhone tip: open Safari → Share → “Add to Home Screen”. Then FuelSkip opens like a real app.
     </div>
   </div>
 
   <!-- CREATE VOUCHER -->
   <div class="card" id="voucherCard" style="display:none;">
-    <div style="font-weight:900;">Create Voucher</div>
-    <div class="muted">
-      Choose amount or litres. Prefer Wallet for fastest bunk experience.
-    </div>
+    <div style="font-weight:1000;">Create Voucher</div>
+    <div class="muted">Prefer Wallet for fastest bunk experience.</div>
 
     <label>Bunk</label>
     <select id="bunk">
@@ -217,16 +200,23 @@
     </div>
 
     <button class="btn-green" onclick="createVoucher()">Generate Voucher</button>
-
     <div class="muted" id="statusLine"></div>
+  </div>
+
+  <!-- RECENT VOUCHERS -->
+  <div class="card" id="recentCard" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-weight:1000;">Recent Vouchers</div>
+      <button class="btn-gray" style="width:auto;margin-top:0;padding:8px 10px;" onclick="loadRecent()">Load</button>
+    </div>
+    <div class="muted">Show QR again instantly (useful if you closed the tab).</div>
+    <div class="list" id="recentList"></div>
   </div>
 
   <!-- QR OUTPUT -->
   <div class="card" id="qrWrap">
-    <div style="font-weight:900;">Your Voucher QR</div>
-    <div class="muted">
-      Show this to attendant (they will scan inside their page).
-    </div>
+    <div style="font-weight:1000;">Your Voucher QR</div>
+    <div class="muted">Show this to attendant (they scan inside their page).</div>
 
     <div id="qrBox"><div id="qr"></div></div>
 
@@ -249,6 +239,14 @@
     name: "",
     wallet_balance: 0,
     pay_method: "wallet",
+
+    // remembered defaults
+    last_bunk: "BUNK-1",
+    last_amount: 300,
+    last_vehicle_type: "",
+    last_vehicle_no: "",
+    last_voucher_id: "",
+    last_sig: ""
   };
 
   function loadState() {
@@ -267,6 +265,13 @@
       name: state.name,
       wallet_balance: state.wallet_balance,
       pay_method: state.pay_method,
+
+      last_bunk: state.last_bunk,
+      last_amount: state.last_amount,
+      last_vehicle_type: state.last_vehicle_type,
+      last_vehicle_no: state.last_vehicle_no,
+      last_voucher_id: state.last_voucher_id,
+      last_sig: state.last_sig
     }));
   }
 
@@ -282,42 +287,34 @@
     document.getElementById("btnRzp").classList.toggle("activePay", m === "razorpay");
   }
 
-  function setTopup(v) {
-    document.getElementById("topupAmount").value = String(v);
+  function setTopup(v) { document.getElementById("topupAmount").value = String(v); }
+  function quickAmount(v) { document.getElementById("amount").value = String(v); document.getElementById("litres").value = ""; }
+
+  function show(el, on=true) { document.getElementById(el).style.display = on ? "" : "none"; }
+
+  function renderWallet() {
+    document.getElementById("balText").textContent = fmtINR(state.wallet_balance);
+    document.getElementById("userText").innerHTML = `
+      <div style="font-weight:1000;color:#e5e7eb;">${state.name || "User"}</div>
+      <div class="small">${state.phone}</div>
+    `;
   }
 
-  function quickAmount(v) {
-    document.getElementById("amount").value = String(v);
+  function applyRememberedDefaultsToForm() {
+    document.getElementById("bunk").value = state.last_bunk || "BUNK-1";
+    document.getElementById("amount").value = state.last_amount ? String(state.last_amount) : "";
     document.getElementById("litres").value = "";
+    document.getElementById("vehicleType").value = state.last_vehicle_type || "";
+    document.getElementById("vehicleNo").value = state.last_vehicle_no || "";
   }
 
-  function show(el, on=true) {
-    document.getElementById(el).style.display = on ? "" : "none";
-  }
-
-  async function login() {
-    const phone = (document.getElementById("phone").value || "").trim();
-    const name = (document.getElementById("name").value || "").trim();
-
-    if (!phone || phone.length < 8) return alert("Enter phone");
-
-    const res = await fetch(`${API}/login`, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({phone, name})
-    });
-
-    const data = await res.json();
-    if (!res.ok) return alert(data.detail || "Login failed");
-
-    state.user_id = data.user_id;
-    state.phone = data.phone;
-    state.name = data.name || "";
-    state.wallet_balance = Number(data.wallet_balance || 0);
-
-    saveState();
-
-    initAfterLogin();
+  function renderLastInfo() {
+    const el = document.getElementById("lastInfo");
+    if (state.last_amount && state.last_bunk) {
+      el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> at <span class="ok">${state.last_bunk}</span>`;
+    } else {
+      el.textContent = "No previous voucher yet.";
+    }
   }
 
   async function refreshBalance() {
@@ -331,42 +328,122 @@
     }
   }
 
-  function renderWallet() {
-    document.getElementById("balText").textContent = fmtINR(state.wallet_balance);
-    document.getElementById("userText").innerHTML = `
-      <div style="font-weight:900;color:#e5e7eb;">${state.name || "User"}</div>
-      <div class="small">${state.phone}</div>
-    `;
+  async function loadRecent() {
+    const list = document.getElementById("recentList");
+    list.innerHTML = "<div class='muted'>Loading…</div>";
+
+    try {
+      const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, {cache:"no-store"});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to load vouchers");
+
+      const recent = (data || []).slice(0, 5);
+      if (!recent.length) {
+        list.innerHTML = "<div class='muted'>No vouchers yet.</div>";
+        return;
+      }
+
+      list.innerHTML = "";
+      recent.forEach(v => {
+        const amount = Number(v.amount || 0);
+        const bunk = v.bunk_id || "-";
+        const status = (v.status || "").toUpperCase();
+        const vid = v.id;
+
+        const row = document.createElement("div");
+        row.className = "item";
+        row.innerHTML = `
+          <div class="meta">
+            <div class="t">₹${amount} • ${bunk}</div>
+            <div class="s">${status} • ${vid}</div>
+          </div>
+          <button class="btn-blue">Show QR</button>
+        `;
+
+        row.querySelector("button").onclick = async () => {
+          // We already have signed QR system, but QR signature is returned only at creation.
+          // For re-showing QR, we can reuse last sig if it matches this voucher id,
+          // OR the easiest MVP: ask user to create new voucher. (But you asked to fasten process.)
+          //
+          // MVP approach now:
+          // - If this voucher is still PAID and not used, we can use "sig is mandatory".
+          // - We do NOT have an endpoint to re-issue sig from server (more secure).
+          //
+          // So here: if user has last_sig stored for this voucher, show it.
+          // Else show message to create new voucher (still fast with wallet).
+          if (state.last_voucher_id === vid && state.last_sig) {
+            showVoucherQR(vid, state.last_sig);
+          } else {
+            alert("For security, QR signature is not re-issued. Please create a new voucher (wallet is instant).");
+          }
+        };
+
+        list.appendChild(row);
+      });
+
+    } catch (e) {
+      list.innerHTML = `<div class='muted'><span class="warn">❌</span> ${e.message}</div>`;
+    }
+  }
+
+  async function refreshAll() {
+    await refreshBalance();
+    await loadRecent();
+    renderLastInfo();
+  }
+
+  async function login() {
+    const phone = (document.getElementById("phone").value || "").trim();
+    const name = (document.getElementById("name").value || "").trim();
+    if (!phone || phone.length < 8) return alert("Enter phone");
+
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({phone, name})
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.detail || "Login failed");
+
+    state.user_id = data.user_id;
+    state.phone = data.phone;
+    state.name = data.name || "";
+    state.wallet_balance = Number(data.wallet_balance || 0);
+
+    saveState();
+    initAfterLogin();
   }
 
   function initAfterLogin() {
     show("loginCard", false);
     show("walletCard", true);
+    show("quickCard", true);
     show("voucherCard", true);
+    show("recentCard", true);
     show("qrWrap", false);
 
     renderWallet();
     setPay(state.pay_method || "wallet");
-    refreshBalance();
+
+    applyRememberedDefaultsToForm();
+    renderLastInfo();
+
+    refreshAll();
   }
 
   async function topupWallet() {
     if (!state.user_id) return alert("Login first");
-
     const amt = Number((document.getElementById("topupAmount").value || "").trim());
     if (!amt || amt < 50) return alert("Minimum topup is ₹50");
 
-    // Create order
     const res = await fetch(`${API}/wallet/topup/create-order`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({user_id: state.user_id, amount: amt})
     });
-
     const data = await res.json();
     if (!res.ok) return alert(data.detail || "Topup create failed");
 
-    // Open Razorpay
     const options = {
       key: data.razorpay_key_id,
       amount: Math.round(amt * 100),
@@ -375,31 +452,21 @@
       description: "Wallet Top-up",
       order_id: data.razorpay_order_id,
       handler: async function () {
-        // Payment success UI; actual credit comes from webhook.
         alert("✅ Payment done. Updating wallet balance…");
         await pollBalanceIncrease(amt);
-      },
-      modal: {
-        ondismiss: function () {
-          // nothing
-        }
       }
     };
-
-    const rzp = new Razorpay(options);
-    rzp.open();
+    new Razorpay(options).open();
   }
 
   async function pollBalanceIncrease(expectedDelta) {
-    // Poll wallet balance for up to ~25 seconds
     const start = Number(state.wallet_balance || 0);
-    const target = start + Number(expectedDelta || 0) * 0.3; // don't require full delta; just detect increase
+    const target = start + Number(expectedDelta || 0) * 0.3;
     for (let i=0; i<10; i++) {
       await new Promise(r => setTimeout(r, 2500));
       await refreshBalance();
       if (Number(state.wallet_balance || 0) > target) return;
     }
-    // If webhook is delayed, user can press Refresh
     alert("If balance not updated yet, press Refresh (webhook may be delayed).");
   }
 
@@ -411,13 +478,25 @@
     document.getElementById("litres").value = "";
   }
 
+  async function repeatLast() {
+    if (!state.last_amount) {
+      alert("No last voucher yet. Create one first.");
+      return;
+    }
+    // Fill the form and instantly create (wallet recommended)
+    document.getElementById("bunk").value = state.last_bunk || "BUNK-1";
+    document.getElementById("amount").value = String(state.last_amount);
+    document.getElementById("litres").value = "";
+    setPay("wallet");
+    await createVoucher();
+  }
+
   async function createVoucher() {
     if (!state.user_id) return alert("Login first");
 
     const bunk_id = document.getElementById("bunk").value;
     const amountStr = (document.getElementById("amount").value || "").trim();
     const litresStr = (document.getElementById("litres").value || "").trim();
-
     const vehicle_type = document.getElementById("vehicleType").value || "";
     const vehicle_no = (document.getElementById("vehicleNo").value || "").trim();
 
@@ -428,11 +507,17 @@
       vehicle_no: vehicle_no || null,
       pay_method: state.pay_method || "wallet",
     };
-
     if (amountStr) payload.amount = Number(amountStr);
     if (litresStr) payload.litres = Number(litresStr);
-
     if (!payload.amount && !payload.litres) return alert("Enter amount or litres");
+
+    // Remember defaults (for speed)
+    state.last_bunk = bunk_id;
+    state.last_vehicle_type = vehicle_type || "";
+    state.last_vehicle_no = vehicle_no || "";
+    if (payload.amount) state.last_amount = Number(payload.amount);
+    saveState();
+    renderLastInfo();
 
     const statusLine = document.getElementById("statusLine");
     statusLine.textContent = "Creating voucher…";
@@ -442,28 +527,29 @@
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(payload)
     });
-
     const data = await res.json();
     if (!res.ok) {
       statusLine.innerHTML = `<span class="warn">❌</span> ${data.detail || "Create failed"}`;
       return;
     }
 
-    // WALLET = instant paid → show QR right away
+    // Wallet = instant paid
     if ((data.pay_method || "") === "wallet" || (payload.pay_method === "wallet")) {
       if (typeof data.wallet_balance !== "undefined") {
         state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
-        saveState();
-        renderWallet();
       }
+      state.last_voucher_id = data.voucher_id;
+      state.last_sig = data.qr_sig;
+      saveState();
+      renderWallet();
       statusLine.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet).`;
       showVoucherQR(data.voucher_id, data.qr_sig);
+      await loadRecent();
       return;
     }
 
-    // Razorpay flow: open checkout, then poll voucher-status until paid
+    // Razorpay flow
     statusLine.textContent = "Opening payment…";
-
     const options = {
       key: data.razorpay_key_id,
       amount: Math.round(Number(data.amount) * 100),
@@ -475,24 +561,22 @@
         statusLine.innerHTML = `<span class="ok">✅</span> Payment done. Waiting for confirmation…`;
         const ok = await pollVoucherPaid(data.voucher_id);
         if (ok) {
+          state.last_voucher_id = data.voucher_id;
+          state.last_sig = data.qr_sig;
+          saveState();
           showVoucherQR(data.voucher_id, data.qr_sig);
+          await loadRecent();
         } else {
-          statusLine.innerHTML = `<span class="warn">⏳</span> Payment received but confirmation delayed. Try again in a few seconds.`;
+          statusLine.innerHTML = `<span class="warn">⏳</span> Confirmation delayed. Try again in a few seconds.`;
         }
       },
-      modal: {
-        ondismiss: function () {
-          statusLine.textContent = "Payment cancelled / closed.";
-        }
-      }
+      modal: { ondismiss: function () { statusLine.textContent = "Payment cancelled / closed."; } }
     };
-
-    const rzp = new Razorpay(options);
-    rzp.open();
+    new Razorpay(options).open();
   }
 
   async function pollVoucherPaid(voucher_id) {
-    for (let i=0; i<12; i++) { // ~30s
+    for (let i=0; i<12; i++) {
       await new Promise(r => setTimeout(r, 2500));
       const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucher_id)}`, {cache:"no-store"});
       const data = await res.json();
@@ -520,7 +604,6 @@
   loadState();
   if (state.user_id) initAfterLogin();
   else {
-    // Prefill phone if user had it
     if (state.phone) document.getElementById("phone").value = state.phone;
     if (state.name) document.getElementById("name").value = state.name;
   }
