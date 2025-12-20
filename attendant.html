@@ -2,113 +2,160 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>FuelSkip - Attendant</title>
+  <title>FuelSkip – Attendant</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       margin: 0; padding: 16px;
-      background: #0f172a; color: #0f172a;
+      background: #0f172a;
       display: flex; justify-content: center;
     }
     .wrap { width: 100%; max-width: 420px; }
     h2 { margin: 0 0 16px 0; color: #e5e7eb; text-align: center; }
+
     .box {
-      background: #ffffff; border-radius: 16px;
-      padding: 16px 16px 18px; margin-top: 12px;
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 12px;
       box-shadow: 0 10px 25px rgba(15,23,42,0.25);
     }
-    .input-row { display: flex; gap: 8px; align-items: center; }
+
+    .input-row {
+      display: flex; gap: 8px; align-items: center;
+    }
+
     input {
-      flex: 1; padding: 10px 12px;
-      border-radius: 10px; border: 1px solid #d4d4d8;
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #d4d4d8;
       font-size: 14px;
     }
-    input:focus {
-      outline: none; border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
-    }
+
     button {
-      padding: 10px 14px; border-radius: 10px;
-      border: none; cursor: pointer;
-      font-weight: 600; font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
       transition: all 0.15s ease;
     }
-    button:active { transform: scale(0.97); }
+
     button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .btn-scan { background: #3b82f6; color: #ffffff; white-space: nowrap; }
-    .btn-dispense { background: #10b981; color: #ffffff; width: 100%; margin-top: 10px; }
-    .btn-dispense.secondary { background: #6b7280; }
+
+    .btn-blue   { background: #3b82f6; color: #fff; }
+    .btn-green  { background: #10b981; color: #fff; width: 100%; margin-top: 10px; }
+    .btn-red    { background: #ef4444; color: #fff; }
+    .btn-dark   { background: #111827; color: #fff; }
 
     .status-chip {
-      display: inline-block; padding: 4px 10px;
-      border-radius: 999px; font-size: 11px;
-      font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.04em; color: #ffffff;
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
     }
-    .status-paid   { background: #16a34a; }
-    .status-used   { background: #6b7280; }
-    .status-pend   { background: #f97316; }
-    .status-invalid{ background: #ef4444; }
+    .paid { background: #16a34a; }
+    .used { background: #6b7280; }
+    .pend { background: #f97316; }
+    .bad  { background: #ef4444; }
 
-    #voucherData p { margin: 4px 0; font-size: 14px; color: #374151; }
-    #voucherData p strong { color: #111827; }
-    #statusMsg { margin-top: 10px; font-size: 14px; }
+    #voucherData p {
+      margin: 4px 0;
+      font-size: 14px;
+      color: #374151;
+    }
+    #voucherData strong { color: #111827; }
+
+    #statusMsg {
+      margin-top: 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
   </style>
 </head>
+
 <body>
 <div class="wrap">
   <h2>⛽ FuelSkip – Attendant</h2>
 
+  <!-- INPUT -->
   <div class="box">
     <div class="input-row">
       <input id="voucherInput" placeholder="Paste voucher ID or scan QR">
-      <button class="btn-scan" onclick="loadVoucher()">Check</button>
+      <button class="btn-blue" onclick="loadVoucher()">Check</button>
     </div>
-    <p style="margin:8px 0 0; font-size:12px; color:#6b7280;">
-      Tip: QR from customer will open this page with voucher pre-filled.
+
+    <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
+      Tip: Scan customer QR — voucher + signature auto-loads.
+    </p>
+
+    <!-- TOKEN CONTROLS -->
+    <div style="margin-top:10px;display:flex;gap:8px;">
+      <button class="btn-red" onclick="resetToken()">Reset Token</button>
+      <button class="btn-dark" onclick="setToken()">Set Token</button>
+    </div>
+
+    <p style="margin:8px 0 0;font-size:12px;color:#94a3b8;">
+      Use Reset if you see “Unauthorized”.
     </p>
   </div>
 
+  <!-- VOUCHER DETAILS -->
   <div class="box" id="voucherInfo" style="display:none;">
-    <h3 style="margin:0 0 8px 0; font-size:18px; color:#111827;">Voucher Details</h3>
+    <h3 style="margin:0 0 8px 0;">Voucher Details</h3>
     <div id="voucherData"></div>
     <div id="statusMsg"></div>
-    <button id="dispenseBtn" class="btn-dispense" onclick="validateAndDispense()" style="display:none;">
+    <button id="dispenseBtn" class="btn-green" onclick="validateAndDispense()" style="display:none;">
       ✅ Dispense Fuel
     </button>
   </div>
 </div>
 
 <script>
-const API = localStorage.getItem('FUELSKIP_API') || window.location.origin;
+const API = window.location.origin;
 
+let currentVoucherId = null;
+let currentSig = "";
+
+/* ---------- TOKEN HANDLING ---------- */
 function getAttendantToken() {
-  let tok = localStorage.getItem('FUELSKIP_ATTENDANT_TOKEN');
+  let tok = localStorage.getItem("FUELSKIP_ATTENDANT_TOKEN");
   if (!tok) {
-    tok = prompt('Enter Attendant Token (one-time on this device):');
-    if (tok) localStorage.setItem('FUELSKIP_ATTENDANT_TOKEN', tok);
+    tok = prompt("Enter Attendant Token:");
+    if (tok) localStorage.setItem("FUELSKIP_ATTENDANT_TOKEN", tok.trim());
   }
-  return tok || '';
+  return tok ? tok.trim() : "";
 }
 
-let currentVoucherId     = null;
-let currentVoucherStatus = null;
-let currentSig = ""; // ✅ NEW
+function resetToken() {
+  localStorage.removeItem("FUELSKIP_ATTENDANT_TOKEN");
+  alert("Attendant token cleared. Tap Set Token to enter again.");
+}
 
+function setToken() {
+  const tok = prompt("Enter Attendant Token:");
+  if (tok) {
+    localStorage.setItem("FUELSKIP_ATTENDANT_TOKEN", tok.trim());
+    alert("Token saved.");
+  }
+}
+
+/* ---------- URL PARAMS ---------- */
 function getParams() {
-  const params = new URLSearchParams(window.location.search);
+  const p = new URLSearchParams(window.location.search);
   return {
-    voucher: params.get("voucher") || "",
-    sig: params.get("sig") || ""
+    voucher: p.get("voucher") || "",
+    sig: p.get("sig") || ""
   };
 }
 
-// on page load, auto-fill from QR link
 window.addEventListener("load", () => {
   const p = getParams();
   if (p.voucher) {
@@ -118,129 +165,105 @@ window.addEventListener("load", () => {
   }
 });
 
-function formatStatusChip(status, used) {
-  if (used) return '<span class="status-chip status-used">USED</span>';
-  if (status === 'paid') return '<span class="status-chip status-paid">PAID</span>';
-  if (status === 'pending') return '<span class="status-chip status-pend">PENDING</span>';
-  return '<span class="status-chip status-invalid">' + (status || 'INVALID').toUpperCase() + '</span>';
+/* ---------- UI HELPERS ---------- */
+function statusChip(status, used) {
+  if (used) return '<span class="status-chip used">USED</span>';
+  if (status === "paid") return '<span class="status-chip paid">PAID</span>';
+  if (status === "pending") return '<span class="status-chip pend">PENDING</span>';
+  return '<span class="status-chip bad">INVALID</span>';
 }
 
+/* ---------- LOAD VOUCHER ---------- */
 async function loadVoucher() {
-  const voucherId = document.getElementById('voucherInput').value.trim();
-  if (!voucherId) { alert('Enter or scan a voucher ID'); return; }
+  const id = document.getElementById("voucherInput").value.trim();
+  if (!id) return alert("Enter voucher ID");
 
-  // If user manually pasted voucher id, sig may be missing
   const p = getParams();
-  if (p.voucher && p.voucher === voucherId) currentSig = p.sig || currentSig;
+  if (p.voucher === id) currentSig = p.sig || currentSig;
 
-  const infoBox     = document.getElementById('voucherInfo');
-  const dataDiv     = document.getElementById('voucherData');
-  const statusDiv   = document.getElementById('statusMsg');
-  const dispenseBtn = document.getElementById('dispenseBtn');
+  const box = document.getElementById("voucherInfo");
+  const data = document.getElementById("voucherData");
+  const msg = document.getElementById("statusMsg");
+  const btn = document.getElementById("dispenseBtn");
 
-  infoBox.style.display     = 'none';
-  dataDiv.innerHTML         = '';
-  statusDiv.textContent     = '';
-  dispenseBtn.style.display = 'none';
+  box.style.display = "none";
+  btn.style.display = "none";
+  msg.textContent = "";
 
   try {
-    const res = await fetch(`${API}/voucher/${encodeURIComponent(voucherId)}`);
+    const res = await fetch(`${API}/voucher/${id}`);
     if (!res.ok) throw new Error("Voucher not found");
 
-    const voucher = await res.json();
-    currentVoucherId     = voucherId;
-    currentVoucherStatus = voucher.status;
+    const v = await res.json();
+    currentVoucherId = id;
 
-    const statusChip = formatStatusChip(voucher.status, voucher.used);
-
-    dataDiv.innerHTML = `
-      <p><strong>ID:</strong> ${voucher.id}</p>
-      <p><strong>Customer:</strong> ${
-        voucher.user_name
-          ? voucher.user_name + ' (' + (voucher.user_phone || 'no phone') + ')'
-          : 'Walk-in / No user'
-      }</p>
-      <p><strong>Amount:</strong> ₹${voucher.amount}</p>
-      <p><strong>Litres:</strong> ${voucher.litres} L</p>
-      <p><strong>Vehicle:</strong> ${voucher.vehicle_type || '-'} ${voucher.vehicle_no ? '• ' + voucher.vehicle_no : ''}</p>
-      <p><strong>Status:</strong> ${statusChip}</p>
-      <p><strong>Expires:</strong> Never</p>
-      <p><strong>QR Signature:</strong> ${currentSig ? '<span style="color:#16a34a;font-weight:700;">OK</span>' : '<span style="color:#ef4444;font-weight:700;">MISSING</span>'}</p>
+    data.innerHTML = `
+      <p><strong>ID:</strong> ${v.id}</p>
+      <p><strong>Customer:</strong> ${v.user_name || "Walk-in"} (${v.user_phone || "-"})</p>
+      <p><strong>Amount:</strong> ₹${v.amount}</p>
+      <p><strong>Litres:</strong> ${v.litres} L</p>
+      <p><strong>Vehicle:</strong> ${v.vehicle_type || "-"} • ${v.vehicle_no || "-"}</p>
+      <p><strong>Status:</strong> ${statusChip(v.status, v.used)}</p>
+      <p><strong>QR Signature:</strong>
+        ${currentSig ? "<span style='color:#16a34a'>OK</span>" :
+                       "<span style='color:#ef4444'>MISSING</span>"}
+      </p>
     `;
 
-    infoBox.style.display = 'block';
+    box.style.display = "block";
 
-    const valid = voucher.status === 'paid' && !voucher.used;
-
-    if (valid) {
+    if (v.status === "paid" && !v.used) {
       if (!currentSig) {
-        statusDiv.innerHTML =
-          '<p style="color:#ef4444;">❌ QR signature missing. Please scan the customer QR (do not manually type voucher).</p>';
-        dispenseBtn.style.display = 'none';
+        msg.innerHTML = "❌ QR signature missing. Scan customer QR.";
         return;
       }
-
-      statusDiv.innerHTML =
-        '<p style="color:#16a34a;">✅ Voucher is valid. Tap “Dispense Fuel”.</p>';
-      dispenseBtn.textContent   = '✅ Dispense Fuel';
-      dispenseBtn.className     = 'btn-dispense';
-      dispenseBtn.disabled      = false;
-      dispenseBtn.style.display = 'block';
-    } else if (voucher.used) {
-      statusDiv.innerHTML = '<p style="color:#6b7280;">⚠️ This voucher is already used.</p>';
-    } else if (voucher.status === 'pending') {
-      statusDiv.innerHTML = '<p style="color:#f97316;">⏳ Payment pending – ask customer to complete payment.</p>';
-    } else if (voucher.status === 'failed') {
-      statusDiv.innerHTML = '<p style="color:#ef4444;">❌ Payment failed – ask customer to retry.</p>';
+      msg.innerHTML = "✅ Ready to dispense.";
+      btn.style.display = "block";
+      btn.disabled = false;
+    } else if (v.used) {
+      msg.innerHTML = "⚠️ Voucher already used.";
     } else {
-      statusDiv.innerHTML = '<p style="color:#ef4444;">❌ Invalid voucher – cannot dispense.</p>';
+      msg.innerHTML = "⏳ Payment pending or failed.";
     }
   } catch (e) {
-    alert('Voucher not found: ' + e.message);
+    alert(e.message);
   }
 }
 
+/* ---------- VALIDATE & DISPENSE ---------- */
 async function validateAndDispense() {
-  if (!currentVoucherId) return;
+  const btn = document.getElementById("dispenseBtn");
+  const msg = document.getElementById("statusMsg");
 
-  const btn       = document.getElementById('dispenseBtn');
-  const statusDiv = document.getElementById('statusMsg');
-
-  btn.disabled  = true;
-  btn.textContent = '⏳ Validating...';
+  btn.disabled = true;
+  btn.textContent = "⏳ Validating...";
 
   try {
-    const res = await fetch(`${API}/validate/${encodeURIComponent(currentVoucherId)}?sig=${encodeURIComponent(currentSig || "")}`, {
-      method: 'POST',
-      headers: {
-        'X-ATTENDANT-TOKEN': getAttendantToken()
+    const res = await fetch(
+      `${API}/validate/${currentVoucherId}?sig=${encodeURIComponent(currentSig)}`,
+      {
+        method: "POST",
+        headers: {
+          "X-ATTENDANT-TOKEN": getAttendantToken()
+        }
       }
-    });
+    );
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data.already_used) {
-        statusDiv.innerHTML =
-          '<p style="color:#6b7280; font-size:16px;">⚠️ Already used (no action needed)</p>';
-        btn.textContent = '✔️ Already Used';
-      } else {
-        statusDiv.innerHTML =
-          '<p style="color:#10b981; font-size:16px;">✅ VALIDATED – FUEL DISPENSED</p>';
-        btn.textContent = '✔️ Dispensed';
-      }
-      btn.className   = 'btn-dispense secondary';
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.detail || "Unauthorized");
+
+    if (data.already_used) {
+      msg.innerHTML = "⚠️ Already used.";
+      btn.textContent = "✔️ Used";
     } else {
-      const err = await res.json();
-      statusDiv.innerHTML =
-        `<p style="color:#ef4444;">❌ Validation failed: ${err.detail || 'Unknown error'}</p>`;
-      btn.disabled  = false;
-      btn.textContent = '✅ Dispense Fuel';
+      msg.innerHTML = "✅ Fuel Dispensed";
+      btn.textContent = "✔️ Dispensed";
     }
   } catch (e) {
-    statusDiv.innerHTML =
-      `<p style="color:#ef4444;">❌ Error: ${e.message}</p>`;
-    btn.disabled  = false;
-    btn.textContent = '✅ Dispense Fuel';
+    msg.innerHTML = `❌ ${e.message}`;
+    btn.disabled = false;
+    btn.textContent = "✅ Dispense Fuel";
   }
 }
 </script>
