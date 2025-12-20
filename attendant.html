@@ -5,113 +5,59 @@
   <title>FuelSkip - Attendant</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- QRCode.js (kept in case you later want to show QR) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      margin: 0;
-      padding: 16px;
-      background: #0f172a;
-      color: #0f172a;
-      display: flex;
-      justify-content: center;
+      margin: 0; padding: 16px;
+      background: #0f172a; color: #0f172a;
+      display: flex; justify-content: center;
     }
-    .wrap {
-      width: 100%;
-      max-width: 420px;
-    }
-    h2 {
-      margin: 0 0 16px 0;
-      color: #e5e7eb;
-      text-align: center;
-    }
+    .wrap { width: 100%; max-width: 420px; }
+    h2 { margin: 0 0 16px 0; color: #e5e7eb; text-align: center; }
     .box {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 16px 16px 18px;
-      margin-top: 12px;
+      background: #ffffff; border-radius: 16px;
+      padding: 16px 16px 18px; margin-top: 12px;
       box-shadow: 0 10px 25px rgba(15,23,42,0.25);
     }
-    .input-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
+    .input-row { display: flex; gap: 8px; align-items: center; }
     input {
-      flex: 1;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #d4d4d8;
+      flex: 1; padding: 10px 12px;
+      border-radius: 10px; border: 1px solid #d4d4d8;
       font-size: 14px;
     }
     input:focus {
-      outline: none;
-      border-color: #3b82f6;
+      outline: none; border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
     }
     button {
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
+      padding: 10px 14px; border-radius: 10px;
+      border: none; cursor: pointer;
+      font-weight: 600; font-size: 14px;
       transition: all 0.15s ease;
     }
-    button:active {
-      transform: scale(0.97);
-    }
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .btn-scan {
-      background: #3b82f6;
-      color: #ffffff;
-      white-space: nowrap;
-    }
-    .btn-dispense {
-      background: #10b981;
-      color: #ffffff;
-      width: 100%;
-      margin-top: 10px;
-    }
-    .btn-dispense.secondary {
-      background: #6b7280;
-    }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-scan { background: #3b82f6; color: #ffffff; white-space: nowrap; }
+    .btn-dispense { background: #10b981; color: #ffffff; width: 100%; margin-top: 10px; }
+    .btn-dispense.secondary { background: #6b7280; }
+
     .status-chip {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: #ffffff;
+      display: inline-block; padding: 4px 10px;
+      border-radius: 999px; font-size: 11px;
+      font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: #ffffff;
     }
     .status-paid   { background: #16a34a; }
     .status-used   { background: #6b7280; }
     .status-pend   { background: #f97316; }
     .status-invalid{ background: #ef4444; }
 
-    #voucherData p {
-      margin: 4px 0;
-      font-size: 14px;
-      color: #374151;
-    }
-    #voucherData p strong {
-      color: #111827;
-    }
-    #statusMsg {
-      margin-top: 10px;
-      font-size: 14px;
-    }
+    #voucherData p { margin: 4px 0; font-size: 14px; color: #374151; }
+    #voucherData p strong { color: #111827; }
+    #statusMsg { margin-top: 10px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -124,7 +70,7 @@
       <button class="btn-scan" onclick="loadVoucher()">Check</button>
     </div>
     <p style="margin:8px 0 0; font-size:12px; color:#6b7280;">
-      Tip: QR from customer will open this page with voucher pre‑filled.
+      Tip: QR from customer will open this page with voucher pre-filled.
     </p>
   </div>
 
@@ -139,8 +85,6 @@
 </div>
 
 <script>
-// If you host frontend and backend together (current setup), this works automatically.
-// If you later host frontend separately, set localStorage.FUELSKIP_API = "https://...".
 const API = localStorage.getItem('FUELSKIP_API') || window.location.origin;
 
 function getAttendantToken() {
@@ -151,44 +95,43 @@ function getAttendantToken() {
   }
   return tok || '';
 }
+
 let currentVoucherId     = null;
 let currentVoucherStatus = null;
+let currentSig = ""; // ✅ NEW
 
-// read ?voucher=... from URL
-function getVoucherFromUrl() {
+function getParams() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("voucher");
+  return {
+    voucher: params.get("voucher") || "",
+    sig: params.get("sig") || ""
+  };
 }
 
 // on page load, auto-fill from QR link
 window.addEventListener("load", () => {
-  const vid = getVoucherFromUrl();
-  if (vid) {
-    document.getElementById("voucherInput").value = vid;
+  const p = getParams();
+  if (p.voucher) {
+    document.getElementById("voucherInput").value = p.voucher;
+    currentSig = p.sig || "";
     loadVoucher();
   }
 });
 
-// NO EXPIRY: status chip only depends on status + used
 function formatStatusChip(status, used) {
-  if (used) {
-    return '<span class="status-chip status-used">USED</span>';
-  }
-  if (status === 'paid') {
-    return '<span class="status-chip status-paid">PAID</span>';
-  }
-  if (status === 'pending') {
-    return '<span class="status-chip status-pend">PENDING</span>';
-  }
+  if (used) return '<span class="status-chip status-used">USED</span>';
+  if (status === 'paid') return '<span class="status-chip status-paid">PAID</span>';
+  if (status === 'pending') return '<span class="status-chip status-pend">PENDING</span>';
   return '<span class="status-chip status-invalid">' + (status || 'INVALID').toUpperCase() + '</span>';
 }
 
 async function loadVoucher() {
   const voucherId = document.getElementById('voucherInput').value.trim();
-  if (!voucherId) {
-    alert('Enter or scan a voucher ID');
-    return;
-  }
+  if (!voucherId) { alert('Enter or scan a voucher ID'); return; }
+
+  // If user manually pasted voucher id, sig may be missing
+  const p = getParams();
+  if (p.voucher && p.voucher === voucherId) currentSig = p.sig || currentSig;
 
   const infoBox     = document.getElementById('voucherInfo');
   const dataDiv     = document.getElementById('voucherData');
@@ -215,23 +158,30 @@ async function loadVoucher() {
       <p><strong>Customer:</strong> ${
         voucher.user_name
           ? voucher.user_name + ' (' + (voucher.user_phone || 'no phone') + ')'
-          : 'Walk‑in / No user'
+          : 'Walk-in / No user'
       }</p>
       <p><strong>Amount:</strong> ₹${voucher.amount}</p>
       <p><strong>Litres:</strong> ${voucher.litres} L</p>
       <p><strong>Vehicle:</strong> ${voucher.vehicle_type || '-'} ${voucher.vehicle_no ? '• ' + voucher.vehicle_no : ''}</p>
       <p><strong>Status:</strong> ${statusChip}</p>
       <p><strong>Expires:</strong> Never</p>
+      <p><strong>QR Signature:</strong> ${currentSig ? '<span style="color:#16a34a;font-weight:700;">OK</span>' : '<span style="color:#ef4444;font-weight:700;">MISSING</span>'}</p>
     `;
 
     infoBox.style.display = 'block';
 
-    // VALID ONLY BY STATUS, NO TIME LIMIT
     const valid = voucher.status === 'paid' && !voucher.used;
 
     if (valid) {
+      if (!currentSig) {
+        statusDiv.innerHTML =
+          '<p style="color:#ef4444;">❌ QR signature missing. Please scan the customer QR (do not manually type voucher).</p>';
+        dispenseBtn.style.display = 'none';
+        return;
+      }
+
       statusDiv.innerHTML =
-        '<p style="color:#16a34a;">✅ Voucher is valid. Confirm and tap “Dispense Fuel”.</p>';
+        '<p style="color:#16a34a;">✅ Voucher is valid. Tap “Dispense Fuel”.</p>';
       dispenseBtn.textContent   = '✅ Dispense Fuel';
       dispenseBtn.className     = 'btn-dispense';
       dispenseBtn.disabled      = false;
@@ -240,8 +190,6 @@ async function loadVoucher() {
       statusDiv.innerHTML = '<p style="color:#6b7280;">⚠️ This voucher is already used.</p>';
     } else if (voucher.status === 'pending') {
       statusDiv.innerHTML = '<p style="color:#f97316;">⏳ Payment pending – ask customer to complete payment.</p>';
-    } else if (voucher.status === 'failed') {
-      statusDiv.innerHTML = '<p style="color:#ef4444;">❌ Payment failed – ask customer to retry.</p>';
     } else if (voucher.status === 'failed') {
       statusDiv.innerHTML = '<p style="color:#ef4444;">❌ Payment failed – ask customer to retry.</p>';
     } else {
@@ -262,16 +210,24 @@ async function validateAndDispense() {
   btn.textContent = '⏳ Validating...';
 
   try {
-    const res = await fetch(`${API}/validate/${encodeURIComponent(currentVoucherId)}`, {
+    const res = await fetch(`${API}/validate/${encodeURIComponent(currentVoucherId)}?sig=${encodeURIComponent(currentSig || "")}`, {
       method: 'POST',
       headers: {
         'X-ATTENDANT-TOKEN': getAttendantToken()
       }
     });
+
     if (res.ok) {
-      statusDiv.innerHTML =
-        '<p style="color:#10b981; font-size:16px;">✅ VALIDATED – FUEL DISPENSED</p>';
-      btn.textContent = '✔️ Dispensed';
+      const data = await res.json();
+      if (data.already_used) {
+        statusDiv.innerHTML =
+          '<p style="color:#6b7280; font-size:16px;">⚠️ Already used (no action needed)</p>';
+        btn.textContent = '✔️ Already Used';
+      } else {
+        statusDiv.innerHTML =
+          '<p style="color:#10b981; font-size:16px;">✅ VALIDATED – FUEL DISPENSED</p>';
+        btn.textContent = '✔️ Dispensed';
+      }
       btn.className   = 'btn-dispense secondary';
     } else {
       const err = await res.json();
