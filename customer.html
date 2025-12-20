@@ -11,164 +11,161 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
+    :root{
+      /* PhonePe-like primary */
+      --primary: #7c3aed;     /* purple */
+      --primary2:#6d28d9;
+      --bg: #0b1020;
+      --panel: rgba(10,14,28,0.86);
+      --panel2: rgba(15,23,42,0.62);
+      --border: rgba(148,163,184,0.14);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+
+      --success:#22c55e;
+      --danger:#ef4444;
+      --warn:#f97316;
+      --gray:#334155;
+      --dark:#111827;
+    }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(1200px 800px at 20% 20%, rgba(99,102,241,0.25), transparent 55%),
-                  radial-gradient(900px 700px at 90% 10%, rgba(34,197,94,0.18), transparent 55%),
-                  #0f172a;
-      color: #e5e7eb;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 800px at 12% 10%, rgba(124,58,237,0.25), transparent 60%),
+        radial-gradient(900px 700px at 90% 20%, rgba(34,197,94,0.12), transparent 60%),
+        var(--bg);
     }
 
-    .app {
-      display: flex;
-      min-height: 100vh;
-    }
+    .app { display:flex; min-height:100vh; }
 
     /* Sidebar */
-    .sidebar {
-      width: 260px;
-      background: rgba(2,6,23,0.85);
-      border-right: 1px solid rgba(148,163,184,0.15);
-      padding: 18px 14px;
+    .sidebar{
+      width:260px;
+      background: var(--panel);
+      border-right:1px solid var(--border);
+      padding:18px 14px;
       position: sticky;
-      top: 0;
-      height: 100vh;
+      top:0; height:100vh;
     }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 950;
-      font-size: 18px;
-      margin-bottom: 16px;
-    }
-    .brand span {
-      color: #93c5fd;
-    }
-
-    .userbox {
-      background: rgba(15,23,42,0.65);
-      border: 1px solid rgba(148,163,184,0.15);
-      border-radius: 16px;
-      padding: 12px;
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:1000; font-size:18px;
       margin-bottom: 14px;
     }
-    .userbox .name { font-weight: 950; }
-    .userbox .phone { font-size: 12px; color: #94a3b8; font-weight: 700; margin-top: 2px; }
-    .userbox .bal { margin-top: 10px; display:flex; justify-content:space-between; align-items:center; }
-    .userbox .bal .amt { font-weight: 950; color: #86efac; }
+    .brand span{ color: #c4b5fd; }
 
-    .nav {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
+    .userbox{
+      background: var(--panel2);
+      border:1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
-    .nav button {
-      width: 100%;
-      background: rgba(15,23,42,0.55);
-      border: 1px solid rgba(148,163,184,0.15);
-      color: #e5e7eb;
+    .userbox .name{ font-weight:1000; }
+    .userbox .phone{ font-size:12px; color: var(--muted); font-weight:800; margin-top:2px; }
+    .userbox .bal{ margin-top:10px; display:flex; justify-content:space-between; align-items:center; }
+    .userbox .bal .amt{ font-weight:1000; color:#86efac; }
+
+    .nav{ display:flex; flex-direction:column; gap:8px; margin-top: 8px; }
+    .nav button{
+      width:100%;
+      background: var(--panel2);
+      border:1px solid var(--border);
+      color: var(--text);
       padding: 10px 12px;
       border-radius: 14px;
-      cursor: pointer;
-      font-weight: 900;
-      text-align: left;
-    }
-    .nav button.active {
-      outline: 2px solid rgba(99,102,241,0.55);
-      background: rgba(30,41,59,0.6);
-    }
-
-    .logoutBtn {
-      margin-top: 14px;
-      width: 100%;
-      background: rgba(239,68,68,0.9);
-      color: #2a0b0b;
-      border: none;
-      padding: 10px 12px;
-      border-radius: 14px;
-      cursor: pointer;
+      cursor:pointer;
       font-weight: 950;
+      text-align:left;
+    }
+    .nav button.active{
+      outline: 2px solid rgba(124,58,237,0.55);
+      background: rgba(124,58,237,0.12);
+    }
+
+    .logoutBtn{
+      margin-top: 14px;
+      width:100%;
+      background: rgba(239,68,68,0.92);
+      color:#2a0b0b;
+      border:none;
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:1000;
     }
 
     /* Main */
-    .main {
-      flex: 1;
-      padding: 18px;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      width: 100%;
-      max-width: 860px;
-    }
+    .main{ flex:1; padding:18px; display:flex; justify-content:center; }
+    .container{ width:100%; max-width: 900px; }
 
-    /* Cards */
-    .card {
-      background: rgba(2,6,23,0.85);
-      border: 1px solid rgba(148,163,184,0.15);
+    .card{
+      background: var(--panel);
+      border: 1px solid var(--border);
       border-radius: 18px;
       padding: 16px;
       box-shadow: 0 14px 35px rgba(0,0,0,0.35);
       margin-bottom: 14px;
     }
-    .cardTitle {
-      font-weight: 1000;
-      font-size: 18px;
-      margin-bottom: 6px;
-    }
-    .muted { font-size: 12px; color: #94a3b8; font-weight: 700; line-height: 1.45; }
 
-    label { display:block; margin-top: 10px; margin-bottom: 6px; font-size: 12px; color:#93a4b8; font-weight: 900; }
-    input, select {
-      width: 100%;
+    .cardTitle{ font-weight:1000; font-size:18px; margin-bottom: 6px; }
+    .muted{ font-size:12px; color: var(--muted); font-weight:800; line-height: 1.45; }
+
+    label{ display:block; margin-top:10px; margin-bottom:6px; font-size:12px; color:#a5b4fc; font-weight:1000; }
+    input, select{
+      width:100%;
       padding: 10px 12px;
       border-radius: 14px;
-      border: 1px solid rgba(148,163,184,0.18);
-      background: rgba(15,23,42,0.6);
-      color: #e5e7eb;
-      outline: none;
-      font-weight: 800;
+      border: 1px solid var(--border);
+      background: rgba(2,6,23,0.35);
+      color: var(--text);
+      outline:none;
+      font-weight: 850;
     }
-    .row { display: flex; gap: 12px; }
-    .row > div { flex: 1; }
 
-    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
-    .chip {
+    .row{ display:flex; gap:12px; }
+    .row > div{ flex:1; }
+
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .chip{
       padding: 8px 10px;
       border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.18);
-      background: rgba(15,23,42,0.6);
-      cursor: pointer;
-      font-weight: 950;
-      user-select: none;
+      border: 1px solid var(--border);
+      background: rgba(2,6,23,0.35);
+      cursor:pointer;
+      font-weight:1000;
+      user-select:none;
     }
 
-    .btnRow { display:flex; gap: 10px; margin-top: 10px; }
-    .btn {
-      border: none;
-      border-radius: 14px;
-      padding: 10px 12px;
-      font-weight: 950;
-      cursor: pointer;
+    .btn{ border:none; border-radius:14px; padding: 10px 12px; font-weight:1000; cursor:pointer; }
+    .btn:disabled{ opacity: .65; cursor:not-allowed; }
+    .btnPrimary{ background: var(--primary); color:#f8fafc; }
+    .btnPrimary:hover{ background: var(--primary2); }
+    .btnGray{ background: var(--gray); color: var(--text); }
+    .btnDark{ background: var(--dark); color: var(--text); }
+    .btnGreen{ background: var(--success); color:#06240f; }
+    .btnOutline{
+      background: transparent;
+      border:1px solid rgba(124,58,237,0.45);
+      color:#e5e7eb;
     }
-    .btnGreen { background: #22c55e; color: #06240f; }
-    .btnBlue { background: #3b82f6; color: #061628; }
-    .btnGray { background: #334155; color: #e5e7eb; }
-    .btnDark { background: #111827; color: #e5e7eb; }
-    .btn:disabled { opacity: .65; cursor: not-allowed; }
 
-    .toggle { display:flex; gap: 10px; margin-top: 10px; }
-    .toggle .btn { flex: 1; }
-    .activePay { outline: 2px solid rgba(34,197,94,0.6); }
+    .toggle{ display:flex; gap:10px; margin-top:10px; }
+    .toggle .btn{ flex:1; }
+    .activePay{ outline:2px solid rgba(124,58,237,0.55); }
+
+    .statusLine{ margin-top:10px; font-weight:950; font-size:13px; }
+    .ok{ color:#86efac; }
+    .warn{ color:#fca5a5; }
+    .info{ color:#c4b5fd; }
 
     /* QR */
-    #qrWrap { display:none; }
-    #qrBox {
+    #qrWrap{ display:none; }
+    #qrBox{
       background:#fff;
       border-radius: 16px;
       padding: 12px;
@@ -177,22 +174,13 @@
       margin-top: 10px;
       overflow:hidden;
     }
-    code { color:#93c5fd; word-break: break-all; }
-
-    .statusLine {
-      margin-top: 10px;
-      font-weight: 950;
-      font-size: 13px;
-    }
-    .ok { color:#86efac; }
-    .warn { color:#fca5a5; }
-    .info { color:#93c5fd; }
+    code{ color:#c4b5fd; word-break: break-all; }
 
     /* Lists */
-    .list { margin-top: 10px; display:flex; flex-direction:column; gap: 10px; }
-    .item {
-      background: rgba(15,23,42,0.55);
-      border: 1px solid rgba(148,163,184,0.15);
+    .list{ margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+    .item{
+      background: var(--panel2);
+      border: 1px solid var(--border);
       border-radius: 16px;
       padding: 12px;
       display:flex;
@@ -200,49 +188,47 @@
       align-items:center;
       gap: 10px;
     }
-    .item .t { font-weight: 1000; }
-    .item .s { font-size: 12px; color: #94a3b8; font-weight: 800; margin-top: 4px; }
-    .item .right { display:flex; gap: 8px; }
-    .pill { font-size: 11px; font-weight: 950; padding: 4px 10px; border-radius: 999px; }
-    .pillPaid { background:#16a34a; color:#06240f; }
-    .pillUsed { background:#6b7280; color:#0b1220; }
-    .pillPending { background:#f97316; color:#2a0b0b; }
+    .item .t{ font-weight:1000; }
+    .item .s{ font-size:12px; color: var(--muted); font-weight:850; margin-top: 4px; }
+    .item .right{ display:flex; gap: 8px; flex-wrap:wrap; justify-content:flex-end; }
 
-    /* Mobile sidebar toggle */
-    .topbar {
+    .pill{ font-size:11px; font-weight:1000; padding: 4px 10px; border-radius: 999px; }
+    .pillPaid{ background:#16a34a; color:#06240f; }
+    .pillUsed{ background:#64748b; color:#0b1020; }
+    .pillPending{ background:#f59e0b; color:#1a1306; }
+    .pillFailed{ background:#ef4444; color:#2a0b0b; }
+
+    /* Mobile topbar */
+    .topbar{
       display:none;
       padding: 14px 16px;
-      background: rgba(2,6,23,0.85);
-      border-bottom: 1px solid rgba(148,163,184,0.15);
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 10;
     }
-    .topbar .row1 {
-      display:flex; justify-content:space-between; align-items:center;
-    }
-    .hamburger {
-      background: rgba(15,23,42,0.65);
-      border: 1px solid rgba(148,163,184,0.15);
-      color: #e5e7eb;
+    .topbar .row1{ display:flex; justify-content:space-between; align-items:center; }
+    .hamburger{
+      background: rgba(2,6,23,0.35);
+      border:1px solid var(--border);
+      color: var(--text);
       padding: 8px 10px;
       border-radius: 12px;
-      cursor: pointer;
-      font-weight: 950;
+      cursor:pointer;
+      font-weight:1000;
     }
-    .sidebar.mobileHidden { display:none; }
+    .sidebar.mobileHidden{ display:none; }
 
     @media (max-width: 820px) {
-      .topbar { display:block; }
-      .sidebar { position: fixed; z-index: 20; left: 0; top: 0; height: 100vh; }
-      .main { padding: 12px; }
+      .topbar{ display:block; }
+      .sidebar{ position: fixed; z-index: 20; left:0; top:0; height:100vh; }
+      .main{ padding: 12px; }
     }
   </style>
 </head>
 
 <body>
-
-<!-- Mobile topbar -->
 <div class="topbar">
   <div class="row1">
     <div style="font-weight:1000;">⛽ FuelSkip</div>
@@ -254,7 +240,7 @@
   <aside class="sidebar mobileHidden" id="sidebar">
     <div class="brand">⛽ <span>FuelSkip</span></div>
 
-    <div class="userbox" id="userBox">
+    <div class="userbox">
       <div class="name" id="sbName">Not logged in</div>
       <div class="phone" id="sbPhone"></div>
       <div class="bal">
@@ -264,7 +250,7 @@
     </div>
 
     <div class="nav">
-      <button id="navDash" class="active" onclick="go('dashboard')">🧾 Dashboard</button>
+      <button id="navDash" class="active" onclick="go('dashboard')">🏠 Dashboard</button>
       <button id="navVouchers" onclick="go('vouchers')">🎟️ Vouchers</button>
       <button id="navVehicles" onclick="go('vehicles')">🚗 Vehicles</button>
       <button id="navStations" onclick="go('stations')">⛽ Stations</button>
@@ -280,7 +266,7 @@
   <main class="main">
     <div class="container">
 
-      <!-- LOGIN PAGE -->
+      <!-- LOGIN -->
       <div class="card" id="pageLogin">
         <div class="cardTitle">Login</div>
         <div class="muted">MVP: no OTP. Wallet is linked to phone.</div>
@@ -291,8 +277,7 @@
         <label>Name (optional)</label>
         <input id="name" placeholder="Your name" />
 
-        <button class="btn btnBlue" style="width:100%;margin-top:12px;" onclick="login()">Login</button>
-
+        <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="login()">Login</button>
         <div class="statusLine" id="loginStatus"></div>
       </div>
 
@@ -320,8 +305,7 @@
             <div class="chip" onclick="setTopup(2000)">₹2000</div>
           </div>
           <input id="topupAmount" placeholder="Custom amount (min ₹50)" inputmode="decimal" />
-
-          <button class="btn btnGreen" style="width:100%;margin-top:12px;" onclick="topupWallet()">Add Money</button>
+          <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="topupWallet()">Add Money</button>
           <div class="statusLine" id="topupStatus"></div>
         </div>
 
@@ -336,11 +320,8 @@
           <div class="cardTitle">Create Voucher</div>
           <div class="muted">Prefer Wallet for fastest bunk experience.</div>
 
-          <label>Bunk</label>
-          <select id="bunk">
-            <option value="BUNK-1">BUNK-1</option>
-            <option value="BUNK-2">BUNK-2</option>
-          </select>
+          <label>Station</label>
+          <select id="bunk"></select>
 
           <div class="row">
             <div>
@@ -379,56 +360,58 @@
 
           <label>Payment method</label>
           <div class="toggle">
-            <button id="btnWallet" class="btn btnGreen activePay" onclick="setPay('wallet')">Wallet (Fast)</button>
-            <button id="btnRzp" class="btn btnBlue" onclick="setPay('razorpay')">Razorpay</button>
+            <button id="btnWallet" class="btn btnPrimary activePay" onclick="setPay('wallet')">Wallet (Fast)</button>
+            <button id="btnRzp" class="btn btnOutline" onclick="setPay('razorpay')">Razorpay</button>
           </div>
 
-          <button class="btn btnGreen" style="width:100%;margin-top:12px;" id="createBtn" onclick="createVoucher()">Generate Voucher</button>
+          <button class="btn btnPrimary" style="width:100%;margin-top:12px;" id="createBtn" onclick="createVoucher()">Generate Voucher</button>
           <div class="statusLine" id="statusLine"></div>
 
-          <!-- QR output (same card) -->
           <div id="qrWrap">
             <div class="cardTitle" style="margin-top:14px;">Your Voucher QR</div>
-            <div class="muted">Show this to attendant (they scan inside their page).</div>
+            <div class="muted" id="qrSubText">Show this to attendant (they scan inside their page).</div>
+
             <div id="qrBox"><div id="qr"></div></div>
+
             <div class="muted" style="margin-top:10px;">
+              Station: <b id="qrStationName"></b><br/>
               Voucher: <code id="vId"></code><br/>
               Signature: <code id="vSig"></code><br/>
               Link: <code id="vLink"></code>
             </div>
-            <div class="btnRow">
-              <button class="btn btnGray" onclick="hideQR()">Create another</button>
-              <button class="btn btnGray" onclick="copyLink()">Copy link</button>
+
+            <div class="row" style="margin-top:10px;">
+              <div><button class="btn btnGray" style="width:100%;" onclick="hideQR()">Create another</button></div>
+              <div><button class="btn btnGray" style="width:100%;" onclick="copyLink()">Copy link</button></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- VOUCHERS PAGE -->
+      <!-- VOUCHERS -->
       <div class="card" id="pageVouchers" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="cardTitle">My Vouchers</div>
           <button class="btn btnGray" onclick="loadVouchers()">Refresh</button>
         </div>
-        <div class="muted">Wallet makes new vouchers instant. (For security, only the latest voucher can re-show QR without extra endpoint.)</div>
+        <div class="muted">
+          After dispensing, status becomes USED (auto-refresh will update).
+        </div>
         <div class="list" id="voucherList"></div>
       </div>
 
-      <!-- VEHICLES PAGE -->
+      <!-- VEHICLES -->
       <div class="card" id="pageVehicles" style="display:none;">
         <div class="cardTitle">Vehicles</div>
         <div class="muted">
-          MVP: we store vehicle type/no in vouchers. Next upgrade: save multiple vehicles and 1-tap select.
-        </div>
-        <div class="muted" style="margin-top:10px;">
-          For now use the fields in “Create Voucher”.
+          Next upgrade: save multiple vehicles + 1-tap select. For now use fields in “Create Voucher”.
         </div>
       </div>
 
-      <!-- STATIONS PAGE -->
+      <!-- STATIONS -->
       <div class="card" id="pageStations" style="display:none;">
         <div class="cardTitle">Stations</div>
-        <div class="muted">MVP: static station list. Next upgrade: GPS nearby bunks + queue indicator.</div>
+        <div class="muted">Select a station to set as default for voucher creation.</div>
         <div class="list" id="stationList"></div>
       </div>
 
@@ -439,61 +422,95 @@
 <script>
   const API = window.location.origin;
 
+  // ✅ Station mapping (IDs -> Names)
+  const BUNK_META = {
+    "BUNK-1": { name: "BPCL Siripuram", address: "Siripuram, Visakhapatnam" },
+    "BUNK-2": { name: "Gajuwaka Expressway", address: "Gajuwaka, Visakhapatnam" }
+  };
+
+  function bunkName(id){
+    return (BUNK_META[id] && BUNK_META[id].name) ? BUNK_META[id].name : id;
+  }
+  function bunkAddress(id){
+    return (BUNK_META[id] && BUNK_META[id].address) ? BUNK_META[id].address : "";
+  }
+
   let state = {
     user_id: null,
     phone: "",
     name: "",
     wallet_balance: 0,
     pay_method: "wallet",
-
     last_bunk: "BUNK-1",
     last_amount: 300,
     last_vehicle_type: "",
     last_vehicle_no: "",
     last_voucher_id: "",
-    last_sig: ""
+    last_sig: "",
+    last_qr_station: "BUNK-1"
   };
 
-  function loadState() {
-    const raw = localStorage.getItem("FUELSKIP_USER");
-    if (!raw) return;
-    try {
-      const s = JSON.parse(raw);
-      if (s && s.user_id) state = {...state, ...s};
-    } catch {}
-  }
-  function saveState() {
-    localStorage.setItem("FUELSKIP_USER", JSON.stringify(state));
-  }
+  let vouchersAutoRefreshTimer = null;
 
-  function fmtINR(x) {
+  function loadState(){
+    const raw = localStorage.getItem("FUELSKIP_USER");
+    if(!raw) return;
+    try{
+      const s = JSON.parse(raw);
+      if(s && s.user_id) state = {...state, ...s};
+    }catch{}
+  }
+  function saveState(){ localStorage.setItem("FUELSKIP_USER", JSON.stringify(state)); }
+
+  function fmtINR(x){
     const n = Number(x || 0);
     return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
   }
 
-  function toggleSidebar() {
-    const sb = document.getElementById("sidebar");
-    sb.classList.toggle("mobileHidden");
+  function toggleSidebar(){
+    document.getElementById("sidebar").classList.toggle("mobileHidden");
   }
 
-  function setSidebarUser() {
+  function setSidebarUser(){
     document.getElementById("sbName").textContent = state.name || "User";
     document.getElementById("sbPhone").textContent = state.phone || "";
     document.getElementById("sbBal").textContent = fmtINR(state.wallet_balance);
     document.getElementById("balText").textContent = fmtINR(state.wallet_balance);
   }
 
-  function setPay(m) {
+  function setPay(m){
     state.pay_method = m;
     saveState();
     document.getElementById("btnWallet").classList.toggle("activePay", m === "wallet");
     document.getElementById("btnRzp").classList.toggle("activePay", m === "razorpay");
   }
 
-  function setTopup(v) { document.getElementById("topupAmount").value = String(v); }
-  function quickAmount(v) { document.getElementById("amount").value = String(v); document.getElementById("litres").value = ""; }
+  function setTopup(v){ document.getElementById("topupAmount").value = String(v); }
+  function quickAmount(v){ document.getElementById("amount").value = String(v); document.getElementById("litres").value = ""; }
 
-  function applyDefaults() {
+  function renderLastInfo(){
+    const el = document.getElementById("lastInfo");
+    if(state.last_amount && state.last_bunk){
+      el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> at <span class="info">${bunkName(state.last_bunk)}</span>`;
+    } else {
+      el.textContent = "No previous voucher yet.";
+    }
+  }
+
+  function populateBunkDropdown(){
+    const sel = document.getElementById("bunk");
+    sel.innerHTML = "";
+
+    Object.keys(BUNK_META).forEach(id => {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `${bunkName(id)} (${id})`;
+      sel.appendChild(opt);
+    });
+  }
+
+  function applyDefaults(){
+    populateBunkDropdown();
     document.getElementById("bunk").value = state.last_bunk || "BUNK-1";
     document.getElementById("amount").value = state.last_amount ? String(state.last_amount) : "";
     document.getElementById("litres").value = "";
@@ -503,136 +520,114 @@
     renderLastInfo();
   }
 
-  function renderLastInfo() {
-    const el = document.getElementById("lastInfo");
-    if (state.last_amount && state.last_bunk) {
-      el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> at <span class="ok">${state.last_bunk}</span>`;
-    } else {
-      el.textContent = "No previous voucher yet.";
-    }
-  }
-
-  function hideQR() {
-    document.getElementById("qrWrap").style.display = "none";
-    document.getElementById("qr").innerHTML = "";
-    document.getElementById("statusLine").innerHTML = "";
-  }
-
-  async function login() {
-    const phone = (document.getElementById("phone").value || "").trim();
-    const name = (document.getElementById("name").value || "").trim();
-    const st = document.getElementById("loginStatus");
-    st.textContent = "";
-
-    if (!phone || phone.length < 8) {
-      st.innerHTML = `<span class="warn">❌</span> Enter phone`;
-      return;
-    }
-
-    st.innerHTML = `<span class="info">⏳</span> Logging in…`;
-
-    try {
-      const res = await fetch(`${API}/login`, {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ phone, name })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Login failed");
-
-      state.user_id = data.user_id;
-      state.phone = data.phone;
-      state.name = data.name || name || "";
-      state.wallet_balance = Number(data.wallet_balance || 0);
-
-      saveState();
-      st.innerHTML = `<span class="ok">✅</span> Logged in`;
-      bootAfterLogin();
-    } catch (e) {
-      st.innerHTML = `<span class="warn">❌</span> ${e.message}`;
-      alert(e.message);
-    }
-  }
-
-  function logout() {
-    localStorage.removeItem("FUELSKIP_USER");
-    state = {
-      user_id: null, phone:"", name:"", wallet_balance:0, pay_method:"wallet",
-      last_bunk:"BUNK-1", last_amount:300, last_vehicle_type:"", last_vehicle_no:"",
-      last_voucher_id:"", last_sig:""
-    };
-    location.reload();
-  }
-
-  function showPage(p) {
+  function showPage(p){
     document.getElementById("pageLogin").style.display = "none";
     document.getElementById("pageDashboard").style.display = "none";
     document.getElementById("pageVouchers").style.display = "none";
     document.getElementById("pageVehicles").style.display = "none";
     document.getElementById("pageStations").style.display = "none";
 
-    if (p === "login") document.getElementById("pageLogin").style.display = "";
-    if (p === "dashboard") document.getElementById("pageDashboard").style.display = "";
-    if (p === "vouchers") document.getElementById("pageVouchers").style.display = "";
-    if (p === "vehicles") document.getElementById("pageVehicles").style.display = "";
-    if (p === "stations") document.getElementById("pageStations").style.display = "";
+    if(p==="login") document.getElementById("pageLogin").style.display = "";
+    if(p==="dashboard") document.getElementById("pageDashboard").style.display = "";
+    if(p==="vouchers") document.getElementById("pageVouchers").style.display = "";
+    if(p==="vehicles") document.getElementById("pageVehicles").style.display = "";
+    if(p==="stations") document.getElementById("pageStations").style.display = "";
   }
 
-  function setNavActive(id) {
-    ["navDash","navVouchers","navVehicles","navStations"].forEach(x => {
-      document.getElementById(x).classList.remove("active");
-    });
+  function setNavActive(id){
+    ["navDash","navVouchers","navVehicles","navStations"].forEach(x=>document.getElementById(x).classList.remove("active"));
     document.getElementById(id).classList.add("active");
   }
 
-  function go(where) {
-    if (window.innerWidth <= 820) {
+  function go(where){
+    // stop auto refresh when leaving vouchers page
+    if(where !== "vouchers") stopVouchersAutoRefresh();
+
+    if(window.innerWidth <= 820){
       document.getElementById("sidebar").classList.add("mobileHidden");
     }
-    if (where === "dashboard") { setNavActive("navDash"); showPage("dashboard"); }
-    if (where === "vouchers") { setNavActive("navVouchers"); showPage("vouchers"); loadVouchers(); }
-    if (where === "vehicles") { setNavActive("navVehicles"); showPage("vehicles"); }
-    if (where === "stations") { setNavActive("navStations"); showPage("stations"); loadStations(); }
+    if(where==="dashboard"){ setNavActive("navDash"); showPage("dashboard"); }
+    if(where==="vouchers"){ setNavActive("navVouchers"); showPage("vouchers"); loadVouchers(); startVouchersAutoRefresh(); }
+    if(where==="vehicles"){ setNavActive("navVehicles"); showPage("vehicles"); }
+    if(where==="stations"){ setNavActive("navStations"); showPage("stations"); loadStations(); }
   }
 
-  async function refreshBalance() {
-    if (!state.user_id) return;
+  async function login(){
+    const phone = (document.getElementById("phone").value || "").trim();
+    const name = (document.getElementById("name").value || "").trim();
+    const st = document.getElementById("loginStatus");
+    st.textContent = "";
+
+    if(!phone || phone.length < 8){
+      st.innerHTML = `<span class="warn">❌</span> Enter phone`;
+      return;
+    }
+
+    st.innerHTML = `<span class="info">⏳</span> Logging in…`;
+    try{
+      const res = await fetch(`${API}/login`, {
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ phone, name })
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.detail || "Login failed");
+
+      state.user_id = data.user_id;
+      state.phone = data.phone;
+      state.name = data.name || name || "";
+      state.wallet_balance = Number(data.wallet_balance || 0);
+      saveState();
+
+      bootAfterLogin();
+    }catch(e){
+      st.innerHTML = `<span class="warn">❌</span> ${e.message}`;
+      alert(e.message);
+    }
+  }
+
+  function logout(){
+    stopVouchersAutoRefresh();
+    localStorage.removeItem("FUELSKIP_USER");
+    location.reload();
+  }
+
+  async function refreshBalance(){
+    if(!state.user_id) return;
     const res = await fetch(`${API}/wallet/balance?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
     const data = await res.json();
-    if (res.ok) {
+    if(res.ok){
       state.wallet_balance = Number(data.wallet_balance || 0);
       saveState();
       setSidebarUser();
     }
   }
 
-  async function refreshAll() {
+  async function refreshAll(){
     await refreshBalance();
     await loadVouchers(false);
   }
 
-  async function topupWallet() {
+  async function topupWallet(){
     const status = document.getElementById("topupStatus");
     status.textContent = "";
-
-    if (!state.user_id) { alert("Login first"); return; }
+    if(!state.user_id){ alert("Login first"); return; }
 
     const amt = Number((document.getElementById("topupAmount").value || "").trim());
-    if (!amt || amt < 50) {
+    if(!amt || amt < 50){
       status.innerHTML = `<span class="warn">❌</span> Minimum topup is ₹50`;
       return;
     }
 
     status.innerHTML = `<span class="info">⏳</span> Creating order…`;
-
-    try {
+    try{
       const res = await fetch(`${API}/wallet/topup/create-order`, {
-        method: "POST",
+        method:"POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({ user_id: state.user_id, amount: amt })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Topup create failed");
+      if(!res.ok) throw new Error(data.detail || "Topup create failed");
 
       status.innerHTML = `<span class="info">⏳</span> Opening payment…`;
 
@@ -643,143 +638,168 @@
         name: "FuelSkip Wallet",
         description: "Wallet Top-up",
         order_id: data.razorpay_order_id,
-        handler: async function () {
+        handler: async function(){
           status.innerHTML = `<span class="ok">✅</span> Paid. Updating balance…`;
           await pollBalanceIncrease(amt);
         }
       };
-
       new Razorpay(options).open();
 
-    } catch (e) {
+    }catch(e){
       status.innerHTML = `<span class="warn">❌</span> ${e.message}`;
       alert(e.message);
     }
   }
 
-  async function pollBalanceIncrease(expectedDelta) {
+  async function pollBalanceIncrease(expectedDelta){
     const start = Number(state.wallet_balance || 0);
     const target = start + Number(expectedDelta || 0) * 0.3;
-    for (let i=0; i<10; i++) {
-      await new Promise(r => setTimeout(r, 2000));
+    for(let i=0;i<10;i++){
+      await new Promise(r=>setTimeout(r,2000));
       await refreshBalance();
-      if (Number(state.wallet_balance || 0) > target) return;
+      if(Number(state.wallet_balance || 0) > target) return;
     }
     alert("If balance not updated yet, press Refresh (webhook may be delayed).");
   }
 
-  function statusPill(v) {
+  function statusPill(v){
     const st = (v.status || "").toLowerCase();
-    if (v.used || st === "used") return `<span class="pill pillUsed">USED</span>`;
-    if (st === "paid") return `<span class="pill pillPaid">PAID</span>`;
+    const used = !!v.used || st === "used";
+    if(used) return `<span class="pill pillUsed">USED</span>`;
+    if(st === "paid") return `<span class="pill pillPaid">PAID</span>`;
+    if(st === "failed") return `<span class="pill pillFailed">FAILED</span>`;
     return `<span class="pill pillPending">${(v.status || "PENDING").toUpperCase()}</span>`;
   }
 
-  async function loadVouchers(showPageAfter=true) {
-    if (!state.user_id) return;
-    const box = document.getElementById("voucherList");
-    if (showPageAfter) showPage("vouchers");
-    box.innerHTML = `<div class="muted">Loading…</div>`;
+  function vStationLabel(v){
+    const id = v.bunk_id || "-";
+    return `${bunkName(id)} (${id})`;
+  }
 
-    try {
+  async function loadVouchers(showPageAfter=true){
+    if(!state.user_id) return;
+    const box = document.getElementById("voucherList");
+    if(showPageAfter) showPage("vouchers");
+
+    box.innerHTML = `<div class="muted">Loading…</div>`;
+    try{
       const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Failed to load");
+      if(!res.ok) throw new Error(data.detail || "Failed to load vouchers");
 
-      const list = (data || []).slice(0, 10);
-      if (!list.length) {
+      const list = (data || []).slice(0, 15);
+      if(!list.length){
         box.innerHTML = `<div class="muted">No vouchers yet.</div>`;
         return;
       }
 
       box.innerHTML = "";
-      list.forEach(v => {
+      list.forEach(v=>{
+        const amount = Number(v.amount || 0);
         const el = document.createElement("div");
         el.className = "item";
         el.innerHTML = `
           <div>
-            <div class="t">₹${Number(v.amount || 0).toFixed(0)} • ${v.bunk_id || "-"}</div>
+            <div class="t">₹${amount.toFixed(0)} • ${vStationLabel(v)}</div>
             <div class="s">${statusPill(v)} &nbsp; ${v.id}</div>
           </div>
           <div class="right">
-            <button class="btn btnGray" onclick="prefillFromVoucher('${v.bunk_id || "BUNK-1"}', ${Number(v.amount || 0)})">Repeat</button>
-            <button class="btn btnBlue" onclick="tryShowQR('${v.id}')">Show QR</button>
+            <button class="btn btnGray" onclick="prefillFromVoucher('${v.bunk_id || "BUNK-1"}', ${Math.round(amount)})">Repeat</button>
+            <button class="btn btnPrimary" onclick="tryShowQR('${v.id}')">Show QR</button>
           </div>
         `;
         box.appendChild(el);
       });
 
-    } catch (e) {
+    }catch(e){
       box.innerHTML = `<div class="muted"><span class="warn">❌</span> ${e.message}</div>`;
       alert(e.message);
     }
   }
 
-  function prefillFromVoucher(bunk, amount) {
+  function startVouchersAutoRefresh(){
+    stopVouchersAutoRefresh();
+    vouchersAutoRefreshTimer = setInterval(() => {
+      // refresh every 6 seconds while user is on vouchers page
+      loadVouchers(false);
+    }, 6000);
+  }
+  function stopVouchersAutoRefresh(){
+    if(vouchersAutoRefreshTimer){
+      clearInterval(vouchersAutoRefreshTimer);
+      vouchersAutoRefreshTimer = null;
+    }
+  }
+
+  function prefillFromVoucher(bunk, amount){
     go("dashboard");
     document.getElementById("bunk").value = bunk || "BUNK-1";
-    document.getElementById("amount").value = String(Math.round(amount || 0));
+    document.getElementById("amount").value = String(amount || 0);
     document.getElementById("litres").value = "";
     setPay("wallet");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function tryShowQR(voucherId) {
-    // Security: only latest stored signature can be shown without a server endpoint
-    if (state.last_voucher_id === voucherId && state.last_sig) {
-      showVoucherQR(voucherId, state.last_sig);
+  function tryShowQR(voucherId){
+    // only latest voucher QR can be re-shown without server endpoint
+    if(state.last_voucher_id === voucherId && state.last_sig){
+      showVoucherQR(voucherId, state.last_sig, state.last_qr_station || state.last_bunk || "BUNK-1");
       go("dashboard");
       document.getElementById("qrWrap").scrollIntoView({ behavior: "smooth", block: "start" });
+      // also refresh vouchers now (so USED updates soon)
+      loadVouchers(false);
     } else {
-      alert("For security, QR signature is not re-issued for old vouchers yet. Use Repeat (wallet is instant). If you want, we can add a secure endpoint to re-issue QR for your own vouchers.");
+      alert("For security, QR signature is not re-issued for old vouchers yet. Use Repeat (wallet is instant). If you want, we can add a secure endpoint so old vouchers can show QR too.");
     }
   }
 
-  async function loadStations() {
+  async function loadStations(){
     const list = document.getElementById("stationList");
     list.innerHTML = "";
-
-    // Static display (matches your backend bunks dict ids)
-    const items = [
-      { id:"BUNK-1", name:"BPCL Siripuram", addr:"Siripuram, Visakhapatnam" },
-      { id:"BUNK-2", name:"Gajuwaka Expressway", addr:"Gajuwaka, Visakhapatnam" }
-    ];
-
-    items.forEach(b => {
+    Object.keys(BUNK_META).forEach(id=>{
       const el = document.createElement("div");
       el.className = "item";
       el.innerHTML = `
         <div>
-          <div class="t">${b.name}</div>
-          <div class="s">${b.id} • ${b.addr}</div>
+          <div class="t">${bunkName(id)}</div>
+          <div class="s">${id} • ${bunkAddress(id)}</div>
         </div>
         <div class="right">
-          <button class="btn btnGreen" onclick="pickStation('${b.id}')">Select</button>
+          <button class="btn btnPrimary" onclick="pickStation('${id}')">Select</button>
         </div>
       `;
       list.appendChild(el);
     });
   }
 
-  function pickStation(id) {
+  function pickStation(id){
     state.last_bunk = id;
     saveState();
     applyDefaults();
     go("dashboard");
   }
 
-  function copyLink() {
-    const link = document.getElementById("vLink").textContent || "";
-    if (!link) return;
-    navigator.clipboard.writeText(link).then(() => alert("Link copied"));
+  function hideQR(){
+    document.getElementById("qrWrap").style.display = "none";
+    document.getElementById("qr").innerHTML = "";
+    document.getElementById("statusLine").innerHTML = "";
   }
 
-  function showVoucherQR(voucherId, sig) {
+  function copyLink(){
+    const link = document.getElementById("vLink").textContent || "";
+    if(!link) return;
+    navigator.clipboard.writeText(link).then(()=>alert("Link copied"));
+  }
+
+  function showVoucherQR(voucherId, sig, stationId){
     const link = `${window.location.origin}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`;
 
     document.getElementById("vId").textContent = voucherId;
     document.getElementById("vSig").textContent = sig;
     document.getElementById("vLink").textContent = link;
+
+    const stName = bunkName(stationId || "BUNK-1");
+    document.getElementById("qrStationName").textContent = stName;
 
     const qrEl = document.getElementById("qr");
     qrEl.innerHTML = "";
@@ -788,8 +808,8 @@
     document.getElementById("qrWrap").style.display = "block";
   }
 
-  async function repeatLast() {
-    if (!state.last_amount) {
+  async function repeatLast(){
+    if(!state.last_amount){
       alert("No last voucher yet. Create one first.");
       return;
     }
@@ -800,12 +820,11 @@
     await createVoucher();
   }
 
-  async function createVoucher() {
+  async function createVoucher(){
     const status = document.getElementById("statusLine");
     const btn = document.getElementById("createBtn");
     status.textContent = "";
-
-    if (!state.user_id) { alert("Login first"); return; }
+    if(!state.user_id){ alert("Login first"); return; }
 
     const bunk_id = document.getElementById("bunk").value;
     const amountStr = (document.getElementById("amount").value || "").trim();
@@ -820,10 +839,10 @@
       vehicle_no: vehicle_no || null,
       pay_method: state.pay_method || "wallet",
     };
-    if (amountStr) payload.amount = Number(amountStr);
-    if (litresStr) payload.litres = Number(litresStr);
+    if(amountStr) payload.amount = Number(amountStr);
+    if(litresStr) payload.litres = Number(litresStr);
 
-    if (!payload.amount && !payload.litres) {
+    if(!payload.amount && !payload.litres){
       status.innerHTML = `<span class="warn">❌</span> Enter amount or litres`;
       return;
     }
@@ -832,35 +851,39 @@
     state.last_bunk = bunk_id;
     state.last_vehicle_type = vehicle_type || "";
     state.last_vehicle_no = vehicle_no || "";
-    if (payload.amount) state.last_amount = Number(payload.amount);
+    if(payload.amount) state.last_amount = Number(payload.amount);
     saveState();
     renderLastInfo();
 
     btn.disabled = true;
     status.innerHTML = `<span class="info">⏳</span> Creating voucher…`;
 
-    try {
+    try{
       const res = await fetch(`${API}/create-voucher`, {
-        method: "POST",
+        method:"POST",
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Create failed");
+      if(!res.ok) throw new Error(data.detail || "Create failed");
 
-      // WALLET path: instant paid → show QR immediately
-      if ((data.pay_method || "") === "wallet" || payload.pay_method === "wallet") {
-        if (typeof data.wallet_balance !== "undefined") {
+      // Wallet instant
+      if((data.pay_method || "") === "wallet" || payload.pay_method === "wallet"){
+        if(typeof data.wallet_balance !== "undefined"){
           state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
         }
         state.last_voucher_id = data.voucher_id;
         state.last_sig = data.qr_sig;
+        state.last_qr_station = bunk_id;
         saveState();
         setSidebarUser();
 
         status.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet). Showing QR…`;
-        showVoucherQR(data.voucher_id, data.qr_sig);
-        await loadVouchers(false);
+        showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
+
+        // refresh voucher list so later it can become USED
+        loadVouchers(false);
+
         btn.disabled = false;
         return;
       }
@@ -875,61 +898,61 @@
         name: "FuelSkip",
         description: "Fuel Voucher",
         order_id: data.razorpay_order_id,
-        handler: async function () {
+        handler: async function(){
           status.innerHTML = `<span class="ok">✅</span> Paid. Waiting confirmation…`;
           const ok = await pollVoucherPaid(data.voucher_id);
-          if (ok) {
+          if(ok){
             state.last_voucher_id = data.voucher_id;
             state.last_sig = data.qr_sig;
+            state.last_qr_station = bunk_id;
             saveState();
             status.innerHTML = `<span class="ok">✅</span> Voucher confirmed. Showing QR…`;
-            showVoucherQR(data.voucher_id, data.qr_sig);
-            await loadVouchers(false);
+            showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
+            loadVouchers(false);
           } else {
             status.innerHTML = `<span class="warn">⏳</span> Confirmation delayed. Refresh later.`;
           }
           btn.disabled = false;
         },
-        modal: {
-          ondismiss: function () {
+        modal:{
+          ondismiss: function(){
             status.innerHTML = `<span class="warn">⚠️</span> Payment closed.`;
             btn.disabled = false;
           }
         }
       };
-
       new Razorpay(options).open();
 
-    } catch (e) {
+    }catch(e){
       status.innerHTML = `<span class="warn">❌</span> ${e.message}`;
       alert(e.message);
       btn.disabled = false;
     }
   }
 
-  async function pollVoucherPaid(voucher_id) {
-    for (let i=0; i<12; i++) {
-      await new Promise(r => setTimeout(r, 2500));
+  async function pollVoucherPaid(voucher_id){
+    for(let i=0;i<12;i++){
+      await new Promise(r=>setTimeout(r,2500));
       const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucher_id)}`, { cache:"no-store" });
       const data = await res.json();
-      if (res.ok && (data.status === "paid" || data.status === "used")) return true;
+      if(res.ok && (data.status === "paid" || data.status === "used")) return true;
     }
     return false;
   }
 
-  function bootAfterLogin() {
+  function bootAfterLogin(){
     document.getElementById("pageLogin").style.display = "none";
     document.getElementById("sidebar").classList.remove("mobileHidden");
-    showPage("dashboard");
     setSidebarUser();
     applyDefaults();
+    go("dashboard");
     loadStations();
     loadVouchers(false);
   }
 
   // Boot
   loadState();
-  if (state.user_id) {
+  if(state.user_id){
     bootAfterLogin();
   } else {
     showPage("login");
