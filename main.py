@@ -21,27 +21,8 @@ from sqlalchemy import text as sql_text
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
 
-"""
-FuelSkip backend upgrades:
-- Signed QR (HMAC) so voucher QR cannot be forged/tampered
-- Device pairing (Owner generates QR once, Attendant scans once)
-- Bunk binding via device token (device can dispense only its bunk)
-
-Railway env vars:
-- DATABASE_URL (Railway Postgres)
-- RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
-- RAZORPAY_WEBHOOK_SECRET
-- QR_SIGNING_SECRET  (strong random string, 32+ chars recommended)
-- OWNER_TOKEN
-Optional fallback:
-- ATTENDANT_TOKEN (old method)
-- ATTENDANT_BUNK_ID (old method)
-"""
-
 # ---------------- DB Setup ----------------
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fuelskip.db")
-
-# If Railway provides postgres://, SQLAlchemy prefers postgresql://
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -56,17 +37,18 @@ Base = declarative_base()
 
 class UserDB(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     phone = Column(String, unique=True, index=True)
     name = Column(String, nullable=True)
     created_at = Column(DateTime)
 
+    # ✅ Wallet balance (INR)
+    wallet_balance = Column(Float, default=0.0)
+
 
 class VoucherDB(Base):
     __tablename__ = "vouchers"
-
-    id = Column(String, primary_key=True, index=True)  # voucher_id
+    id = Column(String, primary_key=True, index=True)
     bunk_id = Column(String, index=True)
 
     amount = Column(Float)
@@ -87,11 +69,12 @@ class VoucherDB(Base):
     vehicle_type = Column(String, nullable=True)
     vehicle_no = Column(String, nullable=True)
 
+    # ✅ How voucher was paid
+    pay_method = Column(String, nullable=True)  # "razorpay" or "wallet"
+
 
 class WebhookEventDB(Base):
-    """Store Razorpay event ids for idempotency."""
     __tablename__ = "webhook_events"
-
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     event_id = Column(String, unique=True, index=True)
     event_type = Column(String, index=True)
@@ -103,7 +86,6 @@ class WebhookEventDB(Base):
 
 class ErrorLogDB(Base):
     __tablename__ = "error_logs"
-
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     where = Column(String)
     message = Column(String)
@@ -112,13 +94,24 @@ class ErrorLogDB(Base):
 
 class DeviceDB(Base):
     __tablename__ = "devices"
-
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     name = Column(String, nullable=True)
     bunk_id = Column(String, index=True)
-    device_token = Column(String, unique=True, index=True)  # secret token for this device
+    device_token = Column(String, unique=True, index=True)
     created_at = Column(DateTime)
     last_seen_at = Column(DateTime, nullable=True)
+
+
+class WalletTopupDB(Base):
+    __tablename__ = "wallet_topups"
+    id = Column(String, primary_key=True, index=True)  # topup_id
+    user_id = Column(Integer, index=True)
+    amount = Column(Float)
+    status = Column(String, index=True)  # pending/paid/failed
+    created_at = Column(DateTime)
+
+    razorpay_order_id = Column(String, index=True)
+    razorpay_payment_id = Column(String, index=True, nullable=True)
 
 
 def get_db():
@@ -132,10 +125,9 @@ def get_db():
 
 app = FastAPI(title="FuelSkip")
 
-# ---- Tokens (env) ----
-ATTENDANT_TOKEN = os.getenv("ATTENDANT_TOKEN", "")  # old fallback
+ATTENDANT_TOKEN = os.getenv("ATTENDANT_TOKEN", "")
 OWNER_TOKEN = os.getenv("OWNER_TOKEN", "")
-ATTENDANT_BUNK_ID = os.getenv("ATTENDANT_BUNK_ID", "")  # old fallback (optional)
+ATTENDANT_BUNK_ID = os.getenv("ATTENDANT_BUNK_ID", "")
 
 
 def _require_token(expected: str, provided: str | None, label: str):
@@ -154,10 +146,6 @@ def _qr_secret() -> bytes:
 
 
 def sign_voucher_qr(voucher: VoucherDB) -> str:
-    """
-    Stable signature based on server-truth fields.
-    We sign: voucher_id|bunk_id|amount|created_at
-    """
     created = voucher.created_at.replace(tzinfo=None).isoformat(timespec="seconds")
     msg = f"{voucher.id}|{voucher.bunk_id}|{voucher.amount:.2f}|{created}".encode("utf-8")
     return hmac.new(_qr_secret(), msg, hashlib.sha256).hexdigest()
@@ -170,10 +158,8 @@ def verify_voucher_sig(voucher: VoucherDB, sig: str | None) -> bool:
     return hmac.compare_digest(expected, sig)
 
 
-# ---- CORS ----
 cors_origins_raw = os.getenv("CORS_ORIGINS", "*")
 cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins if cors_origins_raw != "*" else ["*"],
@@ -182,7 +168,6 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# ---- Static mount ----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
@@ -216,16 +201,24 @@ def owner_page():
 def on_startup():
     Base.metadata.create_all(bind=engine)
 
-    # lightweight schema patching for SQLite dev only
+    # SQLite schema patch for older dev DB
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         with engine.begin() as conn:
-            cols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(vouchers)")).fetchall()]
-            if "vehicle_type" not in cols:
+            # users.wallet_balance
+            cols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(users)")).fetchall()]
+            if "wallet_balance" not in cols:
+                conn.execute(sql_text("ALTER TABLE users ADD COLUMN wallet_balance FLOAT DEFAULT 0"))
+
+            # vouchers extra cols
+            vcols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(vouchers)")).fetchall()]
+            if "vehicle_type" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_type VARCHAR"))
-            if "vehicle_no" not in cols:
+            if "vehicle_no" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_no VARCHAR"))
-            if "razorpay_payment_id" not in cols:
+            if "razorpay_payment_id" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN razorpay_payment_id VARCHAR"))
+            if "pay_method" not in vcols:
+                conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN pay_method VARCHAR"))
 # -----------------------------------
 
 
@@ -234,11 +227,7 @@ RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
 
-if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
-    print("WARNING: Razorpay keys not set in env; set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET")
-
 razor_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
-# --------------------------
 
 
 # -------- Bunks (static for now) --------
@@ -277,12 +266,7 @@ def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 def log_error(db: Session, where: str, message: str):
     try:
-        entry = ErrorLogDB(
-            where=where,
-            message=message[:1000],
-            created_at=datetime.datetime.utcnow(),
-        )
-        db.add(entry)
+        db.add(ErrorLogDB(where=where, message=message[:1000], created_at=datetime.datetime.utcnow()))
         db.commit()
     except Exception:
         pass
@@ -297,6 +281,9 @@ class CreateVoucher(BaseModel):
     vehicle_type: str | None = None
     vehicle_no: str | None = None
 
+    # ✅ New: pay method
+    pay_method: str | None = "razorpay"  # "razorpay" or "wallet"
+
 
 class LoginRequest(BaseModel):
     phone: str
@@ -307,11 +294,17 @@ class LoginResponse(BaseModel):
     user_id: int
     phone: str
     name: str | None = None
+    wallet_balance: float
 
 
 class RegisterDeviceRequest(BaseModel):
     name: str | None = None
     bunk_id: str
+
+
+class WalletTopupCreate(BaseModel):
+    user_id: int
+    amount: float
 # --------------------------------
 
 
@@ -324,15 +317,72 @@ def health():
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(UserDB).filter(UserDB.phone == req.phone).first()
     if not user:
-        user = UserDB(
-            phone=req.phone,
-            name=req.name,
-            created_at=datetime.datetime.utcnow(),
-        )
+        user = UserDB(phone=req.phone, name=req.name, created_at=datetime.datetime.utcnow(), wallet_balance=0.0)
         db.add(user)
         db.commit()
         db.refresh(user)
-    return LoginResponse(user_id=user.id, phone=user.phone, name=user.name)
+    return LoginResponse(user_id=user.id, phone=user.phone, name=user.name, wallet_balance=user.wallet_balance or 0.0)
+
+
+@app.get("/wallet/balance")
+def wallet_balance(user_id: int, db: Session = Depends(get_db)):
+    u = db.query(UserDB).filter(UserDB.id == user_id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"user_id": u.id, "wallet_balance": float(u.wallet_balance or 0.0)}
+
+
+@app.post("/wallet/topup/create-order")
+def wallet_topup_create(req: WalletTopupCreate, db: Session = Depends(get_db)):
+    u = db.query(UserDB).filter(UserDB.id == req.user_id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    amt = float(req.amount)
+    if amt < 50:
+        raise HTTPException(status_code=400, detail="Minimum topup is ₹50")
+    if amt > 50000:
+        raise HTTPException(status_code=400, detail="Maximum topup is ₹50,000")
+
+    topup_id = "topup_" + uuid.uuid4().hex[:12]
+
+    # Razorpay order
+    try:
+        order = razor_client.order.create(
+            {
+                "amount": int(amt * 100),
+                "currency": "INR",
+                "receipt": topup_id,
+                "payment_capture": 1,
+                "notes": {
+                    "type": "wallet_topup",
+                    "user_id": str(req.user_id),
+                    "topup_id": topup_id,
+                },
+            }
+        )
+    except Exception as e:
+        log_error(db, "wallet-topup-create", str(e))
+        raise HTTPException(status_code=500, detail="Razorpay order error")
+
+    db.add(
+        WalletTopupDB(
+            id=topup_id,
+            user_id=req.user_id,
+            amount=amt,
+            status="pending",
+            created_at=datetime.datetime.utcnow(),
+            razorpay_order_id=order["id"],
+        )
+    )
+    db.commit()
+
+    return {
+        "topup_id": topup_id,
+        "amount": amt,
+        "razorpay_order_id": order["id"],
+        "razorpay_key_id": RAZORPAY_KEY_ID,
+    }
 
 
 @app.get("/nearby-bunks")
@@ -341,13 +391,7 @@ def nearby_bunks(lat: float, lon: float) -> List[dict]:
     for bunk in bunks.values():
         dist = distance_km(lat, lon, bunk["lat"], bunk["lon"])
         results.append(
-            {
-                "id": bunk["id"],
-                "name": bunk["name"],
-                "address": bunk.get("address"),
-                "distance_km": dist,
-                "pumps": bunk["pumps"],
-            }
+            {"id": bunk["id"], "name": bunk["name"], "address": bunk.get("address"), "distance_km": dist, "pumps": bunk["pumps"]}
         )
     results.sort(key=lambda x: x["distance_km"])
     return results
@@ -373,40 +417,90 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Amount must be > 0")
     if litres is not None and litres <= 0:
         raise HTTPException(status_code=400, detail="Litres must be > 0")
-    if amount is not None and amount > 20000:
-        raise HTTPException(status_code=400, detail="Amount too high")
-    if litres is not None and litres > 200:
-        raise HTTPException(status_code=400, detail="Litres too high")
 
     if amount is not None and litres is None:
         litres = round(amount / price, 2)
     elif litres is not None and amount is None:
         amount = round(litres * price, 2)
 
-    voucher_id = uuid.uuid4().hex[:12]
+    if amount is None or litres is None:
+        raise HTTPException(status_code=400, detail="Invalid amount/litres")
 
-    # Razorpay order
+    voucher_id = uuid.uuid4().hex[:12]
+    now = datetime.datetime.utcnow()
+    expires = now + datetime.timedelta(minutes=30)
+
+    pay_method = (req.pay_method or "razorpay").lower().strip()
+
+    # ✅ Wallet path: instant paid voucher
+    if pay_method == "wallet":
+        if not req.user_id:
+            raise HTTPException(status_code=400, detail="user_id required for wallet payment")
+
+        u = db.query(UserDB).filter(UserDB.id == req.user_id).with_for_update().first()
+        if not u:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        bal = float(u.wallet_balance or 0.0)
+        if bal + 1e-9 < float(amount):
+            raise HTTPException(status_code=400, detail=f"Insufficient wallet balance. Balance ₹{bal:.2f}")
+
+        # Deduct balance
+        u.wallet_balance = bal - float(amount)
+
+        v = VoucherDB(
+            id=voucher_id,
+            bunk_id=req.bunk_id,
+            amount=float(amount),
+            litres=float(litres),
+            status="paid",
+            price_per_litre=price,
+            created_at=now,
+            expires_at=expires,
+            razorpay_order_id="WALLET",
+            used=False,
+            user_id=req.user_id,
+            vehicle_type=req.vehicle_type,
+            vehicle_no=req.vehicle_no,
+            pay_method="wallet",
+        )
+        db.add(v)
+        db.commit()
+        db.refresh(v)
+
+        qr_sig = sign_voucher_qr(v)
+        return {
+            "voucher_id": voucher_id,
+            "amount": float(amount),
+            "litres": float(litres),
+            "price_per_litre": price,
+            "expires_at": expires,
+            "status": "paid",
+            "pay_method": "wallet",
+            "qr_sig": qr_sig,
+            "wallet_balance": float(u.wallet_balance or 0.0),
+        }
+
+    # ✅ Razorpay path (existing)
     try:
         order = razor_client.order.create(
             {
-                "amount": int(amount * 100),
+                "amount": int(float(amount) * 100),
                 "currency": "INR",
                 "receipt": voucher_id,
                 "payment_capture": 1,
+                "notes": {"type": "voucher", "voucher_id": voucher_id},
             }
         )
     except Exception as e:
         log_error(db, "create-voucher", str(e))
         raise HTTPException(status_code=500, detail="Razorpay order error")
 
-    now = datetime.datetime.utcnow()
-    expires = now + datetime.timedelta(minutes=30)
-
-    voucher_db = VoucherDB(
+    v = VoucherDB(
         id=voucher_id,
         bunk_id=req.bunk_id,
-        amount=amount,
-        litres=litres,
+        amount=float(amount),
+        litres=float(litres),
         status="pending",
         price_per_litre=price,
         created_at=now,
@@ -416,22 +510,25 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         user_id=req.user_id,
         vehicle_type=req.vehicle_type,
         vehicle_no=req.vehicle_no,
+        pay_method="razorpay",
     )
-    db.add(voucher_db)
+    db.add(v)
     db.commit()
-    db.refresh(voucher_db)
+    db.refresh(v)
 
-    qr_sig = sign_voucher_qr(voucher_db)
+    qr_sig = sign_voucher_qr(v)
 
     return {
         "voucher_id": voucher_id,
-        "amount": amount,
-        "litres": litres,
+        "amount": float(amount),
+        "litres": float(litres),
         "price_per_litre": price,
         "expires_at": expires,
         "razorpay_order_id": order["id"],
         "razorpay_key_id": RAZORPAY_KEY_ID,
         "qr_sig": qr_sig,
+        "status": "pending",
+        "pay_method": "razorpay",
     }
 
 
@@ -468,11 +565,10 @@ def register_device(
     x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
 ):
     _require_token(OWNER_TOKEN, x_owner_token, "Owner")
-
     if req.bunk_id not in bunks:
         raise HTTPException(status_code=404, detail="Bunk not found")
 
-    token = uuid.uuid4().hex  # long random token
+    token = uuid.uuid4().hex
     d = DeviceDB(
         name=req.name or "Attendant Device",
         bunk_id=req.bunk_id,
@@ -483,13 +579,7 @@ def register_device(
     db.add(d)
     db.commit()
     db.refresh(d)
-
-    return {
-        "device_id": d.id,
-        "name": d.name,
-        "bunk_id": d.bunk_id,
-        "device_token": d.device_token,
-    }
+    return {"device_id": d.id, "name": d.name, "bunk_id": d.bunk_id, "device_token": d.device_token}
 
 
 @app.get("/devices")
@@ -499,16 +589,7 @@ def list_devices(
 ):
     _require_token(OWNER_TOKEN, x_owner_token, "Owner")
     devices = db.query(DeviceDB).order_by(DeviceDB.created_at.desc()).all()
-    return [
-        {
-            "id": d.id,
-            "name": d.name,
-            "bunk_id": d.bunk_id,
-            "created_at": d.created_at,
-            "last_seen_at": d.last_seen_at,
-        }
-        for d in devices
-    ]
+    return [{"id": d.id, "name": d.name, "bunk_id": d.bunk_id, "created_at": d.created_at, "last_seen_at": d.last_seen_at} for d in devices]
 # ------------------------------------------------------------
 
 
@@ -520,12 +601,10 @@ def validate_voucher(
     x_device_token: str | None = Header(None, alias="X-DEVICE-TOKEN"),
     x_attendant_token: str | None = Header(None, alias="X-ATTENDANT-TOKEN"),
 ):
-    # ✅ Prefer device token (paired device)
     device = None
     if x_device_token:
         device = db.query(DeviceDB).filter(DeviceDB.device_token == x_device_token).first()
 
-    # Fallback to old attendant token (optional)
     if not device:
         _require_token(ATTENDANT_TOKEN, x_attendant_token, "Attendant")
 
@@ -533,48 +612,29 @@ def validate_voucher(
     if not v:
         raise HTTPException(status_code=404, detail="Voucher not found")
 
-    # Signed QR required for dispensing
     if not verify_voucher_sig(v, sig):
         raise HTTPException(status_code=403, detail="Invalid QR signature")
 
-    # ✅ Bunk binding via device token (best)
     if device:
         device.last_seen_at = datetime.datetime.utcnow()
         db.commit()
         if v.bunk_id != device.bunk_id:
             raise HTTPException(status_code=403, detail=f"Wrong bunk. This device is for {device.bunk_id}")
     else:
-        # fallback old env bunk binding if you still want
         if ATTENDANT_BUNK_ID and v.bunk_id != ATTENDANT_BUNK_ID:
             raise HTTPException(status_code=403, detail=f"Wrong bunk. This device is for {ATTENDANT_BUNK_ID}")
 
-    # Payment checks
     if v.status not in ("paid", "used"):
         raise HTTPException(status_code=400, detail="Payment not completed yet")
 
-    # Idempotent
     if v.used or v.status == "used":
-        return {
-            "approved": True,
-            "already_used": True,
-            "voucher_id": voucher_id,
-            "bunk_id": v.bunk_id,
-            "amount": v.amount,
-            "litres": v.litres,
-        }
+        return {"approved": True, "already_used": True, "voucher_id": voucher_id, "bunk_id": v.bunk_id, "amount": v.amount, "litres": v.litres}
 
     v.used = True
     v.status = "used"
     db.commit()
 
-    return {
-        "approved": True,
-        "already_used": False,
-        "voucher_id": voucher_id,
-        "bunk_id": v.bunk_id,
-        "amount": v.amount,
-        "litres": v.litres,
-    }
+    return {"approved": True, "already_used": False, "voucher_id": voucher_id, "bunk_id": v.bunk_id, "amount": v.amount, "litres": v.litres}
 
 
 # ---------------- Razorpay webhook ----------------
@@ -587,11 +647,7 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Webhook secret not configured")
 
     try:
-        razor_client.utility.verify_webhook_signature(
-            body_bytes.decode("utf-8"),
-            signature,
-            WEBHOOK_SECRET,
-        )
+        razor_client.utility.verify_webhook_signature(body_bytes.decode("utf-8"), signature, WEBHOOK_SECRET)
     except Exception as e:
         log_error(db, "webhook-verify", str(e))
         raise HTTPException(status_code=400, detail="Invalid signature")
@@ -606,33 +662,45 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
         if already:
             return {"ok": True, "deduped": True}
 
-        db.add(
-            WebhookEventDB(
-                event_id=event_id,
-                event_type=event or "",
-                raw=str(payload)[:20000],
-                created_at=datetime.datetime.utcnow(),
-            )
-        )
+        db.add(WebhookEventDB(event_id=event_id, event_type=event or "", raw=str(payload)[:20000], created_at=datetime.datetime.utcnow()))
         db.commit()
 
-    if event in ("payment.captured", "payment.authorized", "payment.failed"):
-        payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
-        order_id = payment_entity.get("order_id")
-        payment_id = payment_entity.get("id")
+    payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
+    order_id = payment_entity.get("order_id")
+    payment_id = payment_entity.get("id")
 
+    if event in ("payment.captured", "payment.failed"):
         if order_id:
+            # 1) If this order is a wallet topup
+            topup = db.query(WalletTopupDB).filter(WalletTopupDB.razorpay_order_id == order_id).first()
+            if topup:
+                if payment_id:
+                    topup.razorpay_payment_id = payment_id
+
+                if event == "payment.captured":
+                    if topup.status != "paid":
+                        topup.status = "paid"
+                        # credit wallet once
+                        u = db.query(UserDB).filter(UserDB.id == topup.user_id).with_for_update().first()
+                        if u:
+                            u.wallet_balance = float(u.wallet_balance or 0.0) + float(topup.amount)
+                else:
+                    topup.status = "failed"
+
+                db.commit()
+                return {"ok": True, "type": "wallet_topup"}
+
+            # 2) Else this is a voucher order
             v = db.query(VoucherDB).filter(VoucherDB.razorpay_order_id == order_id).first()
             if v:
                 if payment_id:
                     v.razorpay_payment_id = payment_id
-
                 if event == "payment.captured":
                     v.status = "paid"
-                elif event == "payment.failed":
+                else:
                     v.status = "failed"
-
                 db.commit()
+                return {"ok": True, "type": "voucher"}
 
     return {"ok": True}
 # -------------------------------------------------
@@ -657,34 +725,5 @@ def list_vouchers(
 
 @app.get("/my-vouchers")
 def my_vouchers(user_id: int, db: Session = Depends(get_db)):
-    q = (
-        db.query(VoucherDB)
-        .filter(VoucherDB.user_id == user_id)
-        .order_by(VoucherDB.created_at.desc())
-    )
+    q = db.query(VoucherDB).filter(VoucherDB.user_id == user_id).order_by(VoucherDB.created_at.desc())
     return [v.__dict__ for v in q.all()]
-
-
-@app.get("/admin/users")
-def list_users(
-    db: Session = Depends(get_db),
-    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
-):
-    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
-    users = db.query(UserDB).order_by(UserDB.created_at.desc()).all()
-    return [u.__dict__ for u in users]
-
-
-@app.get("/admin/errors")
-def list_errors(
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
-):
-    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
-    q = (
-        db.query(ErrorLogDB)
-        .order_by(ErrorLogDB.created_at.desc())
-        .limit(limit)
-    )
-    return [e.__dict__ for e in q.all()]
