@@ -5,24 +5,27 @@
   <title>FuelSkip – Customer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- ✅ Optional: tab icon (add these files later if you want) -->
+  <link rel="icon" type="image/png" href="/icon-192.png" />
+
   <!-- QR render -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- Razorpay -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
+    /* ===== FORCE LIGHT THEME ===== */
     :root{
-      /* ✅ Light theme + Paytm-ish accent */
-      --primary: #00baf2;
+      --primary:#00baf2;
       --primary2:#009ad0;
 
-      --bg: #f5f7fb;
-      --panel: #ffffff;
+      --bg:#f6f8fc;
+      --panel:#ffffff;
       --panel2:#f1f5f9;
       --border:#e5e7eb;
 
-      --text: #0f172a;
-      --muted: #64748b;
+      --text:#0f172a;
+      --muted:#64748b;
 
       --success:#16a34a;
       --danger:#ef4444;
@@ -33,14 +36,12 @@
     }
 
     *{ box-sizing:border-box; }
+    html, body { height: 100%; }
     body{
       margin:0;
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 800px at 12% 10%, rgba(0,186,242,0.12), transparent 60%),
-        radial-gradient(900px 700px at 90% 20%, rgba(99,102,241,0.10), transparent 60%),
-        var(--bg);
+      color:var(--text) !important;
+      background: var(--bg) !important;
       overflow-x:hidden;
     }
 
@@ -49,7 +50,7 @@
     /* Sidebar */
     .sidebar{
       width:260px;
-      background:var(--panel);
+      background:var(--panel) !important;
       border-right:1px solid var(--border);
       padding:18px 14px;
       position:sticky;
@@ -61,6 +62,14 @@
       display:flex; align-items:center; gap:10px;
       font-weight:1000; font-size:18px;
       margin-bottom:14px;
+      color: var(--text);
+    }
+    .brand .mark{
+      width:28px; height:28px; border-radius:10px;
+      background: rgba(0,186,242,0.12);
+      border: 1px solid rgba(0,186,242,0.25);
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px;
     }
     .brand span{ color:var(--primary2); }
 
@@ -91,15 +100,15 @@
     .nav button.active{
       outline:2px solid rgba(0,186,242,0.35);
       background: rgba(0,186,242,0.10);
-      border-color: rgba(0,186,242,0.30);
+      border-color: rgba(0,186,242,0.25);
     }
 
     .logoutBtn{
       margin-top:14px;
       width:100%;
-      background:rgba(239,68,68,0.15);
+      background:rgba(239,68,68,0.12);
       color:#b91c1c;
-      border:1px solid rgba(239,68,68,0.35);
+      border:1px solid rgba(239,68,68,0.30);
       padding:10px 12px;
       border-radius:14px;
       cursor:pointer;
@@ -111,7 +120,7 @@
     .container{ width:100%; max-width:900px; }
 
     .card{
-      background:var(--panel);
+      background:var(--panel) !important;
       border:1px solid var(--border);
       border-radius:18px;
       padding:16px;
@@ -128,7 +137,7 @@
       margin-top:10px;
       margin-bottom:6px;
       font-size:12px;
-      color:#0ea5e9;
+      color:#0284c7;
       font-weight:1000;
     }
 
@@ -137,8 +146,8 @@
       padding:10px 12px;
       border-radius:14px;
       border:1px solid var(--border);
-      background:#ffffff;
-      color:var(--text);
+      background:#fff !important;
+      color:var(--text) !important;
       outline:none;
       font-weight:850;
       max-width:100%;
@@ -161,6 +170,7 @@
       font-weight:1000;
       user-select:none;
       white-space:nowrap;
+      color: var(--text);
     }
     .chip:hover{
       border-color: rgba(0,186,242,0.45);
@@ -226,10 +236,10 @@
     /* Lists */
     .list{ margin-top:10px; display:flex; flex-direction:column; gap:10px; }
     .item{
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:12px;
       display:flex;
       justify-content:space-between;
       align-items:center;
@@ -268,7 +278,6 @@
     }
     .sidebar.mobileHidden{ display:none; }
 
-    /* ✅ Mobile fit fixes */
     @media (max-width: 820px){
       .topbar{ display:block; }
       .sidebar{ position: fixed; z-index: 20; left:0; top:0; height:100vh; }
@@ -281,714 +290,809 @@
       #qrBox{ padding:8px; }
       #qr canvas{ width:180px !important; height:180px !important; }
     }
+
+    /* ===== Splash Screen ===== */
+    #splash{
+      position: fixed;
+      inset: 0;
+      background: #f6f8fc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 350ms ease, transform 350ms ease;
+    }
+    #splash.hide{
+      opacity: 0;
+      transform: scale(1.02);
+      pointer-events: none;
+    }
+    .splashCard{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius: 22px;
+      padding: 28px 34px;
+      box-shadow: 0 18px 45px rgba(15,23,42,0.12);
+      text-align:center;
+      min-width: 260px;
+    }
+
+    /* simple modern: fuel drop + FuelSkip text */
+    .splashLogoWrap{
+      width: 72px; height: 72px;
+      border-radius: 22px;
+      margin: 0 auto 12px auto;
+      display:flex; align-items:center; justify-content:center;
+      background: rgba(0,186,242,0.12);
+      border:1px solid rgba(0,186,242,0.25);
+    }
+    .drop{
+      width: 30px; height: 40px;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      border-radius: 18px 18px 20px 20px;
+      transform: rotate(0deg);
+      position: relative;
+      box-shadow: 0 10px 20px rgba(0,186,242,0.22);
+    }
+    .drop:before{
+      content:"";
+      position:absolute;
+      top:-12px; left:50%;
+      width: 22px; height: 22px;
+      transform: translateX(-50%) rotate(45deg);
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      border-radius: 6px;
+    }
+
+    .splashText{
+      font-weight: 1000;
+      font-size: 22px;
+      color: #0f172a;
+      letter-spacing: 0.2px;
+    }
+    .splashSub{
+      margin-top: 6px;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 800;
+    }
   </style>
 </head>
 
 <body>
-<div class="topbar">
-  <div class="row1">
-    <div style="font-weight:1000;">⛽ FuelSkip</div>
-    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <!-- Splash -->
+  <div id="splash">
+    <div class="splashCard">
+      <div class="splashLogoWrap">
+        <div class="drop"></div>
+      </div>
+      <div class="splashText">FuelSkip</div>
+      <div class="splashSub">Fast fuel. No queue.</div>
+    </div>
   </div>
-</div>
 
-<div class="app">
-  <aside class="sidebar mobileHidden" id="sidebar">
-    <div class="brand">⛽ <span>FuelSkip</span></div>
-
-    <div class="userbox">
-      <div class="name" id="sbName">Not logged in</div>
-      <div class="phone" id="sbPhone"></div>
-      <div class="bal">
-        <div class="phone">Wallet</div>
-        <div class="amt" id="sbBal">₹0</div>
-      </div>
+  <div class="topbar">
+    <div class="row1">
+      <div style="font-weight:1000;">FuelSkip</div>
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
     </div>
+  </div>
 
-    <div class="nav">
-      <button id="navDash" class="active" onclick="go('dashboard')">🏠 Dashboard</button>
-      <button id="navVouchers" onclick="go('vouchers')">🎟️ Vouchers</button>
-      <button id="navVehicles" onclick="go('vehicles')">🚗 Vehicles</button>
-      <button id="navStations" onclick="go('stations')">⛽ Stations</button>
-    </div>
-
-    <button class="logoutBtn" onclick="logout()">Logout</button>
-
-    <div class="muted" style="margin-top:12px;">
-      Tip: iPhone Safari → Share → “Add to Home Screen” for fastest open.
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="container">
-
-      <!-- LOGIN -->
-      <div class="card" id="pageLogin">
-        <div class="cardTitle">Login</div>
-        <div class="muted">MVP: no OTP. Wallet is linked to phone.</div>
-
-        <label>Phone</label>
-        <input id="phone" placeholder="10-digit phone" inputmode="numeric" />
-
-        <label>Name (optional)</label>
-        <input id="name" placeholder="Your name" />
-
-        <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="login()">Login</button>
-        <div class="statusLine" id="loginStatus"></div>
+  <div class="app">
+    <aside class="sidebar mobileHidden" id="sidebar">
+      <div class="brand">
+        <div class="mark">⛽</div>
+        <span>FuelSkip</span>
       </div>
 
-      <!-- DASHBOARD -->
-      <div id="pageDashboard" style="display:none;">
-        <div class="card">
-          <div class="cardTitle">Wallet</div>
-          <div class="muted">Load once during non-peak time. At bunk, voucher becomes instant.</div>
+      <div class="userbox">
+        <div class="name" id="sbName">Not logged in</div>
+        <div class="phone" id="sbPhone"></div>
+        <div class="bal">
+          <div class="phone">Wallet</div>
+          <div class="amt" id="sbBal">₹0</div>
+        </div>
+      </div>
 
-          <div class="row" style="margin-top:10px;">
-            <div>
-              <div class="muted">Balance</div>
-              <div style="font-weight:1000;font-size:22px;color:var(--success);" id="balText">₹0</div>
-            </div>
-            <div style="display:flex;justify-content:flex-end;align-items:flex-start;">
-              <button class="btn btnGray" onclick="refreshAll()">Refresh</button>
-            </div>
-          </div>
+      <div class="nav">
+        <button id="navDash" class="active" onclick="go('dashboard')">🏠 Dashboard</button>
+        <button id="navVouchers" onclick="go('vouchers')">🎟️ Vouchers</button>
+        <button id="navVehicles" onclick="go('vehicles')">🚗 Vehicles</button>
+        <button id="navStations" onclick="go('stations')">⛽ Stations</button>
+      </div>
 
-          <label>Top-up amount</label>
-          <div class="chips">
-            <div class="chip" onclick="setTopup(200)">₹200</div>
-            <div class="chip" onclick="setTopup(500)">₹500</div>
-            <div class="chip" onclick="setTopup(1000)">₹1000</div>
-            <div class="chip" onclick="setTopup(2000)">₹2000</div>
-          </div>
-          <input id="topupAmount" placeholder="Custom amount (min ₹50)" inputmode="decimal" />
-          <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="topupWallet()">Add Money</button>
-          <div class="statusLine" id="topupStatus"></div>
+      <button class="logoutBtn" onclick="logout()">Logout</button>
+
+      <div class="muted" style="margin-top:12px;">
+        Tip: iPhone Safari → Share → “Add to Home Screen” for fastest open.
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="container">
+
+        <!-- LOGIN -->
+        <div class="card" id="pageLogin">
+          <div class="cardTitle">Login</div>
+          <div class="muted">MVP: no OTP. Wallet is linked to phone.</div>
+
+          <label>Phone</label>
+          <input id="phone" placeholder="10-digit phone" inputmode="numeric" />
+
+          <label>Name (optional)</label>
+          <input id="name" placeholder="Your name" />
+
+          <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="login()">Login</button>
+          <div class="statusLine" id="loginStatus"></div>
         </div>
 
-        <div class="card">
-          <div class="cardTitle">Quick</div>
-          <div class="muted">Repeat last voucher in 1 tap.</div>
-          <button class="btn btnDark" style="width:100%;margin-top:12px;" onclick="repeatLast()">⚡ Repeat Last Voucher</button>
-          <div class="muted" id="lastInfo" style="margin-top:8px;"></div>
-        </div>
-
-        <div class="card" id="createCard">
-          <div class="cardTitle">Create Voucher</div>
-          <div class="muted">Prefer Wallet for fastest bunk experience.</div>
-
-          <label>Station</label>
-          <select id="bunk"></select>
-
-          <div class="row">
-            <div>
-              <label>Amount (₹)</label>
-              <input id="amount" placeholder="e.g. 300" inputmode="decimal" />
-            </div>
-            <div>
-              <label>Litres (L)</label>
-              <input id="litres" placeholder="e.g. 3" inputmode="decimal" />
-            </div>
-          </div>
-
-          <div class="chips">
-            <div class="chip" onclick="quickAmount(200)">₹200</div>
-            <div class="chip" onclick="quickAmount(300)">₹300</div>
-            <div class="chip" onclick="quickAmount(500)">₹500</div>
-            <div class="chip" onclick="quickAmount(1000)">₹1000</div>
-          </div>
-
-          <div class="row">
-            <div>
-              <label>Vehicle Type</label>
-              <select id="vehicleType">
-                <option value="">-</option>
-                <option value="Bike">Bike</option>
-                <option value="Car">Car</option>
-                <option value="Auto">Auto</option>
-                <option value="Truck">Truck</option>
-              </select>
-            </div>
-            <div>
-              <label>Vehicle No</label>
-              <input id="vehicleNo" placeholder="AP.. / TS.." />
-            </div>
-          </div>
-
-          <label>Payment method</label>
-          <div class="toggle">
-            <button id="btnWallet" class="btn btnPrimary activePay" onclick="setPay('wallet')">Wallet (Fast)</button>
-            <button id="btnRzp" class="btn btnOutline" onclick="setPay('razorpay')">Razorpay</button>
-          </div>
-
-          <button class="btn btnPrimary" style="width:100%;margin-top:12px;" id="createBtn" onclick="createVoucher()">Generate Voucher</button>
-          <div class="statusLine" id="statusLine"></div>
-
-          <div id="qrWrap">
-            <div class="cardTitle" style="margin-top:14px;">Your Voucher QR</div>
-            <div class="muted">Show this to attendant (they scan inside their page).</div>
-
-            <div id="qrBox"><div id="qr"></div></div>
-
-            <div class="muted" style="margin-top:10px;">
-              Station: <b id="qrStationName"></b><br/>
-              Voucher: <code id="vId"></code><br/>
-              Signature: <code id="vSig"></code><br/>
-              Link: <code id="vLink"></code>
-            </div>
+        <!-- DASHBOARD -->
+        <div id="pageDashboard" style="display:none;">
+          <div class="card">
+            <div class="cardTitle">Wallet</div>
+            <div class="muted">Load once during non-peak time. At bunk, voucher becomes instant.</div>
 
             <div class="row" style="margin-top:10px;">
-              <div><button class="btn btnGray" style="width:100%;" onclick="hideQR()">Create another</button></div>
-              <div><button class="btn btnGray" style="width:100%;" onclick="copyLink()">Copy link</button></div>
+              <div>
+                <div class="muted">Balance</div>
+                <div style="font-weight:1000;font-size:22px;color:var(--success);" id="balText">₹0</div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;align-items:flex-start;">
+                <button class="btn btnGray" onclick="refreshAll()">Refresh</button>
+              </div>
+            </div>
+
+            <label>Top-up amount</label>
+            <div class="chips">
+              <div class="chip" onclick="setTopup(200)">₹200</div>
+              <div class="chip" onclick="setTopup(500)">₹500</div>
+              <div class="chip" onclick="setTopup(1000)">₹1000</div>
+              <div class="chip" onclick="setTopup(2000)">₹2000</div>
+            </div>
+            <input id="topupAmount" placeholder="Custom amount (min ₹50)" inputmode="decimal" />
+            <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="topupWallet()">Add Money</button>
+            <div class="statusLine" id="topupStatus"></div>
+          </div>
+
+          <div class="card">
+            <div class="cardTitle">Quick</div>
+            <div class="muted">Repeat last voucher in 1 tap.</div>
+            <button class="btn btnDark" style="width:100%;margin-top:12px;" onclick="repeatLast()">⚡ Repeat Last Voucher</button>
+            <div class="muted" id="lastInfo" style="margin-top:8px;"></div>
+          </div>
+
+          <div class="card" id="createCard">
+            <div class="cardTitle">Create Voucher</div>
+            <div class="muted">Prefer Wallet for fastest bunk experience.</div>
+
+            <label>Station</label>
+            <select id="bunk"></select>
+
+            <div class="row">
+              <div>
+                <label>Amount (₹)</label>
+                <input id="amount" placeholder="e.g. 300" inputmode="decimal" />
+              </div>
+              <div>
+                <label>Litres (L)</label>
+                <input id="litres" placeholder="e.g. 3" inputmode="decimal" />
+              </div>
+            </div>
+
+            <div class="chips">
+              <div class="chip" onclick="quickAmount(200)">₹200</div>
+              <div class="chip" onclick="quickAmount(300)">₹300</div>
+              <div class="chip" onclick="quickAmount(500)">₹500</div>
+              <div class="chip" onclick="quickAmount(1000)">₹1000</div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Vehicle Type</label>
+                <select id="vehicleType">
+                  <option value="">-</option>
+                  <option value="Bike">Bike</option>
+                  <option value="Car">Car</option>
+                  <option value="Auto">Auto</option>
+                  <option value="Truck">Truck</option>
+                </select>
+              </div>
+              <div>
+                <label>Vehicle No</label>
+                <input id="vehicleNo" placeholder="AP.. / TS.." />
+              </div>
+            </div>
+
+            <label>Payment method</label>
+            <div class="toggle">
+              <button id="btnWallet" class="btn btnPrimary activePay" onclick="setPay('wallet')">Wallet (Fast)</button>
+              <button id="btnRzp" class="btn btnOutline" onclick="setPay('razorpay')">Razorpay</button>
+            </div>
+
+            <button class="btn btnPrimary" style="width:100%;margin-top:12px;" id="createBtn" onclick="createVoucher()">Generate Voucher</button>
+            <div class="statusLine" id="statusLine"></div>
+
+            <div id="qrWrap">
+              <div class="cardTitle" style="margin-top:14px;">Your Voucher QR</div>
+              <div class="muted">Show this to attendant (they scan inside their page).</div>
+
+              <div id="qrBox"><div id="qr"></div></div>
+
+              <div class="muted" style="margin-top:10px;">
+                Station: <b id="qrStationName"></b><br/>
+                Voucher: <code id="vId"></code><br/>
+                Signature: <code id="vSig"></code><br/>
+                Link: <code id="vLink"></code>
+              </div>
+
+              <div class="row" style="margin-top:10px;">
+                <div><button class="btn btnGray" style="width:100%;" onclick="hideQR()">Create another</button></div>
+                <div><button class="btn btnGray" style="width:100%;" onclick="copyLink()">Copy link</button></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- VOUCHERS -->
-      <div class="card" id="pageVouchers" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-          <div class="cardTitle">My Vouchers</div>
-          <button class="btn btnGray" onclick="loadVouchers()">Refresh</button>
+        <!-- VOUCHERS -->
+        <div class="card" id="pageVouchers" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div class="cardTitle">My Vouchers</div>
+            <button class="btn btnGray" onclick="loadVouchers()">Refresh</button>
+          </div>
+          <div class="muted">After dispensing, status becomes USED (auto-refresh updates).</div>
+          <div class="list" id="voucherList"></div>
         </div>
-        <div class="muted">After dispensing, status becomes USED (auto-refresh updates).</div>
-        <div class="list" id="voucherList"></div>
+
+        <!-- VEHICLES -->
+        <div class="card" id="pageVehicles" style="display:none;">
+          <div class="cardTitle">Vehicles</div>
+          <div class="muted">Pilot: use the fields in “Create Voucher”.</div>
+        </div>
+
+        <!-- STATIONS -->
+        <div class="card" id="pageStations" style="display:none;">
+          <div class="cardTitle">Stations</div>
+          <div class="muted">Select a station to set as default for voucher creation.</div>
+          <div class="list" id="stationList"></div>
+        </div>
+
       </div>
+    </main>
+  </div>
 
-      <!-- VEHICLES -->
-      <div class="card" id="pageVehicles" style="display:none;">
-        <div class="cardTitle">Vehicles</div>
-        <div class="muted">Next upgrade: save multiple vehicles + 1-tap select. For now use fields in “Create Voucher”.</div>
-      </div>
+  <script>
+    const API = window.location.origin;
 
-      <!-- STATIONS -->
-      <div class="card" id="pageStations" style="display:none;">
-        <div class="cardTitle">Stations</div>
-        <div class="muted">Select a station to set as default for voucher creation.</div>
-        <div class="list" id="stationList"></div>
-      </div>
+    /* Station mapping */
+    const BUNK_META = {
+      "BUNK-1": { name: "BPCL Siripuram", address: "Siripuram, Visakhapatnam" },
+      "BUNK-2": { name: "Gajuwaka Expressway", address: "Gajuwaka, Visakhapatnam" }
+    };
 
-    </div>
-  </main>
-</div>
-
-<script>
-  const API = window.location.origin;
-
-  const BUNK_META = {
-    "BUNK-1": { name: "BPCL Siripuram", address: "Siripuram, Visakhapatnam" },
-    "BUNK-2": { name: "Gajuwaka Expressway", address: "Gajuwaka, Visakhapatnam" }
-  };
-
-  function bunkName(id){
-    return (BUNK_META[id] && BUNK_META[id].name) ? BUNK_META[id].name : id;
-  }
-  function bunkAddress(id){
-    return (BUNK_META[id] && BUNK_META[id].address) ? BUNK_META[id].address : "";
-  }
-
-  let state = {
-    user_id: null, phone: "", name: "",
-    wallet_balance: 0,
-    pay_method: "wallet",
-    last_bunk: "BUNK-1",
-    last_amount: 300,
-    last_vehicle_type: "",
-    last_vehicle_no: "",
-    last_voucher_id: "",
-    last_sig: "",
-    last_qr_station: "BUNK-1"
-  };
-
-  let vouchersAutoRefreshTimer = null;
-
-  function loadState(){
-    const raw = localStorage.getItem("FUELSKIP_USER");
-    if(!raw) return;
-    try{
-      const s = JSON.parse(raw);
-      if(s && s.user_id) state = {...state, ...s};
-    }catch{}
-  }
-  function saveState(){ localStorage.setItem("FUELSKIP_USER", JSON.stringify(state)); }
-
-  function fmtINR(x){
-    const n = Number(x || 0);
-    return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
-  }
-
-  function toggleSidebar(){
-    document.getElementById("sidebar").classList.toggle("mobileHidden");
-  }
-
-  function setSidebarUser(){
-    document.getElementById("sbName").textContent = state.name || "User";
-    document.getElementById("sbPhone").textContent = state.phone || "";
-    document.getElementById("sbBal").textContent = fmtINR(state.wallet_balance);
-    document.getElementById("balText").textContent = fmtINR(state.wallet_balance);
-  }
-
-  function setPay(m){
-    state.pay_method = m;
-    saveState();
-    document.getElementById("btnWallet").classList.toggle("activePay", m === "wallet");
-    document.getElementById("btnRzp").classList.toggle("activePay", m === "razorpay");
-  }
-
-  function setTopup(v){ document.getElementById("topupAmount").value = String(v); }
-  function quickAmount(v){ document.getElementById("amount").value = String(v); document.getElementById("litres").value = ""; }
-
-  function renderLastInfo(){
-    const el = document.getElementById("lastInfo");
-    if(state.last_amount && state.last_bunk){
-      el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> at <span class="info">${bunkName(state.last_bunk)}</span>`;
-    } else {
-      el.textContent = "No previous voucher yet.";
+    function bunkName(id){
+      return (BUNK_META[id] && BUNK_META[id].name) ? BUNK_META[id].name : id;
     }
-  }
-
-  function populateBunkDropdown(){
-    const sel = document.getElementById("bunk");
-    sel.innerHTML = "";
-    Object.keys(BUNK_META).forEach(id => {
-      const opt = document.createElement("option");
-      opt.value = id;
-      opt.textContent = `${bunkName(id)} • (${id})`;
-      sel.appendChild(opt);
-    });
-  }
-
-  function applyDefaults(){
-    populateBunkDropdown();
-    document.getElementById("bunk").value = state.last_bunk || "BUNK-1";
-    document.getElementById("amount").value = state.last_amount ? String(state.last_amount) : "";
-    document.getElementById("litres").value = "";
-    document.getElementById("vehicleType").value = state.last_vehicle_type || "";
-    document.getElementById("vehicleNo").value = state.last_vehicle_no || "";
-    setPay(state.pay_method || "wallet");
-    renderLastInfo();
-  }
-
-  function showPage(p){
-    ["pageLogin","pageDashboard","pageVouchers","pageVehicles","pageStations"].forEach(id=>{
-      document.getElementById(id).style.display = "none";
-    });
-    if(p==="login") document.getElementById("pageLogin").style.display = "";
-    if(p==="dashboard") document.getElementById("pageDashboard").style.display = "";
-    if(p==="vouchers") document.getElementById("pageVouchers").style.display = "";
-    if(p==="vehicles") document.getElementById("pageVehicles").style.display = "";
-    if(p==="stations") document.getElementById("pageStations").style.display = "";
-  }
-
-  function setNavActive(id){
-    ["navDash","navVouchers","navVehicles","navStations"].forEach(x=>document.getElementById(x).classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-  }
-
-  function go(where){
-    if(where !== "vouchers") stopVouchersAutoRefresh();
-    if(window.innerWidth <= 820){
-      document.getElementById("sidebar").classList.add("mobileHidden");
-    }
-    if(where==="dashboard"){ setNavActive("navDash"); showPage("dashboard"); }
-    if(where==="vouchers"){ setNavActive("navVouchers"); showPage("vouchers"); loadVouchers(); startVouchersAutoRefresh(); }
-    if(where==="vehicles"){ setNavActive("navVehicles"); showPage("vehicles"); }
-    if(where==="stations"){ setNavActive("navStations"); showPage("stations"); loadStations(); }
-  }
-
-  async function login(){
-    const phone = (document.getElementById("phone").value || "").trim();
-    const name = (document.getElementById("name").value || "").trim();
-    const st = document.getElementById("loginStatus");
-    st.textContent = "";
-
-    if(!phone || phone.length < 8){
-      st.innerHTML = `<span class="warn">❌</span> Enter phone`;
-      return;
+    function bunkAddress(id){
+      return (BUNK_META[id] && BUNK_META[id].address) ? BUNK_META[id].address : "";
     }
 
-    st.innerHTML = `<span class="info">⏳</span> Logging in…`;
-    try{
-      const res = await fetch(`${API}/login`, {
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ phone, name })
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.detail || "Login failed");
+    let state = {
+      user_id: null, phone: "", name: "",
+      wallet_balance: 0,
+      pay_method: "wallet",
+      last_bunk: "BUNK-1",
+      last_amount: 300,
+      last_vehicle_type: "",
+      last_vehicle_no: "",
+      last_voucher_id: "",
+      last_sig: "",
+      last_qr_station: "BUNK-1"
+    };
 
-      state.user_id = data.user_id;
-      state.phone = data.phone;
-      state.name = data.name || name || "";
-      state.wallet_balance = Number(data.wallet_balance || 0);
+    let vouchersAutoRefreshTimer = null;
+
+    function loadState(){
+      const raw = localStorage.getItem("FUELSKIP_USER");
+      if(!raw) return;
+      try{
+        const s = JSON.parse(raw);
+        if(s && s.user_id) state = {...state, ...s};
+      }catch{}
+    }
+    function saveState(){ localStorage.setItem("FUELSKIP_USER", JSON.stringify(state)); }
+
+    function fmtINR(x){
+      const n = Number(x || 0);
+      return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    }
+
+    function toggleSidebar(){
+      document.getElementById("sidebar").classList.toggle("mobileHidden");
+    }
+
+    function setSidebarUser(){
+      document.getElementById("sbName").textContent = state.name || "User";
+      document.getElementById("sbPhone").textContent = state.phone || "";
+      document.getElementById("sbBal").textContent = fmtINR(state.wallet_balance);
+      const bt = document.getElementById("balText");
+      if(bt) bt.textContent = fmtINR(state.wallet_balance);
+    }
+
+    function setPay(m){
+      state.pay_method = m;
       saveState();
-
-      bootAfterLogin();
-    }catch(e){
-      st.innerHTML = `<span class="warn">❌</span> ${e.message}`;
-      alert(e.message);
-    }
-  }
-
-  function logout(){
-    stopVouchersAutoRefresh();
-    localStorage.removeItem("FUELSKIP_USER");
-    location.reload();
-  }
-
-  async function refreshBalance(){
-    if(!state.user_id) return;
-    const res = await fetch(`${API}/wallet/balance?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
-    const data = await res.json();
-    if(res.ok){
-      state.wallet_balance = Number(data.wallet_balance || 0);
-      saveState();
-      setSidebarUser();
-    }
-  }
-
-  async function refreshAll(){
-    await refreshBalance();
-    await loadVouchers(false);
-    renderLastInfo();
-  }
-
-  async function topupWallet(){
-    const status = document.getElementById("topupStatus");
-    status.textContent = "";
-    if(!state.user_id){ alert("Login first"); return; }
-
-    const amt = Number((document.getElementById("topupAmount").value || "").trim());
-    if(!amt || amt < 50){
-      status.innerHTML = `<span class="warn">❌</span> Minimum topup is ₹50`;
-      return;
+      document.getElementById("btnWallet").classList.toggle("activePay", m === "wallet");
+      document.getElementById("btnRzp").classList.toggle("activePay", m === "razorpay");
     }
 
-    status.innerHTML = `<span class="info">⏳</span> Creating order…`;
-    try{
-      const res = await fetch(`${API}/wallet/topup/create-order`, {
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ user_id: state.user_id, amount: amt })
+    function setTopup(v){ document.getElementById("topupAmount").value = String(v); }
+    function quickAmount(v){ document.getElementById("amount").value = String(v); document.getElementById("litres").value = ""; }
+
+    function renderLastInfo(){
+      const el = document.getElementById("lastInfo");
+      if(!el) return;
+      if(state.last_amount && state.last_bunk){
+        el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> at <span class="info">${bunkName(state.last_bunk)}</span>`;
+      } else {
+        el.textContent = "No previous voucher yet.";
+      }
+    }
+
+    function populateBunkDropdown(){
+      const sel = document.getElementById("bunk");
+      sel.innerHTML = "";
+      Object.keys(BUNK_META).forEach(id => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = `${bunkName(id)} • (${id})`;
+        sel.appendChild(opt);
       });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.detail || "Topup create failed");
-
-      status.innerHTML = `<span class="info">⏳</span> Opening payment…`;
-
-      const options = {
-        key: data.razorpay_key_id,
-        amount: Math.round(amt * 100),
-        currency: "INR",
-        name: "FuelSkip Wallet",
-        description: "Wallet Top-up",
-        order_id: data.razorpay_order_id,
-        handler: async function(){
-          status.innerHTML = `<span class="ok">✅</span> Paid. Updating balance…`;
-          await pollBalanceIncrease(amt);
-        }
-      };
-      new Razorpay(options).open();
-
-    }catch(e){
-      status.innerHTML = `<span class="warn">❌</span> ${e.message}`;
-      alert(e.message);
     }
-  }
 
-  async function pollBalanceIncrease(expectedDelta){
-    const start = Number(state.wallet_balance || 0);
-    const target = start + Number(expectedDelta || 0) * 0.3;
-    for(let i=0;i<10;i++){
-      await new Promise(r=>setTimeout(r,2000));
-      await refreshBalance();
-      if(Number(state.wallet_balance || 0) > target) return;
+    function applyDefaults(){
+      populateBunkDropdown();
+      document.getElementById("bunk").value = state.last_bunk || "BUNK-1";
+      document.getElementById("amount").value = state.last_amount ? String(state.last_amount) : "";
+      document.getElementById("litres").value = "";
+      document.getElementById("vehicleType").value = state.last_vehicle_type || "";
+      document.getElementById("vehicleNo").value = state.last_vehicle_no || "";
+      setPay(state.pay_method || "wallet");
+      renderLastInfo();
     }
-    alert("If balance not updated yet, press Refresh (webhook may be delayed).");
-  }
 
-  function statusPill(v){
-    const st = (v.status || "").toLowerCase();
-    const used = !!v.used || st === "used";
-    if(used) return `<span class="pill pillUsed">USED</span>`;
-    if(st === "paid") return `<span class="pill pillPaid">PAID</span>`;
-    if(st === "failed") return `<span class="pill pillFailed">FAILED</span>`;
-    return `<span class="pill pillPending">${(v.status || "PENDING").toUpperCase()}</span>`;
-  }
+    function showPage(p){
+      ["pageLogin","pageDashboard","pageVouchers","pageVehicles","pageStations"].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.style.display = "none";
+      });
+      if(p==="login") document.getElementById("pageLogin").style.display = "";
+      if(p==="dashboard") document.getElementById("pageDashboard").style.display = "";
+      if(p==="vouchers") document.getElementById("pageVouchers").style.display = "";
+      if(p==="vehicles") document.getElementById("pageVehicles").style.display = "";
+      if(p==="stations") document.getElementById("pageStations").style.display = "";
+    }
 
-  function vStationLabel(v){
-    const id = v.bunk_id || "-";
-    return `${bunkName(id)} • (${id})`;
-  }
+    function setNavActive(id){
+      ["navDash","navVouchers","navVehicles","navStations"].forEach(x=>document.getElementById(x).classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
 
-  async function loadVouchers(showPageAfter=true){
-    if(!state.user_id) return;
-    const box = document.getElementById("voucherList");
-    if(showPageAfter) showPage("vouchers");
+    function go(where){
+      if(where !== "vouchers") stopVouchersAutoRefresh();
+      if(window.innerWidth <= 820){
+        document.getElementById("sidebar").classList.add("mobileHidden");
+      }
+      if(where==="dashboard"){ setNavActive("navDash"); showPage("dashboard"); }
+      if(where==="vouchers"){ setNavActive("navVouchers"); showPage("vouchers"); loadVouchers(); startVouchersAutoRefresh(); }
+      if(where==="vehicles"){ setNavActive("navVehicles"); showPage("vehicles"); }
+      if(where==="stations"){ setNavActive("navStations"); showPage("stations"); loadStations(); }
+    }
 
-    box.innerHTML = `<div class="muted">Loading…</div>`;
-    try{
-      const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.detail || "Failed to load vouchers");
+    async function login(){
+      const phone = (document.getElementById("phone").value || "").trim();
+      const name = (document.getElementById("name").value || "").trim();
+      const st = document.getElementById("loginStatus");
+      st.textContent = "";
 
-      const list = (data || []).slice(0, 15);
-      if(!list.length){
-        box.innerHTML = `<div class="muted">No vouchers yet.</div>`;
+      if(!phone || phone.length < 8){
+        st.innerHTML = `<span class="warn">❌</span> Enter phone`;
         return;
       }
 
-      box.innerHTML = "";
-      list.forEach(v=>{
-        const amount = Number(v.amount || 0);
+      st.innerHTML = `<span class="info">⏳</span> Logging in…`;
+      try{
+        const res = await fetch(`${API}/login`, {
+          method:"POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ phone, name })
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.detail || "Login failed");
+
+        state.user_id = data.user_id;
+        state.phone = data.phone;
+        state.name = data.name || name || "";
+        state.wallet_balance = Number(data.wallet_balance || 0);
+        saveState();
+
+        bootAfterLogin();
+      }catch(e){
+        st.innerHTML = `<span class="warn">❌</span> ${e.message}`;
+        alert(e.message);
+      }
+    }
+
+    function logout(){
+      stopVouchersAutoRefresh();
+      localStorage.removeItem("FUELSKIP_USER");
+      location.reload();
+    }
+
+    async function refreshBalance(){
+      if(!state.user_id) return;
+      const res = await fetch(`${API}/wallet/balance?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
+      const data = await res.json();
+      if(res.ok){
+        state.wallet_balance = Number(data.wallet_balance || 0);
+        saveState();
+        setSidebarUser();
+      }
+    }
+
+    async function refreshAll(){
+      await refreshBalance();
+      await loadVouchers(false);
+      renderLastInfo();
+    }
+
+    async function topupWallet(){
+      const status = document.getElementById("topupStatus");
+      status.textContent = "";
+      if(!state.user_id){ alert("Login first"); return; }
+
+      const amt = Number((document.getElementById("topupAmount").value || "").trim());
+      if(!amt || amt < 50){
+        status.innerHTML = `<span class="warn">❌</span> Minimum topup is ₹50`;
+        return;
+      }
+
+      status.innerHTML = `<span class="info">⏳</span> Creating order…`;
+      try{
+        const res = await fetch(`${API}/wallet/topup/create-order`, {
+          method:"POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ user_id: state.user_id, amount: amt })
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.detail || "Topup create failed");
+
+        status.innerHTML = `<span class="info">⏳</span> Opening payment…`;
+
+        const options = {
+          key: data.razorpay_key_id,
+          amount: Math.round(amt * 100),
+          currency: "INR",
+          name: "FuelSkip Wallet",
+          description: "Wallet Top-up",
+          order_id: data.razorpay_order_id,
+          handler: async function(){
+            status.innerHTML = `<span class="ok">✅</span> Paid. Updating balance…`;
+            await pollBalanceIncrease(amt);
+          }
+        };
+        new Razorpay(options).open();
+
+      }catch(e){
+        status.innerHTML = `<span class="warn">❌</span> ${e.message}`;
+        alert(e.message);
+      }
+    }
+
+    async function pollBalanceIncrease(expectedDelta){
+      const start = Number(state.wallet_balance || 0);
+      const target = start + Number(expectedDelta || 0) * 0.3;
+      for(let i=0;i<10;i++){
+        await new Promise(r=>setTimeout(r,2000));
+        await refreshBalance();
+        if(Number(state.wallet_balance || 0) > target) return;
+      }
+      alert("If balance not updated yet, press Refresh (webhook may be delayed).");
+    }
+
+    function statusPill(v){
+      const st = (v.status || "").toLowerCase();
+      const used = !!v.used || st === "used";
+      if(used) return `<span class="pill pillUsed">USED</span>`;
+      if(st === "paid") return `<span class="pill pillPaid">PAID</span>`;
+      if(st === "failed") return `<span class="pill pillFailed">FAILED</span>`;
+      return `<span class="pill pillPending">${(v.status || "PENDING").toUpperCase()}</span>`;
+    }
+
+    function vStationLabel(v){
+      const id = v.bunk_id || "-";
+      return `${bunkName(id)} • (${id})`;
+    }
+
+    async function loadVouchers(showPageAfter=true){
+      if(!state.user_id) return;
+      const box = document.getElementById("voucherList");
+      if(showPageAfter) showPage("vouchers");
+
+      box.innerHTML = `<div class="muted">Loading…</div>`;
+      try{
+        const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.detail || "Failed to load vouchers");
+
+        const list = (data || []).slice(0, 15);
+        if(!list.length){
+          box.innerHTML = `<div class="muted">No vouchers yet.</div>`;
+          return;
+        }
+
+        box.innerHTML = "";
+        list.forEach(v=>{
+          const amount = Number(v.amount || 0);
+          const el = document.createElement("div");
+          el.className = "item";
+          el.innerHTML = `
+            <div>
+              <div class="t">₹${amount.toFixed(0)} • ${vStationLabel(v)}</div>
+              <div class="s">${statusPill(v)} &nbsp; ${v.id}</div>
+            </div>
+            <div class="right">
+              <button class="btn btnGray" onclick="prefillFromVoucher('${v.bunk_id || "BUNK-1"}', ${Math.round(amount)})">Repeat</button>
+              <button class="btn btnPrimary" onclick="tryShowQR('${v.id}')">Show QR</button>
+            </div>
+          `;
+          box.appendChild(el);
+        });
+
+      }catch(e){
+        box.innerHTML = `<div class="muted"><span class="warn">❌</span> ${e.message}</div>`;
+        alert(e.message);
+      }
+    }
+
+    function startVouchersAutoRefresh(){
+      stopVouchersAutoRefresh();
+      vouchersAutoRefreshTimer = setInterval(() => loadVouchers(false), 6000);
+    }
+    function stopVouchersAutoRefresh(){
+      if(vouchersAutoRefreshTimer){
+        clearInterval(vouchersAutoRefreshTimer);
+        vouchersAutoRefreshTimer = null;
+      }
+    }
+
+    function prefillFromVoucher(bunk, amount){
+      state.last_bunk = bunk || "BUNK-1";
+      state.last_amount = Number(amount || 0);
+      saveState();
+      go("dashboard");
+      applyDefaults();
+      setPay("wallet");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function tryShowQR(voucherId){
+      if(state.last_voucher_id === voucherId && state.last_sig){
+        showVoucherQR(voucherId, state.last_sig, state.last_qr_station || state.last_bunk || "BUNK-1");
+        go("dashboard");
+        document.getElementById("qrWrap").scrollIntoView({ behavior: "smooth", block: "start" });
+        loadVouchers(false);
+      } else {
+        alert("Pilot: QR is shown for the latest voucher only. Use Repeat to generate a fresh QR quickly.");
+      }
+    }
+
+    async function loadStations(){
+      const list = document.getElementById("stationList");
+      list.innerHTML = "";
+      Object.keys(BUNK_META).forEach(id=>{
         const el = document.createElement("div");
         el.className = "item";
         el.innerHTML = `
           <div>
-            <div class="t">₹${amount.toFixed(0)} • ${vStationLabel(v)}</div>
-            <div class="s">${statusPill(v)} &nbsp; ${v.id}</div>
+            <div class="t">${bunkName(id)}</div>
+            <div class="s">${id} • ${bunkAddress(id)}</div>
           </div>
           <div class="right">
-            <button class="btn btnGray" onclick="prefillFromVoucher('${v.bunk_id || "BUNK-1"}', ${Math.round(amount)})">Repeat</button>
-            <button class="btn btnPrimary" onclick="tryShowQR('${v.id}')">Show QR</button>
+            <button class="btn btnPrimary" onclick="pickStation('${id}')">Select</button>
           </div>
         `;
-        box.appendChild(el);
+        list.appendChild(el);
       });
-
-    }catch(e){
-      box.innerHTML = `<div class="muted"><span class="warn">❌</span> ${e.message}</div>`;
-      alert(e.message);
     }
-  }
 
-  function startVouchersAutoRefresh(){
-    stopVouchersAutoRefresh();
-    vouchersAutoRefreshTimer = setInterval(() => loadVouchers(false), 6000);
-  }
-  function stopVouchersAutoRefresh(){
-    if(vouchersAutoRefreshTimer){
-      clearInterval(vouchersAutoRefreshTimer);
-      vouchersAutoRefreshTimer = null;
-    }
-  }
-
-  function prefillFromVoucher(bunk, amount){
-    state.last_bunk = bunk || "BUNK-1";
-    state.last_amount = Number(amount || 0);
-    saveState();
-    go("dashboard");
-    applyDefaults();
-    setPay("wallet");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function tryShowQR(voucherId){
-    if(state.last_voucher_id === voucherId && state.last_sig){
-      showVoucherQR(voucherId, state.last_sig, state.last_qr_station || state.last_bunk || "BUNK-1");
+    function pickStation(id){
+      state.last_bunk = id;
+      saveState();
+      applyDefaults();
       go("dashboard");
-      document.getElementById("qrWrap").scrollIntoView({ behavior: "smooth", block: "start" });
-      loadVouchers(false);
-    } else {
-      alert("For security, QR signature is not re-issued for old vouchers yet. Use Repeat (wallet is instant). If you want, we can add a secure endpoint so old vouchers can show QR too.");
-    }
-  }
-
-  async function loadStations(){
-    const list = document.getElementById("stationList");
-    list.innerHTML = "";
-    Object.keys(BUNK_META).forEach(id=>{
-      const el = document.createElement("div");
-      el.className = "item";
-      el.innerHTML = `
-        <div>
-          <div class="t">${bunkName(id)}</div>
-          <div class="s">${id} • ${bunkAddress(id)}</div>
-        </div>
-        <div class="right">
-          <button class="btn btnPrimary" onclick="pickStation('${id}')">Select</button>
-        </div>
-      `;
-      list.appendChild(el);
-    });
-  }
-
-  function pickStation(id){
-    state.last_bunk = id;
-    saveState();
-    applyDefaults();
-    go("dashboard");
-  }
-
-  function hideQR(){
-    document.getElementById("qrWrap").style.display = "none";
-    document.getElementById("qr").innerHTML = "";
-    document.getElementById("statusLine").innerHTML = "";
-  }
-
-  function copyLink(){
-    const link = document.getElementById("vLink").textContent || "";
-    if(!link) return;
-    navigator.clipboard.writeText(link).then(()=>alert("Link copied"));
-  }
-
-  function showVoucherQR(voucherId, sig, stationId){
-    const link = `${window.location.origin}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`;
-    document.getElementById("vId").textContent = voucherId;
-    document.getElementById("vSig").textContent = sig;
-    document.getElementById("vLink").textContent = link;
-    document.getElementById("qrStationName").textContent = bunkName(stationId || "BUNK-1");
-    const qrEl = document.getElementById("qr");
-    qrEl.innerHTML = "";
-    new QRCode(qrEl, { text: link, width: 220, height: 220 });
-    document.getElementById("qrWrap").style.display = "block";
-  }
-
-  async function repeatLast(){
-    if(!state.last_amount){
-      alert("No last voucher yet. Create one first.");
-      return;
-    }
-    applyDefaults();
-    setPay("wallet");
-    await createVoucher();
-  }
-
-  async function createVoucher(){
-    const status = document.getElementById("statusLine");
-    const btn = document.getElementById("createBtn");
-    status.textContent = "";
-    if(!state.user_id){ alert("Login first"); return; }
-
-    const bunk_id = document.getElementById("bunk").value;
-    const amountStr = (document.getElementById("amount").value || "").trim();
-    const litresStr = (document.getElementById("litres").value || "").trim();
-    const vehicle_type = document.getElementById("vehicleType").value || "";
-    const vehicle_no = (document.getElementById("vehicleNo").value || "").trim();
-
-    const payload = {
-      bunk_id,
-      user_id: state.user_id,
-      vehicle_type: vehicle_type || null,
-      vehicle_no: vehicle_no || null,
-      pay_method: state.pay_method || "wallet",
-    };
-    if(amountStr) payload.amount = Number(amountStr);
-    if(litresStr) payload.litres = Number(litresStr);
-
-    if(!payload.amount && !payload.litres){
-      status.innerHTML = `<span class="warn">❌</span> Enter amount or litres`;
-      return;
     }
 
-    if(payload.pay_method === "wallet" && payload.amount && Number(payload.amount) > Number(state.wallet_balance || 0)){
-      status.innerHTML = `<span class="warn">❌</span> Insufficient wallet balance`;
-      return;
+    function hideQR(){
+      document.getElementById("qrWrap").style.display = "none";
+      document.getElementById("qr").innerHTML = "";
+      document.getElementById("statusLine").innerHTML = "";
     }
 
-    state.last_bunk = bunk_id;
-    state.last_vehicle_type = vehicle_type || "";
-    state.last_vehicle_no = vehicle_no || "";
-    if(payload.amount) state.last_amount = Number(payload.amount);
-    saveState();
-    renderLastInfo();
+    function copyLink(){
+      const link = document.getElementById("vLink").textContent || "";
+      if(!link) return;
+      navigator.clipboard.writeText(link).then(()=>alert("Link copied"));
+    }
 
-    btn.disabled = true;
-    status.innerHTML = `<span class="info">⏳</span> Creating voucher…`;
+    function showVoucherQR(voucherId, sig, stationId){
+      const link = `${window.location.origin}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`;
+      document.getElementById("vId").textContent = voucherId;
+      document.getElementById("vSig").textContent = sig;
+      document.getElementById("vLink").textContent = link;
+      document.getElementById("qrStationName").textContent = bunkName(stationId || "BUNK-1");
+      const qrEl = document.getElementById("qr");
+      qrEl.innerHTML = "";
+      new QRCode(qrEl, { text: link, width: 220, height: 220 });
+      document.getElementById("qrWrap").style.display = "block";
+    }
 
-    try{
-      const res = await fetch(`${API}/create-voucher`, {
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.detail || "Create failed");
+    async function repeatLast(){
+      if(!state.last_amount){
+        alert("No last voucher yet. Create one first.");
+        return;
+      }
+      applyDefaults();
+      setPay("wallet");
+      await createVoucher();
+    }
 
-      if((data.pay_method || "") === "wallet" || payload.pay_method === "wallet"){
-        if(typeof data.wallet_balance !== "undefined"){
-          state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
-        }
-        state.last_voucher_id = data.voucher_id;
-        state.last_sig = data.qr_sig;
-        state.last_qr_station = bunk_id;
-        saveState();
-        setSidebarUser();
+    async function createVoucher(){
+      const status = document.getElementById("statusLine");
+      const btn = document.getElementById("createBtn");
+      status.textContent = "";
+      if(!state.user_id){ alert("Login first"); return; }
 
-        status.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet). Showing QR…`;
-        showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
-        loadVouchers(false);
-        btn.disabled = false;
+      const bunk_id = document.getElementById("bunk").value;
+      const amountStr = (document.getElementById("amount").value || "").trim();
+      const litresStr = (document.getElementById("litres").value || "").trim();
+      const vehicle_type = document.getElementById("vehicleType").value || "";
+      const vehicle_no = (document.getElementById("vehicleNo").value || "").trim();
+
+      const payload = {
+        bunk_id,
+        user_id: state.user_id,
+        vehicle_type: vehicle_type || null,
+        vehicle_no: vehicle_no || null,
+        pay_method: state.pay_method || "wallet",
+      };
+      if(amountStr) payload.amount = Number(amountStr);
+      if(litresStr) payload.litres = Number(litresStr);
+
+      if(!payload.amount && !payload.litres){
+        status.innerHTML = `<span class="warn">❌</span> Enter amount or litres`;
         return;
       }
 
-      status.innerHTML = `<span class="info">⏳</span> Opening payment…`;
+      if(payload.pay_method === "wallet" && payload.amount && Number(payload.amount) > Number(state.wallet_balance || 0)){
+        status.innerHTML = `<span class="warn">❌</span> Insufficient wallet balance`;
+        return;
+      }
 
-      const options = {
-        key: data.razorpay_key_id,
-        amount: Math.round(Number(data.amount) * 100),
-        currency: "INR",
-        name: "FuelSkip",
-        description: "Fuel Voucher",
-        order_id: data.razorpay_order_id,
-        handler: async function(){
-          status.innerHTML = `<span class="ok">✅</span> Paid. Waiting confirmation…`;
-          const ok = await pollVoucherPaid(data.voucher_id);
-          if(ok){
-            state.last_voucher_id = data.voucher_id;
-            state.last_sig = data.qr_sig;
-            state.last_qr_station = bunk_id;
-            saveState();
-            status.innerHTML = `<span class="ok">✅</span> Voucher confirmed. Showing QR…`;
-            showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
-            loadVouchers(false);
-          } else {
-            status.innerHTML = `<span class="warn">⏳</span> Confirmation delayed. Refresh later.`;
+      state.last_bunk = bunk_id;
+      state.last_vehicle_type = vehicle_type || "";
+      state.last_vehicle_no = vehicle_no || "";
+      if(payload.amount) state.last_amount = Number(payload.amount);
+      saveState();
+      renderLastInfo();
+
+      btn.disabled = true;
+      status.innerHTML = `<span class="info">⏳</span> Creating voucher…`;
+
+      try{
+        const res = await fetch(`${API}/create-voucher`, {
+          method:"POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if(!res.ok) throw new Error(data.detail || "Create failed");
+
+        if((data.pay_method || "") === "wallet" || payload.pay_method === "wallet"){
+          if(typeof data.wallet_balance !== "undefined"){
+            state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
           }
+          state.last_voucher_id = data.voucher_id;
+          state.last_sig = data.qr_sig;
+          state.last_qr_station = bunk_id;
+          saveState();
+          setSidebarUser();
+
+          status.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet). Showing QR…`;
+          showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
+          loadVouchers(false);
           btn.disabled = false;
-        },
-        modal:{
-          ondismiss: function(){
-            status.innerHTML = `<span class="warn">⚠️</span> Payment closed.`;
-            btn.disabled = false;
-          }
+          return;
         }
-      };
-      new Razorpay(options).open();
 
-    }catch(e){
-      status.innerHTML = `<span class="warn">❌</span> ${e.message}`;
-      alert(e.message);
-      btn.disabled = false;
+        status.innerHTML = `<span class="info">⏳</span> Opening payment…`;
+
+        const options = {
+          key: data.razorpay_key_id,
+          amount: Math.round(Number(data.amount) * 100),
+          currency: "INR",
+          name: "FuelSkip",
+          description: "Fuel Voucher",
+          order_id: data.razorpay_order_id,
+          handler: async function(){
+            status.innerHTML = `<span class="ok">✅</span> Paid. Waiting confirmation…`;
+            const ok = await pollVoucherPaid(data.voucher_id);
+            if(ok){
+              state.last_voucher_id = data.voucher_id;
+              state.last_sig = data.qr_sig;
+              state.last_qr_station = bunk_id;
+              saveState();
+              status.innerHTML = `<span class="ok">✅</span> Voucher confirmed. Showing QR…`;
+              showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
+              loadVouchers(false);
+            } else {
+              status.innerHTML = `<span class="warn">⏳</span> Confirmation delayed. Refresh later.`;
+            }
+            btn.disabled = false;
+          },
+          modal:{
+            ondismiss: function(){
+              status.innerHTML = `<span class="warn">⚠️</span> Payment closed.`;
+              btn.disabled = false;
+            }
+          }
+        };
+        new Razorpay(options).open();
+
+      }catch(e){
+        status.innerHTML = `<span class="warn">❌</span> ${e.message}`;
+        alert(e.message);
+        btn.disabled = false;
+      }
     }
-  }
 
-  async function pollVoucherPaid(voucher_id){
-    for(let i=0;i<12;i++){
-      await new Promise(r=>setTimeout(r,2500));
-      const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucher_id)}`, { cache:"no-store" });
-      const data = await res.json();
-      if(res.ok && (data.status === "paid" || data.status === "used")) return true;
+    async function pollVoucherPaid(voucher_id){
+      for(let i=0;i<12;i++){
+        await new Promise(r=>setTimeout(r,2500));
+        const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucher_id)}`, { cache:"no-store" });
+        const data = await res.json();
+        if(res.ok && (data.status === "paid" || data.status === "used")) return true;
+      }
+      return false;
     }
-    return false;
-  }
 
-  function bootAfterLogin(){
-    document.getElementById("pageLogin").style.display = "none";
-    document.getElementById("sidebar").classList.remove("mobileHidden");
-    setSidebarUser();
-    applyDefaults();
-    go("dashboard");
-    loadStations();
-    loadVouchers(false);
-  }
+    function bootAfterLogin(){
+      document.getElementById("pageLogin").style.display = "none";
+      document.getElementById("sidebar").classList.remove("mobileHidden");
+      setSidebarUser();
+      applyDefaults();
+      go("dashboard");
+      loadStations();
+      loadVouchers(false);
+    }
 
-  loadState();
-  if(state.user_id){
-    bootAfterLogin();
-  } else {
-    showPage("login");
-    document.getElementById("sidebar").classList.add("mobileHidden");
-  }
-</script>
+    /* Splash timing */
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        const s = document.getElementById("splash");
+        if(!s) return;
+        s.classList.add("hide");
+        setTimeout(()=> s.remove(), 450);
+      }, 900);
+    });
+
+    /* Boot */
+    loadState();
+    if(state.user_id){
+      bootAfterLogin();
+    } else {
+      showPage("login");
+      document.getElementById("sidebar").classList.add("mobileHidden");
+    }
+  </script>
 </body>
 </html>
