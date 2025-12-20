@@ -12,21 +12,23 @@
 
   <style>
     :root{
-      /* PhonePe-like primary */
-      --primary: #7c3aed;     /* purple */
-      --primary2:#6d28d9;
-      --bg: #0b1020;
-      --panel: rgba(10,14,28,0.86);
-      --panel2: rgba(15,23,42,0.62);
-      --border: rgba(148,163,184,0.14);
-      --text: #e5e7eb;
-      --muted: #94a3b8;
+      /* ✅ Paytm-like clean palette (ONE accent color) */
+      --primary: #00baf2;
+      --primary2:#009ad0;
 
-      --success:#22c55e;
+      --bg: #0b1220;
+      --panel: rgba(10,14,28,0.90);
+      --panel2: rgba(15,23,42,0.65);
+      --border: rgba(148,163,184,0.14);
+
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+
+      --success:#16a34a;   /* only for status: PAID/USED */
       --danger:#ef4444;
-      --warn:#f97316;
+      --warn:#f59e0b;
       --gray:#334155;
-      --dark:#111827;
+      --dark:#020617;
     }
 
     * { box-sizing: border-box; }
@@ -35,9 +37,10 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(1200px 800px at 12% 10%, rgba(124,58,237,0.25), transparent 60%),
-        radial-gradient(900px 700px at 90% 20%, rgba(34,197,94,0.12), transparent 60%),
+        radial-gradient(1200px 800px at 12% 10%, rgba(0,186,242,0.22), transparent 60%),
+        radial-gradient(900px 700px at 90% 20%, rgba(34,197,94,0.10), transparent 60%),
         var(--bg);
+      overflow-x: hidden;
     }
 
     .app { display:flex; min-height:100vh; }
@@ -56,7 +59,7 @@
       font-weight:1000; font-size:18px;
       margin-bottom: 14px;
     }
-    .brand span{ color: #c4b5fd; }
+    .brand span{ color: #bae6fd; }
 
     .userbox{
       background: var(--panel2);
@@ -83,8 +86,8 @@
       text-align:left;
     }
     .nav button.active{
-      outline: 2px solid rgba(124,58,237,0.55);
-      background: rgba(124,58,237,0.12);
+      outline: 2px solid rgba(0,186,242,0.55);
+      background: rgba(0,186,242,0.12);
     }
 
     .logoutBtn{
@@ -110,12 +113,13 @@
       padding: 16px;
       box-shadow: 0 14px 35px rgba(0,0,0,0.35);
       margin-bottom: 14px;
+      max-width: 100%;
     }
 
     .cardTitle{ font-weight:1000; font-size:18px; margin-bottom: 6px; }
     .muted{ font-size:12px; color: var(--muted); font-weight:800; line-height: 1.45; }
 
-    label{ display:block; margin-top:10px; margin-bottom:6px; font-size:12px; color:#a5b4fc; font-weight:1000; }
+    label{ display:block; margin-top:10px; margin-bottom:6px; font-size:12px; color:#bae6fd; font-weight:1000; }
     input, select{
       width:100%;
       padding: 10px 12px;
@@ -125,10 +129,11 @@
       color: var(--text);
       outline:none;
       font-weight: 850;
+      max-width: 100%;
     }
 
     .row{ display:flex; gap:12px; }
-    .row > div{ flex:1; }
+    .row > div{ flex:1; min-width: 0; }
 
     .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     .chip{
@@ -139,29 +144,30 @@
       cursor:pointer;
       font-weight:1000;
       user-select:none;
+      white-space: nowrap;
     }
 
     .btn{ border:none; border-radius:14px; padding: 10px 12px; font-weight:1000; cursor:pointer; }
     .btn:disabled{ opacity: .65; cursor:not-allowed; }
-    .btnPrimary{ background: var(--primary); color:#f8fafc; }
+
+    .btnPrimary{ background: var(--primary); color:#001018; }
     .btnPrimary:hover{ background: var(--primary2); }
     .btnGray{ background: var(--gray); color: var(--text); }
     .btnDark{ background: var(--dark); color: var(--text); }
-    .btnGreen{ background: var(--success); color:#06240f; }
     .btnOutline{
       background: transparent;
-      border:1px solid rgba(124,58,237,0.45);
+      border:1px solid rgba(0,186,242,0.45);
       color:#e5e7eb;
     }
 
     .toggle{ display:flex; gap:10px; margin-top:10px; }
     .toggle .btn{ flex:1; }
-    .activePay{ outline:2px solid rgba(124,58,237,0.55); }
+    .activePay{ outline:2px solid rgba(0,186,242,0.55); }
 
     .statusLine{ margin-top:10px; font-weight:950; font-size:13px; }
     .ok{ color:#86efac; }
     .warn{ color:#fca5a5; }
-    .info{ color:#c4b5fd; }
+    .info{ color:#bae6fd; }
 
     /* QR */
     #qrWrap{ display:none; }
@@ -173,8 +179,9 @@
       justify-content:center;
       margin-top: 10px;
       overflow:hidden;
+      max-width: 100%;
     }
-    code{ color:#c4b5fd; word-break: break-all; }
+    code{ color:#bae6fd; word-break: break-all; }
 
     /* Lists */
     .list{ margin-top:10px; display:flex; flex-direction:column; gap:10px; }
@@ -187,16 +194,17 @@
       justify-content:space-between;
       align-items:center;
       gap: 10px;
+      max-width: 100%;
     }
     .item .t{ font-weight:1000; }
     .item .s{ font-size:12px; color: var(--muted); font-weight:850; margin-top: 4px; }
     .item .right{ display:flex; gap: 8px; flex-wrap:wrap; justify-content:flex-end; }
 
     .pill{ font-size:11px; font-weight:1000; padding: 4px 10px; border-radius: 999px; }
-    .pillPaid{ background:#16a34a; color:#06240f; }
-    .pillUsed{ background:#64748b; color:#0b1020; }
-    .pillPending{ background:#f59e0b; color:#1a1306; }
-    .pillFailed{ background:#ef4444; color:#2a0b0b; }
+    .pillPaid{ background: var(--success); color:#05200f; }
+    .pillUsed{ background:#64748b; color:#08101c; }
+    .pillPending{ background: var(--warn); color:#1a1306; }
+    .pillFailed{ background: var(--danger); color:#2a0b0b; }
 
     /* Mobile topbar */
     .topbar{
@@ -220,10 +228,23 @@
     }
     .sidebar.mobileHidden{ display:none; }
 
+    /* ✅ Mobile fixes: fit screen properly */
     @media (max-width: 820px) {
       .topbar{ display:block; }
       .sidebar{ position: fixed; z-index: 20; left:0; top:0; height:100vh; }
-      .main{ padding: 12px; }
+      .main{ padding: 10px; }
+      .container{ max-width: 100%; }
+
+      .card{ padding: 14px; border-radius: 14px; }
+      .row{ flex-direction: column; }
+      .chips{ gap: 6px; }
+
+      input, select, button { font-size: 15px; }
+      #qrBox{ padding: 8px; }
+      #qr canvas{
+        width: 180px !important;
+        height: 180px !important;
+      }
     }
   </style>
 </head>
@@ -305,6 +326,7 @@
             <div class="chip" onclick="setTopup(2000)">₹2000</div>
           </div>
           <input id="topupAmount" placeholder="Custom amount (min ₹50)" inputmode="decimal" />
+          <!-- ✅ unified color -->
           <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="topupWallet()">Add Money</button>
           <div class="statusLine" id="topupStatus"></div>
         </div>
@@ -369,7 +391,7 @@
 
           <div id="qrWrap">
             <div class="cardTitle" style="margin-top:14px;">Your Voucher QR</div>
-            <div class="muted" id="qrSubText">Show this to attendant (they scan inside their page).</div>
+            <div class="muted">Show this to attendant (they scan inside their page).</div>
 
             <div id="qrBox"><div id="qr"></div></div>
 
@@ -390,22 +412,18 @@
 
       <!-- VOUCHERS -->
       <div class="card" id="pageVouchers" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
           <div class="cardTitle">My Vouchers</div>
           <button class="btn btnGray" onclick="loadVouchers()">Refresh</button>
         </div>
-        <div class="muted">
-          After dispensing, status becomes USED (auto-refresh will update).
-        </div>
+        <div class="muted">After dispensing, status becomes USED (auto-refresh updates).</div>
         <div class="list" id="voucherList"></div>
       </div>
 
       <!-- VEHICLES -->
       <div class="card" id="pageVehicles" style="display:none;">
         <div class="cardTitle">Vehicles</div>
-        <div class="muted">
-          Next upgrade: save multiple vehicles + 1-tap select. For now use fields in “Create Voucher”.
-        </div>
+        <div class="muted">Next upgrade: save multiple vehicles + 1-tap select. For now use fields in “Create Voucher”.</div>
       </div>
 
       <!-- STATIONS -->
@@ -422,7 +440,7 @@
 <script>
   const API = window.location.origin;
 
-  // ✅ Station mapping (IDs -> Names)
+  /* ✅ Station mapping: IDs -> Names */
   const BUNK_META = {
     "BUNK-1": { name: "BPCL Siripuram", address: "Siripuram, Visakhapatnam" },
     "BUNK-2": { name: "Gajuwaka Expressway", address: "Gajuwaka, Visakhapatnam" }
@@ -441,6 +459,7 @@
     name: "",
     wallet_balance: 0,
     pay_method: "wallet",
+
     last_bunk: "BUNK-1",
     last_amount: 300,
     last_vehicle_type: "",
@@ -488,10 +507,12 @@
   function setTopup(v){ document.getElementById("topupAmount").value = String(v); }
   function quickAmount(v){ document.getElementById("amount").value = String(v); document.getElementById("litres").value = ""; }
 
+  /* ✅ FIX: show bunk NAME on dashboard quick section */
   function renderLastInfo(){
     const el = document.getElementById("lastInfo");
     if(state.last_amount && state.last_bunk){
-      el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> at <span class="info">${bunkName(state.last_bunk)}</span>`;
+      el.innerHTML =
+        `Last: <span class="ok">₹${state.last_amount}</span> at <span class="info">${bunkName(state.last_bunk)}</span>`;
     } else {
       el.textContent = "No previous voucher yet.";
     }
@@ -500,11 +521,11 @@
   function populateBunkDropdown(){
     const sel = document.getElementById("bunk");
     sel.innerHTML = "";
-
     Object.keys(BUNK_META).forEach(id => {
       const opt = document.createElement("option");
       opt.value = id;
-      opt.textContent = `${bunkName(id)} (${id})`;
+      /* show human name first */
+      opt.textContent = `${bunkName(id)} • (${id})`;
       sel.appendChild(opt);
     });
   }
@@ -540,7 +561,6 @@
   }
 
   function go(where){
-    // stop auto refresh when leaving vouchers page
     if(where !== "vouchers") stopVouchersAutoRefresh();
 
     if(window.innerWidth <= 820){
@@ -606,6 +626,7 @@
   async function refreshAll(){
     await refreshBalance();
     await loadVouchers(false);
+    renderLastInfo();
   }
 
   async function topupWallet(){
@@ -673,7 +694,7 @@
 
   function vStationLabel(v){
     const id = v.bunk_id || "-";
-    return `${bunkName(id)} (${id})`;
+    return `${bunkName(id)} • (${id})`;
   }
 
   async function loadVouchers(showPageAfter=true){
@@ -719,10 +740,7 @@
 
   function startVouchersAutoRefresh(){
     stopVouchersAutoRefresh();
-    vouchersAutoRefreshTimer = setInterval(() => {
-      // refresh every 6 seconds while user is on vouchers page
-      loadVouchers(false);
-    }, 6000);
+    vouchersAutoRefreshTimer = setInterval(() => loadVouchers(false), 6000);
   }
   function stopVouchersAutoRefresh(){
     if(vouchersAutoRefreshTimer){
@@ -732,21 +750,21 @@
   }
 
   function prefillFromVoucher(bunk, amount){
+    state.last_bunk = bunk || "BUNK-1";
+    state.last_amount = Number(amount || 0);
+    saveState();
+
     go("dashboard");
-    document.getElementById("bunk").value = bunk || "BUNK-1";
-    document.getElementById("amount").value = String(amount || 0);
-    document.getElementById("litres").value = "";
+    applyDefaults();
     setPay("wallet");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function tryShowQR(voucherId){
-    // only latest voucher QR can be re-shown without server endpoint
     if(state.last_voucher_id === voucherId && state.last_sig){
       showVoucherQR(voucherId, state.last_sig, state.last_qr_station || state.last_bunk || "BUNK-1");
       go("dashboard");
       document.getElementById("qrWrap").scrollIntoView({ behavior: "smooth", block: "start" });
-      // also refresh vouchers now (so USED updates soon)
       loadVouchers(false);
     } else {
       alert("For security, QR signature is not re-issued for old vouchers yet. Use Repeat (wallet is instant). If you want, we can add a secure endpoint so old vouchers can show QR too.");
@@ -798,8 +816,7 @@
     document.getElementById("vSig").textContent = sig;
     document.getElementById("vLink").textContent = link;
 
-    const stName = bunkName(stationId || "BUNK-1");
-    document.getElementById("qrStationName").textContent = stName;
+    document.getElementById("qrStationName").textContent = bunkName(stationId || "BUNK-1");
 
     const qrEl = document.getElementById("qr");
     qrEl.innerHTML = "";
@@ -813,9 +830,7 @@
       alert("No last voucher yet. Create one first.");
       return;
     }
-    document.getElementById("bunk").value = state.last_bunk || "BUNK-1";
-    document.getElementById("amount").value = String(state.last_amount);
-    document.getElementById("litres").value = "";
+    applyDefaults();
     setPay("wallet");
     await createVoucher();
   }
@@ -847,7 +862,12 @@
       return;
     }
 
-    // remember defaults
+    /* ✅ Optional: block wallet if insufficient */
+    if(payload.pay_method === "wallet" && payload.amount && Number(payload.amount) > Number(state.wallet_balance || 0)){
+      status.innerHTML = `<span class="warn">❌</span> Insufficient wallet balance`;
+      return;
+    }
+
     state.last_bunk = bunk_id;
     state.last_vehicle_type = vehicle_type || "";
     state.last_vehicle_no = vehicle_no || "";
@@ -867,7 +887,6 @@
       const data = await res.json();
       if(!res.ok) throw new Error(data.detail || "Create failed");
 
-      // Wallet instant
       if((data.pay_method || "") === "wallet" || payload.pay_method === "wallet"){
         if(typeof data.wallet_balance !== "undefined"){
           state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
@@ -881,14 +900,11 @@
         status.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet). Showing QR…`;
         showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
 
-        // refresh voucher list so later it can become USED
         loadVouchers(false);
-
         btn.disabled = false;
         return;
       }
 
-      // Razorpay fallback
       status.innerHTML = `<span class="info">⏳</span> Opening payment…`;
 
       const options = {
