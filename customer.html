@@ -533,8 +533,14 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 </div>
 
 <script>
-const API = localStorage.getItem('FUELSKIP_API') || window.location.origin;
-const FRONTEND_BASE = localStorage.getItem('FUELSKIP_FRONTEND') || window.location.origin;
+/**
+ * IMPORTANT:
+ * - API is your FastAPI base URL (Railway backend).
+ * - FRONTEND_BASE is where this HTML is served from.
+ *   Using window.location.origin makes QR always point to the correct host.
+ */
+const API = "https://fuelskip-production.up.railway.app";
+const FRONTEND_BASE = window.location.origin;
 
 let lastVoucherId = null;
 let razorpayOrderId = null;
@@ -676,6 +682,31 @@ function updateAnalyticsStatus(voucherId,status){
   localStorage.setItem(key,JSON.stringify(arr));
 }
 
+/**
+ * ✅ FIX: Sync local analytics statuses from server
+ * Because attendant can mark vouchers as USED on server, but localStorage analytics won't know.
+ */
+function syncAnalyticsFromServer(serverVouchers){
+  const key=getAnalyticsKey(); if(!key) return;
+  const local=JSON.parse(localStorage.getItem(key)||"[]");
+  if(!local.length) return;
+
+  const map = {};
+  serverVouchers.forEach(v => { map[String(v.id)] = v; });
+
+  let changed=false;
+  local.forEach(item=>{
+    const vid=String(item.voucher_id || item.id || "");
+    const sv=map[vid];
+    if(sv && item.status !== sv.status){
+      item.status = sv.status;
+      changed=true;
+    }
+  });
+
+  if(changed) localStorage.setItem(key, JSON.stringify(local));
+}
+
 async function createVoucher(){
   const amountVal=document.getElementById("amount").value;
   const litresVal=document.getElementById("litres").value;
@@ -704,6 +735,7 @@ async function createVoucher(){
     lastVoucherId=data.voucher_id;
     razorpayOrderId=data.razorpay_order_id;
     razorpayKeyId=data.razorpay_key_id;
+
     saveVehicleToAnalytics({
       vehicleType,
       vehicleNo,
@@ -714,6 +746,7 @@ async function createVoucher(){
       created_at:new Date().toISOString(),
       status:"pending"
     });
+
     document.getElementById("voucherDetails").innerHTML=`
       <div style="font-size:18px;font-weight:800;color:#166534;margin-bottom:12px;">
         ${data.voucher_id}
@@ -755,13 +788,12 @@ function payNow(){
 function startPollingStatus(){
   if(!lastVoucherId) return;
   if(pollTimer) clearInterval(pollTimer);
-  const startedAt = Date.now();
-  pollTimer=setInterval(()=>checkVoucherStatus(startedAt),4000);
+  pollTimer=setInterval(checkVoucherStatus,2500);
   const btn=document.getElementById("payBtn");
   btn.textContent="⏳ Processing..."; btn.disabled=true;
 }
 
-async function checkVoucherStatus(startedAt){
+async function checkVoucherStatus(){
   if(!lastVoucherId) return;
   try{
     const res=await fetch(`${API}/voucher-status/${lastVoucherId}`);
@@ -774,19 +806,6 @@ async function checkVoucherStatus(startedAt){
       loadMyVouchers();
       loadAnalytics();
       document.getElementById("payBtn").style.display="none";
-    } else if (data.status==="failed"){
-      clearInterval(pollTimer);
-      updateAnalyticsStatus(lastVoucherId,data.status);
-      showStatus("createStatus","Payment failed. Please try again.","error");
-      const btn=document.getElementById("payBtn");
-      btn.textContent="Pay Now"; btn.disabled=false;
-    } else {
-      // Stop polling after 3 minutes (network issues / user closed page)
-      if(Date.now() - (startedAt||Date.now()) > 180000){
-        clearInterval(pollTimer);
-        const btn=document.getElementById("payBtn");
-        btn.textContent="Check Status"; btn.disabled=false;
-      }
     }
   }catch(e){console.log("Poll error:",e);}
 }
@@ -794,7 +813,10 @@ async function checkVoucherStatus(startedAt){
 function showQr(){
   document.getElementById("qrSection").style.display="block";
   document.getElementById("qrContainer").innerHTML="";
+
+  // ✅ FIX: QR should point to frontend host, not API.replace hacks
   const url=`${FRONTEND_BASE}/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
+
   new QRCode(document.getElementById("qrContainer"),{
     text:url,width:200,height:200,colorDark:"#1e293b",colorLight:"#f8fafc"
   });
@@ -818,7 +840,12 @@ async function loadMyVouchers(){
     const res=await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(uid)}`);
     if(!res.ok){box.textContent="Loading failed";return;}
     const arr=await res.json();
-    if(!arr.length){box.textContent="No vouchers yet";return;}
+    if(!arr.length){box.textContent="No vouchers yet"; return;}
+
+    // ✅ FIX: sync local analytics with server statuses
+    syncAnalyticsFromServer(arr);
+    loadAnalytics();
+
     box.innerHTML=arr.map(v=>`
       <div class="history-item">
         <div>
@@ -857,13 +884,14 @@ function loadAnalytics(){
       const id=f.bunk_id||"UNKNOWN";
       if(!bunkStats[id]) bunkStats[id]={amount:0,used:0,unused:0};
       bunkStats[id].amount+=parseFloat(f.amount||0);
-      if(f.status==="used") bunkStats[id].used++; else bunkStats[id].unused++;
+      if((f.status||"").toLowerCase()==="used") bunkStats[id].used++;
+      else bunkStats[id].unused++;
     });
 
-    // vouchers tab (always render)
+    // vouchers tab
     {
-      const used=a.filter(f=>f.status==="used");
-      const unused=a.filter(f=>f.status!=="used");
+      const used=a.filter(f=>(f.status||"").toLowerCase()==="used");
+      const unused=a.filter(f=>(f.status||"").toLowerCase()!=="used");
       const box=document.getElementById("voucherStats");
       box.innerHTML=`
         <div style="margin-bottom:12px;font-size:14px;">
@@ -880,15 +908,15 @@ function loadAnalytics(){
               </div>
               <div style="text-align:right;font-size:13px;">
                 <div>₹${parseFloat(f.amount||0).toLocaleString()}</div>
-                <div style="font-size:12px;color:${f.status==='used'?'#16a34a':'#f97316'};">
-                  ${f.status==='used'?'Used':'Pending/Unused'}
+                <div style="font-size:12px;color:${(f.status||"").toLowerCase()==='used'?'#16a34a':'#f97316'};">
+                  ${(f.status||"").toLowerCase()==='used'?'Used':'Pending/Unused'}
                 </div>
               </div>
             </div>`).join("")}
         </div>`;
     }
 
-    // vehicles tab (always render)
+    // vehicles tab
     {
       const box=document.getElementById("vehicleList");
       box.innerHTML=Object.keys(vehicleStats).length?
@@ -900,7 +928,7 @@ function loadAnalytics(){
         '<div style="padding:24px;text-align:center;color:#64748b;">No vehicles tracked</div>';
     }
 
-    // bunks tab (always render)
+    // bunks tab
     {
       const box=document.getElementById("bunkList");
       box.innerHTML=Object.keys(bunkStats).length?
