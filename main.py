@@ -5,6 +5,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, List
 import uuid, datetime, os, math
+import hmac
+import hashlib
 
 from dotenv import load_dotenv
 load_dotenv()   # this reads .env into environment
@@ -17,13 +19,16 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
 """FuelSkip backend.
 
-Notes on security:
-- /validate and admin list endpoints are protected by simple header tokens.
-- For pilots, keep these tokens on the attendant/owner device only.
+Security upgrades:
+- Signed QR (HMAC) to prevent tampering/forged voucher dispense
+- Bunk binding: attendant device can dispense only its configured bunk_id
+
+Env vars needed:
+- QR_SIGNING_SECRET (>= 32 chars recommended)
+- ATTENDANT_BUNK_ID (ex: BUNK-1)
 """
 
 # --- DB setup ---
-# Railway (and most managed hosts) work best with Postgres. Keep SQLite only for local testing.
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fuelskip.db")
 
 # If Railway provides postgres://, SQLAlchemy prefers postgresql://
@@ -55,7 +60,7 @@ class VoucherDB(Base):
     bunk_id = Column(String, index=True)
     amount = Column(Float)
     litres = Column(Float)
-    status = Column(String, index=True)                     # pending/paid/used
+    status = Column(String, index=True)                     # pending/paid/used/failed
     price_per_litre = Column(Float)
     created_at = Column(DateTime)
     expires_at = Column(DateTime)
@@ -64,14 +69,12 @@ class VoucherDB(Base):
     razorpay_payment_id = Column(String, index=True, nullable=True)
     user_id = Column(Integer, index=True, nullable=True)    # link to users
 
-    # Customer-provided metadata (useful for attendant confirmation & owner analytics)
     vehicle_type = Column(String, nullable=True)
     vehicle_no = Column(String, nullable=True)
 
 
 class WebhookEventDB(Base):
     """Store Razorpay event ids for idempotency."""
-
     __tablename__ = "webhook_events"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -104,23 +107,45 @@ def get_db():
 app = FastAPI(title="FuelSkip Flow A")
 
 # ---- Basic access control tokens (keep in env) ----
-# Example values you can set on Railway:
-#   ATTENDANT_TOKEN=...
-#   OWNER_TOKEN=...
 ATTENDANT_TOKEN = os.getenv("ATTENDANT_TOKEN", "")
 OWNER_TOKEN = os.getenv("OWNER_TOKEN", "")
 
+# NEW: bunk binding + QR signing
+ATTENDANT_BUNK_ID = os.getenv("ATTENDANT_BUNK_ID", "")  # e.g. "BUNK-1"
+
 def _require_token(expected: str, provided: str | None, label: str):
     if not expected:
-        # If token isn't configured, fail closed in prod-like deployments.
-        # (For local dev you can set expected to empty and skip by changing this logic.)
         raise HTTPException(status_code=500, detail=f"{label} token not configured")
     if not provided or provided != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
+def _qr_secret() -> bytes:
+    secret = os.getenv("QR_SIGNING_SECRET", "")
+    if not secret or len(secret) < 16:
+        # fail closed - signed QR is required for secure dispensing
+        raise HTTPException(status_code=500, detail="QR_SIGNING_SECRET not configured")
+    return secret.encode("utf-8")
+
+
+def sign_voucher_qr(voucher: VoucherDB) -> str:
+    """
+    Stable signature based on server-truth fields.
+    We sign: voucher_id|bunk_id|amount|created_at
+    """
+    created = voucher.created_at.replace(tzinfo=None).isoformat(timespec="seconds")
+    msg = f"{voucher.id}|{voucher.bunk_id}|{voucher.amount:.2f}|{created}".encode("utf-8")
+    return hmac.new(_qr_secret(), msg, hashlib.sha256).hexdigest()
+
+
+def verify_voucher_sig(voucher: VoucherDB, sig: str | None) -> bool:
+    if not sig:
+        return False
+    expected = sign_voucher_qr(voucher)
+    return hmac.compare_digest(expected, sig)
+
+
 # ---- CORS ----
-# Comma-separated origins, e.g. "https://your-frontend.com,https://..."
 cors_origins_raw = os.getenv("CORS_ORIGINS", "*")
 cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
 
@@ -134,8 +159,6 @@ app.add_middleware(
 
 # ---- Static / HTML pages ----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Optional: serve whole folder as /static
 app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
 
@@ -169,11 +192,9 @@ def owner_page():
 def on_startup():
     Base.metadata.create_all(bind=engine)
 
-    # Lightweight schema patching for SQLite dev DBs (create_all does not add new columns).
-    # For Postgres, prefer Alembic migrations.
+    # Lightweight schema patching for SQLite dev DBs
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         with engine.begin() as conn:
-            # vouchers.vehicle_type, vouchers.vehicle_no, vouchers.razorpay_payment_id
             cols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(vouchers)")).fetchall()]
             if "vehicle_type" not in cols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_type VARCHAR"))
@@ -186,7 +207,7 @@ def on_startup():
 # ----- Razorpay setup -----
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
-WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")  # set same value in dashboard
+WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
 
 print("KEY_ID =", RAZORPAY_KEY_ID)
 
@@ -220,7 +241,6 @@ bunks = {
     },
 }
 
-# simple haversine in km
 def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371.0
     p1 = math.radians(lat1)
@@ -242,7 +262,6 @@ def log_error(db: Session, where: str, message: str):
         db.add(entry)
         db.commit()
     except Exception:
-        # avoid breaking main flow on logging failure
         pass
 
 
@@ -254,11 +273,6 @@ class CreateVoucher(BaseModel):
     user_id: int | None = None
     vehicle_type: str | None = None
     vehicle_no: str | None = None
-
-
-class PaymentUpdate(BaseModel):
-    voucher_id: str
-    status: str  # "paid" or "failed"
 
 
 class LoginRequest(BaseModel):
@@ -295,10 +309,6 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
 
 @app.get("/nearby-bunks")
 def nearby_bunks(lat: float, lon: float) -> List[dict]:
-    """
-    Simple nearby bunk list using static bunks dict.
-    Vouchers never depend on this; it is only for UX in customer.html.
-    """
     results = []
     for bunk in bunks.values():
         dist = distance_km(lat, lon, bunk["lat"], bunk["lon"])
@@ -311,7 +321,6 @@ def nearby_bunks(lat: float, lon: float) -> List[dict]:
                 "pumps": bunk["pumps"],
             }
         )
-    # sort by distance
     results.sort(key=lambda x: x["distance_km"])
     return results
 
@@ -332,7 +341,6 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     amount = req.amount
     litres = req.litres
 
-    # ---- server-side validation (don't trust only frontend) ----
     if amount is not None and amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be > 0")
     if litres is not None and litres <= 0:
@@ -342,20 +350,18 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     if litres is not None and litres > 200:
         raise HTTPException(status_code=400, detail="Litres too high")
 
-    # calculate missing side from price_per_litre
     if amount is not None and litres is None:
         litres = round(amount / price, 2)
     elif litres is not None and amount is None:
         amount = round(litres * price, 2)
 
-    # Use a longer id to reduce guessing + collision risk
     voucher_id = uuid.uuid4().hex[:12]
 
-    # ----- Razorpay ORDER instead of UPI link -----
+    # Razorpay order
     try:
         order = razor_client.order.create(
             {
-                "amount": int(amount * 100),  # Razorpay uses paise
+                "amount": int(amount * 100),
                 "currency": "INR",
                 "receipt": voucher_id,
                 "payment_capture": 1,
@@ -364,10 +370,8 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     except Exception as e:
         log_error(db, "create-voucher", str(e))
         raise HTTPException(status_code=500, detail="Razorpay order error")
-    # ---------------------------------------------
 
     now = datetime.datetime.utcnow()
-    # keep expires_at field but it's not enforced anywhere now
     expires = now + datetime.timedelta(minutes=30)
 
     voucher_db = VoucherDB(
@@ -375,7 +379,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         bunk_id=req.bunk_id,
         amount=amount,
         litres=litres,
-        status="pending",  # pending → paid → used
+        status="pending",
         price_per_litre=price,
         created_at=now,
         expires_at=expires,
@@ -387,6 +391,9 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     )
     db.add(voucher_db)
     db.commit()
+    db.refresh(voucher_db)
+
+    qr_sig = sign_voucher_qr(voucher_db)
 
     return {
         "voucher_id": voucher_id,
@@ -396,20 +403,25 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         "expires_at": expires,
         "razorpay_order_id": order["id"],
         "razorpay_key_id": RAZORPAY_KEY_ID,
+        "qr_sig": qr_sig,  # ✅ NEW
     }
 
 
 @app.get("/voucher/{voucher_id}")
 def get_voucher(voucher_id: str, db: Session = Depends(get_db)):
+    """
+    NOTE:
+    - We allow viewing voucher details without sig (for manual paste use).
+    - BUT dispensing will require sig in /validate.
+    """
     v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Voucher not found")
-    
-    # Include user info if exists
+
     user = None
     if v.user_id:
         user = db.query(UserDB).filter(UserDB.id == v.user_id).first()
-    
+
     return {
         **v.__dict__,
         "user_phone": user.phone if user else None,
@@ -428,27 +440,48 @@ def voucher_status(voucher_id: str, db: Session = Depends(get_db)):
 @app.post("/validate/{voucher_id}")
 def validate_voucher(
     voucher_id: str,
+    sig: str | None = None,
     db: Session = Depends(get_db),
     x_attendant_token: str | None = Header(None, alias="X-ATTENDANT-TOKEN"),
 ):
+    # 1) attendant auth
     _require_token(ATTENDANT_TOKEN, x_attendant_token, "Attendant")
+
     v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Voucher not found")
 
-    if v.status != "paid":
+    # 2) Signed QR required for dispensing
+    if not verify_voucher_sig(v, sig):
+        raise HTTPException(status_code=403, detail="Invalid QR signature")
+
+    # 3) Bunk binding
+    if ATTENDANT_BUNK_ID and v.bunk_id != ATTENDANT_BUNK_ID:
+        raise HTTPException(status_code=403, detail=f"Wrong bunk. This device is for {ATTENDANT_BUNK_ID}")
+
+    # 4) Payment state checks
+    if v.status not in ("paid", "used"):
         raise HTTPException(status_code=400, detail="Payment not completed yet")
 
-    if v.used:
-        raise HTTPException(status_code=400, detail="Voucher already used")
+    # 5) Idempotent behavior
+    if v.used or v.status == "used":
+        return {
+            "approved": True,
+            "already_used": True,
+            "voucher_id": voucher_id,
+            "bunk_id": v.bunk_id,
+            "amount": v.amount,
+            "litres": v.litres,
+        }
 
-    # NOTE: no time-based expiry check here → voucher valid anytime
+    # 6) Mark used
     v.used = True
     v.status = "used"
     db.commit()
 
     return {
         "approved": True,
+        "already_used": False,
         "voucher_id": voucher_id,
         "bunk_id": v.bunk_id,
         "amount": v.amount,
@@ -460,7 +493,6 @@ def validate_voucher(
 @app.post("/razorpay-webhook")
 async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
     body_bytes = await request.body()
-    print("WEBHOOK BODY:", body_bytes)
     signature = request.headers.get("x-razorpay-signature")
 
     if not WEBHOOK_SECRET:
@@ -478,15 +510,14 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 
     payload = await request.json()
     event = payload.get("event")
-    event_id = payload.get("event_id") or payload.get("id")  # Razorpay uses event_id
+    event_id = payload.get("event_id") or payload.get("id")
 
-    # ---- idempotency: ignore duplicate deliveries ----
+    # idempotency
     if event_id:
         already = db.query(WebhookEventDB).filter(WebhookEventDB.event_id == event_id).first()
         if already:
             return {"ok": True, "deduped": True}
 
-        # store event first (fail-safe: if processing crashes mid-way, we still won't double-run)
         db.add(
             WebhookEventDB(
                 event_id=event_id,
@@ -497,7 +528,6 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
         )
         db.commit()
 
-    # ---- process common outcomes ----
     if event in ("payment.captured", "payment.authorized", "payment.failed"):
         payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
         order_id = payment_entity.get("order_id")
@@ -506,7 +536,6 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
         if order_id:
             v = db.query(VoucherDB).filter(VoucherDB.razorpay_order_id == order_id).first()
             if v:
-                # record payment_id for traceability
                 if payment_id:
                     v.razorpay_payment_id = payment_id
 
