@@ -5,6 +5,9 @@
   <title>FuelSkip – Attendant</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- QR decode library -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -24,8 +27,7 @@
       box-shadow: 0 10px 25px rgba(15,23,42,0.25);
     }
 
-    .input-row { display: flex; gap: 8px; align-items: center; }
-
+    .input-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
     input {
       flex: 1;
       padding: 10px 12px;
@@ -39,7 +41,7 @@
       border-radius: 10px;
       border: none;
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 700;
       font-size: 14px;
     }
     button:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -47,13 +49,14 @@
     .btn-blue  { background: #3b82f6; color: #fff; }
     .btn-green { background: #10b981; color: #fff; width: 100%; margin-top: 10px; }
     .btn-red   { background: #ef4444; color: #fff; }
+    .btn-dark  { background: #111827; color: #fff; }
 
     .status-chip {
       display: inline-block;
       padding: 4px 10px;
       border-radius: 999px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 800;
       color: #fff;
     }
     .paid { background: #16a34a; }
@@ -62,8 +65,24 @@
 
     #voucherData p { margin: 4px 0; font-size: 14px; color: #374151; }
     #voucherData strong { color: #111827; }
-    #statusMsg { margin-top: 10px; font-size: 14px; font-weight: 600; }
-    .mini { margin-top: 6px; font-size: 12px; color: #6b7280; }
+    #statusMsg { margin-top: 10px; font-size: 14px; font-weight: 700; }
+
+    .mini { margin-top: 8px; font-size: 12px; color: #6b7280; }
+    .debug { margin-top: 8px; font-size: 12px; color: #64748b; word-break: break-all; }
+
+    /* Scanner UI */
+    #scannerWrap { display:none; margin-top: 12px; }
+    #video {
+      width: 100%;
+      border-radius: 12px;
+      background: #000;
+    }
+    #scanHint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #374151;
+      font-weight: 600;
+    }
   </style>
 </head>
 
@@ -73,31 +92,46 @@
 
   <!-- PAIRING STATUS -->
   <div class="box">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:13px;font-weight:700;">
-        Device Status:
-        <span id="pairState" style="font-weight:800;color:#ef4444;">NOT PAIRED</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <div style="font-size:13px;font-weight:800;">
+        Device:
+        <span id="pairState" style="font-weight:900;color:#ef4444;">NOT PAIRED</span>
       </div>
       <button class="btn-red" onclick="resetPairing()">Reset</button>
     </div>
 
     <div class="mini">
-      If voucher scan shows NOT PAIRED, open this page once in Safari and pair again.
+      Pair once using Owner QR. After that, use “Scan Voucher QR” inside this page (don’t open new tabs).
     </div>
 
-    <div class="mini" id="debugLine"></div>
+    <div class="debug" id="debugLine"></div>
   </div>
 
-  <!-- INPUT -->
+  <!-- VOUCHER SCAN / INPUT -->
   <div class="box">
+    <button class="btn-dark" style="width:100%;" onclick="startScan()">
+      📷 Scan Voucher QR
+    </button>
+
+    <div id="scannerWrap">
+      <video id="video" playsinline></video>
+      <div id="scanHint">Point camera at voucher QR…</div>
+      <div class="input-row">
+        <button class="btn-red" style="flex:1;" onclick="stopScan()">Stop</button>
+      </div>
+    </div>
+
     <div class="input-row">
-      <input id="voucherInput" placeholder="Scan or paste voucher ID">
+      <input id="voucherInput" placeholder="Or paste voucher ID">
       <button class="btn-blue" onclick="loadVoucher()">Check</button>
     </div>
 
-    <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
-      Tip: Customer QR auto-fills voucher + signature.
-    </p>
+    <div class="mini">
+      Customer QR will contain a link like: <br>
+      <span style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace;">
+        /attendant.html?voucher=...&sig=...
+      </span>
+    </div>
   </div>
 
   <!-- VOUCHER DETAILS -->
@@ -117,11 +151,10 @@ const API = window.location.origin;
 let currentVoucherId = null;
 let currentSig = "";
 
-/* ---------------- COOKIES (more robust) ---------------- */
+/* ---------------- Cookie helpers ---------------- */
 function setCookie(name, value, days=365) {
   const maxAge = days * 24 * 60 * 60;
   const secure = (location.protocol === "https:") ? "; Secure" : "";
-  // SameSite=Lax + Secure helps iOS/Safari consistency for https sites
   document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
 }
 function getCookie(name) {
@@ -132,7 +165,7 @@ function getCookie(name) {
   return "";
 }
 
-/* ---------------- DEVICE TOKEN (multi-store) ---------------- */
+/* ---------------- Device token store ---------------- */
 function saveDeviceToken(token) {
   const t = (token || "").trim();
   if (!t) return;
@@ -140,81 +173,57 @@ function saveDeviceToken(token) {
   try { localStorage.setItem("FUELSKIP_DEVICE_TOKEN", t); } catch(e){}
   setCookie("fuelskip_dt", t, 365);
 }
-
 function getDeviceToken() {
   let t = "";
   try { t = (sessionStorage.getItem("FUELSKIP_DEVICE_TOKEN") || "").trim(); } catch(e){}
-  if (!t) {
-    try { t = (localStorage.getItem("FUELSKIP_DEVICE_TOKEN") || "").trim(); } catch(e){}
-  }
+  if (!t) { try { t = (localStorage.getItem("FUELSKIP_DEVICE_TOKEN") || "").trim(); } catch(e){} }
   if (!t) t = (getCookie("fuelskip_dt") || "").trim();
   return t;
 }
-
 function setPairState() {
   const t = getDeviceToken();
   const paired = !!t;
   const el = document.getElementById("pairState");
   el.textContent = paired ? "PAIRED" : "NOT PAIRED";
   el.style.color = paired ? "#16a34a" : "#ef4444";
-
-  // Debug line to confirm where it’s running
-  const d = document.getElementById("debugLine");
-  d.textContent = `Origin: ${window.location.origin} • Token: ${paired ? (t.slice(0,8) + "…") : "none"}`;
+  document.getElementById("debugLine").textContent =
+    `Origin: ${window.location.origin} • Token: ${paired ? (t.slice(0,8)+"…") : "none"}`;
 }
-
 function resetPairing() {
   try { sessionStorage.removeItem("FUELSKIP_DEVICE_TOKEN"); } catch(e){}
   try { localStorage.removeItem("FUELSKIP_DEVICE_TOKEN"); } catch(e){}
-  setCookie("fuelskip_dt", "", -1); // delete
+  setCookie("fuelskip_dt", "", -1);
   alert("Pairing removed. Scan Owner QR again.");
   setPairState();
 }
 
-/* ---------------- URL PARAMS ---------------- */
+/* ---------------- URL params (for pairing only) ---------------- */
 function getParams() {
   const p = new URLSearchParams(window.location.search);
-  return {
-    voucher: p.get("voucher") || "",
-    sig: p.get("sig") || "",
-    dt: p.get("dt") || ""
-  };
+  return { dt: p.get("dt") || "" };
 }
 
 window.addEventListener("load", () => {
   const p = getParams();
-
-  // Pair-by-QR
   if (p.dt) {
     saveDeviceToken(p.dt);
     history.replaceState({}, "", window.location.pathname);
     alert("✅ Device paired successfully!");
   }
-
   setPairState();
-
-  // Customer QR auto-load
-  if (p.voucher) {
-    document.getElementById("voucherInput").value = p.voucher;
-    currentSig = p.sig || "";
-    loadVoucher();
-  }
 });
 
-/* ---------------- UI HELPERS ---------------- */
+/* ---------------- Voucher UI helpers ---------------- */
 function statusChip(status, used) {
   if (used) return '<span class="status-chip used">USED</span>';
   if (status === "paid") return '<span class="status-chip paid">PAID</span>';
   return '<span class="status-chip pend">PENDING</span>';
 }
 
-/* ---------------- LOAD VOUCHER ---------------- */
+/* ---------------- Load voucher ---------------- */
 async function loadVoucher() {
   const id = document.getElementById("voucherInput").value.trim();
   if (!id) return alert("Enter voucher ID");
-
-  const p = getParams();
-  if (p.voucher === id) currentSig = p.sig || currentSig;
 
   const box = document.getElementById("voucherInfo");
   const data = document.getElementById("voucherData");
@@ -239,22 +248,16 @@ async function loadVoucher() {
       <p><strong>Vehicle:</strong> ${v.vehicle_type || "-"} • ${v.vehicle_no || "-"}</p>
       <p><strong>Status:</strong> ${statusChip(v.status, v.used)}</p>
       <p><strong>QR Signature:</strong>
-        ${currentSig ? "<span style='color:#16a34a'>OK</span>" :
-                       "<span style='color:#ef4444'>MISSING</span>"}
+        ${currentSig ? "<span style='color:#16a34a;font-weight:900;'>OK</span>" :
+                       "<span style='color:#ef4444;font-weight:900;'>MISSING</span>"}
       </p>
     `;
 
     box.style.display = "block";
 
     if (v.status === "paid" && !v.used) {
-      if (!currentSig) {
-        msg.innerHTML = "❌ Invalid QR. Scan customer QR.";
-        return;
-      }
-      if (!getDeviceToken()) {
-        msg.innerHTML = "❌ Device not paired. Scan Owner pairing QR again.";
-        return;
-      }
+      if (!currentSig) { msg.innerHTML = "❌ Missing signature. Scan voucher QR."; return; }
+      if (!getDeviceToken()) { msg.innerHTML = "❌ Device not paired. Scan Owner QR."; return; }
       msg.innerHTML = "✅ Ready to dispense.";
       btn.style.display = "block";
       btn.disabled = false;
@@ -268,7 +271,7 @@ async function loadVoucher() {
   }
 }
 
-/* ---------------- DISPENSE ---------------- */
+/* ---------------- Dispense ---------------- */
 async function validateAndDispense() {
   const btn = document.getElementById("dispenseBtn");
   const msg = document.getElementById("statusMsg");
@@ -279,12 +282,7 @@ async function validateAndDispense() {
   try {
     const res = await fetch(
       `${API}/validate/${encodeURIComponent(currentVoucherId)}?sig=${encodeURIComponent(currentSig)}`,
-      {
-        method: "POST",
-        headers: {
-          "X-DEVICE-TOKEN": getDeviceToken()
-        }
-      }
+      { method: "POST", headers: { "X-DEVICE-TOKEN": getDeviceToken() } }
     );
 
     const data = await res.json();
@@ -301,6 +299,91 @@ async function validateAndDispense() {
     msg.innerHTML = `❌ ${e.message}`;
     btn.disabled = false;
     btn.textContent = "✅ Dispense Fuel";
+  }
+}
+
+/* ---------------- In-page QR scanner ---------------- */
+let scanStream = null;
+let scanLoopId = null;
+
+function parseVoucherFromQR(text) {
+  // Expect full URL like:
+  // https://.../attendant.html?voucher=...&sig=...
+  try {
+    const u = new URL(text);
+    const v = u.searchParams.get("voucher") || "";
+    const s = u.searchParams.get("sig") || "";
+    return { voucher: v, sig: s };
+  } catch {
+    // Sometimes QR might be only the query string
+    try {
+      const u = new URL(window.location.origin + text);
+      const v = u.searchParams.get("voucher") || "";
+      const s = u.searchParams.get("sig") || "";
+      return { voucher: v, sig: s };
+    } catch {
+      return { voucher: "", sig: "" };
+    }
+  }
+}
+
+async function startScan() {
+  if (!getDeviceToken()) {
+    alert("Device not paired. Scan Owner pairing QR first.");
+    return;
+  }
+  const wrap = document.getElementById("scannerWrap");
+  const video = document.getElementById("video");
+  wrap.style.display = "block";
+
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment" }, audio: false
+    });
+    video.srcObject = scanStream;
+    await video.play();
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    const tick = () => {
+      if (!video.videoWidth) {
+        scanLoopId = requestAnimationFrame(tick);
+        return;
+      }
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+      if (code && code.data) {
+        const parsed = parseVoucherFromQR(code.data);
+        if (parsed.voucher && parsed.sig) {
+          currentSig = parsed.sig;
+          document.getElementById("voucherInput").value = parsed.voucher;
+          stopScan();
+          loadVoucher();
+          return;
+        }
+      }
+      scanLoopId = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (e) {
+    alert("Camera not available or permission denied.");
+    wrap.style.display = "none";
+  }
+}
+
+function stopScan() {
+  const wrap = document.getElementById("scannerWrap");
+  wrap.style.display = "none";
+  if (scanLoopId) cancelAnimationFrame(scanLoopId);
+  scanLoopId = null;
+  if (scanStream) {
+    scanStream.getTracks().forEach(t => t.stop());
+    scanStream = null;
   }
 }
 </script>
