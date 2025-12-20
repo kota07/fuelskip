@@ -1,741 +1,529 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>FuelSkip - Customer (Analytics + Flow)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta charset="UTF-8" />
+  <title>FuelSkip – Customer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- QR display -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Razorpay checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<style>
-/* (UNCHANGED CSS - kept exactly as your file) */
-* { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 12px; color: #1e293b; line-height: 1.5; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-.app-shell { position: relative; width: 100%; max-width: 400px; margin: 0 auto; }
-.sidebar { position: fixed; top: 0; left: 0; width: 280px; max-width: 90vw; height: 100vh; background: #ffffff; border-radius: 0 24px 24px 0; box-shadow: 0 25px 50px rgba(0,0,0,0.25); padding: 0; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 1000; backdrop-filter: blur(20px); }
-.sidebar.open { transform: translateX(0); }
-.sidebar-header { padding: 24px; border-bottom: 1px solid #f1f5f9; background: linear-gradient(135deg, #667eea15, #764ba215); }
-.sidebar-header h2 { margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #1e293b; }
-.sidebar-header small { font-size: 13px; color: #64748b; font-weight: 500; }
-.sidebar-menu { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
-.sidebar-menu li { margin: 0; }
-.sidebar-menu a { display: flex; align-items: center; gap: 12px; padding: 16px 24px; font-size: 15px; font-weight: 500; color: #64748b; text-decoration: none; border-left: 4px solid transparent; transition: all 0.2s ease; }
-.sidebar-menu a:hover, .sidebar-menu a.active { background: linear-gradient(135deg, #eef2ff, #e0f2fe); border-left-color: #6366f1; color: #1e293b; }
-.sidebar-footer { padding: 20px 24px; border-top: 1px solid #f1f5f9; }
-.sidebar-footer button { width: 100%; border: none; background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 14px 20px; cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 12px; transition: all 0.2s ease; display: flex; align-items: center; gap: 10px; }
-.sidebar-footer button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 25px rgba(239,68,68,0.3); }
-.backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 999; backdrop-filter: blur(8px); }
-.backdrop.show { opacity: 1; pointer-events: auto; }
-.sidebar-hidden { display: none !important; }
-.container { max-width: 100%; background: rgba(255,255,255,0.97); border-radius: 24px; padding: 24px 20px 28px; box-shadow: 0 25px 50px rgba(0,0,0,0.15); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); margin-bottom: 20px; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #f1f5f9; }
-h1 { margin: 0; font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.header-right { display: flex; align-items: center; gap: 8px; }
-.user-pill { font-size: 13px; font-weight: 600; color: #64748b; background: #f8fafc; padding: 6px 10px; border-radius: 20px; white-space: nowrap; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
-.hamburger { border: none; background: linear-gradient(135deg, #1e293b, #334155); color: #f8fafc; border-radius: 12px; padding: 8px 12px; font-size: 18px; cursor: pointer; box-shadow: 0 4px 12px rgba(30,41,59,0.3); transition: all 0.2s ease; min-width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
-.hamburger:active { transform: scale(0.95); }
-.card { background: rgba(255,255,255,0.9); border-radius: 20px; padding: 24px; margin-bottom: 20px; box-shadow: 0 8px 25px rgba(0,0,0,0.08); border: 1px solid rgba(248,250,252,0.8); }
-.form-group { margin-bottom: 20px; }
-.label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: #374151; }
-input, select { width: 100%; padding: 14px 16px; border-radius: 14px; border: 2px solid #f1f5f9; font-size: 16px; box-sizing: border-box; background: #fafbfc; font-weight: 500; }
-input:focus, select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); background: white; }
-.vehicle-section { background: linear-gradient(135deg, #f8fafc, #f1f5f9); padding: 20px; border-radius: 16px; margin-bottom: 20px; border-left: 5px solid #6366f1; }
-.vehicle-grid { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 12px; }
-button { border: none; border-radius: 14px; padding: 14px 20px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; min-height: 48px; display: flex; align-items: center; justify-content: center; }
-button:active { transform: scale(0.97); }
-button:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-primary { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; width: 100%; margin-top: 8px; box-shadow: 0 8px 25px rgba(34,197,94,0.3); }
-.btn-primary:hover:not(:disabled) { background: linear-gradient(135deg, #16a34a, #15803d); box-shadow: 0 12px 35px rgba(22,163,74,0.4); transform: translateY(-1px); }
-.badge { padding: 6px 12px; border-radius: 20px; font-size:12px; font-weight:600; }
-.badge-pending { background: linear-gradient(135deg,#fef3c7,#fde68a); color:#92400e; }
-.badge-paid    { background: linear-gradient(135deg,#dcfce7,#bbf7d0); color:#166534; }
-.badge-used    { background: linear-gradient(135deg,#f1f5f9,#e2e8f0); color:#475569; }
-.badge-failed  { background: linear-gradient(135deg,#fee2e2,#fecaca); color:#b91c1c; }
-.history-item { border-bottom: 1px solid #f1f5f9; padding: 16px 0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
-.history-item:last-child { border-bottom: none; }
-#voucherBox { display:none; }
-#qrContainer { margin-top: 16px; display: flex; justify-content: center; padding: 20px; background: #f8fafc; border-radius: 16px; }
-#voucherDetails { font-size: 15px; margin-bottom: 20px; padding: 24px; background: linear-gradient(135deg,#ecfdf5,#d1fae5); border-radius: 20px; border-left: 5px solid #22c55e; text-align: center; }
-.page-section { display:none; }
-.page-section.active { display:block; }
-.dash-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:16px; margin-bottom:24px; }
-.dash-card { background:linear-gradient(135deg,#eef2ff,#e0e7ff); padding:20px; border-radius:16px; text-align:center; }
-.status-msg { font-size:13px; margin-top:12px; text-align:center; font-weight:500; padding:12px; border-radius:12px; }
-.status-success { background:#ecfdf5; color:#166534; border:1px solid #bbf7d0; }
-.status-error   { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
-.status-info    { background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe; }
-.profile-grid { display:grid; gap:16px; margin-bottom:28px; }
-.profile-card { display:flex; flex-direction:column; gap:8px; padding:20px; background:#f8fafc; border-radius:16px; }
-.near-item { display:flex; justify-content:space-between; align-items:flex-start; padding:8px 0; border-bottom:1px solid #e5e7eb; }
-.near-item:last-child{border-bottom:none;}
-.near-name {font-weight:600;font-size:14px;color:#111827;}
-.near-addr {font-size:12px;color:#6b7280;}
-.near-dist {font-size:12px;color:#22c55e;margin-top:2px;}
-.near-btn { padding:8px 10px; font-size:12px; border-radius:999px; background:#eef2ff; color:#4f46e5; border:none; }
-@media (min-width:480px){ .vehicle-grid{grid-template-columns:1fr 1fr;} .container{max-width:420px;padding:28px 24px 32px;} }
-@media (max-width:360px){ body{padding:8px;} .container{padding:20px 16px 24px;} .card{padding:20px 16px;} }
-</style>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0; padding: 16px;
+      background: #0f172a; color: #e5e7eb;
+      display:flex; justify-content:center;
+    }
+    .wrap { width:100%; max-width: 420px; }
+    h2 { margin: 0 0 14px 0; text-align:center; }
+    .card {
+      background: #020617;
+      border: 1px solid #111827;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 10px 25px rgba(15,23,42,0.35);
+      margin-bottom: 12px;
+    }
+    label { display:block; font-size: 12px; color:#93a4b8; margin: 10px 0 6px; font-weight:700; }
+    input, select {
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+      background: #0b1220;
+      color: #e5e7eb;
+      font-size: 14px;
+      outline: none;
+    }
+    .row { display:flex; gap:10px; }
+    .row > div { flex:1; }
+    button {
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    button:active { transform: scale(0.99); }
+    .btn-green { background:#22c55e; color:#06240f; }
+    .btn-blue  { background:#3b82f6; color:#061628; }
+    .btn-gray  { background:#334155; color:#e5e7eb; }
+    .btn-red   { background:#ef4444; color:#2a0b0b; }
+
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid #1f2937;
+      background: #0b1220;
+      color:#e5e7eb;
+      font-weight:800;
+      font-size: 13px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip:hover { border-color:#334155; }
+    .muted { font-size:12px; color:#94a3b8; margin-top: 6px; line-height:1.4; }
+
+    .balance {
+      display:flex; justify-content:space-between; align-items:center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background:#0b1220;
+      border:1px solid #1f2937;
+      margin-top: 10px;
+    }
+    .bal-amt { font-size: 18px; font-weight: 900; color:#86efac; }
+    .small { font-size:12px; color:#94a3b8; font-weight:700; }
+
+    #qrWrap { display:none; }
+    #qrBox {
+      background:#ffffff;
+      border-radius: 16px;
+      padding: 12px;
+      display:flex;
+      justify-content:center;
+      margin-top: 10px;
+    }
+    code { color:#93c5fd; word-break:break-all; }
+    .ok { color:#86efac; font-weight:900; }
+    .warn { color:#fca5a5; font-weight:900; }
+    .toggle {
+      display:flex; gap:10px; margin-top: 10px;
+    }
+    .toggle button {
+      margin-top:0;
+      width:50%;
+    }
+    .activePay {
+      outline: 2px solid rgba(34,197,94,0.65);
+    }
+  </style>
 </head>
+
 <body>
-<div class="app-shell">
-<div id="backdrop" class="backdrop sidebar-hidden" onclick="closeSidebar()"></div>
+<div class="wrap">
+  <h2>⛽ FuelSkip – Customer</h2>
 
-<aside class="sidebar sidebar-hidden" id="sidebar">
-  <div class="sidebar-header">
-    <h2>📊 Analytics</h2>
-    <small id="sidebarUser">Not logged in</small>
-  </div>
-  <ul class="sidebar-menu">
-    <li><a href="#" onclick="openSection('create');closeSidebar();return false;" id="homeLink">🏠 Home</a></li>
-    <li><a href="#" onclick="openSection('dashboard');closeSidebar();return false;" id="dashLink">📈 Dashboard</a></li>
-    <li><a href="#" onclick="openSection('vouchers');closeSidebar();return false;" id="vouchLink">🎫 Vouchers</a></li>
-    <li><a href="#" onclick="openSection('vehicles');closeSidebar();return false;" id="vehLink">🚗 Vehicles</a></li>
-    <li><a href="#" onclick="openSection('bunks');closeSidebar();return false;" id="bunkLink">⛽ Bunks</a></li>
-    <li><a href="#" onclick="openSection('profile');closeSidebar();return false;" id="profLink">👤 Profile</a></li>
-  </ul>
-  <div class="sidebar-footer">
-    <button onclick="logout()">🚪 Logout</button>
-  </div>
-</aside>
+  <!-- LOGIN -->
+  <div class="card" id="loginCard">
+    <div class="muted" style="margin-top:0;">
+      Login once. Wallet balance will be linked to your phone.
+    </div>
 
-<div class="container">
-  <div class="header">
-    <h1>🚗 FuelSkip</h1>
-    <div class="header-right">
-      <div class="user-pill" id="userDisplay"></div>
-      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <label>Phone</label>
+    <input id="phone" placeholder="10-digit phone" inputmode="numeric"/>
+
+    <label>Name (optional)</label>
+    <input id="name" placeholder="Your name"/>
+
+    <button class="btn-blue" onclick="login()">Login</button>
+
+    <div class="muted">
+      (MVP note: no OTP. For production later we can add silent verification.)
     </div>
   </div>
 
-  <!-- Create / Login -->
-  <div id="create" class="page-section active">
-    <div class="card" id="loginBox">
-      <h3 style="margin:0 0 24px 0;font-size:22px;">👋 Get Started</h3>
-      <div class="form-group">
-        <span class="label">📱 Phone number *</span>
-        <input id="phone" type="tel" maxlength="10" placeholder="98XXXXXXXX">
-      </div>
-      <div class="form-group">
-        <span class="label">👤 Full Name *</span>
-        <input id="name" placeholder="Enter your full name">
-      </div>
-      <div class="form-group">
-        <span class="label">📧 Email (optional)</span>
-        <input id="email" type="email" placeholder="you@gmail.com">
-      </div>
-      <button class="btn-primary" onclick="login()">🚀 Continue</button>
-      <div id="loginMsg" class="status-msg" style="display:none;"></div>
+  <!-- WALLET -->
+  <div class="card" id="walletCard" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <div style="font-weight:900;">Wallet</div>
+      <button class="btn-gray" style="width:auto;margin-top:0;padding:8px 10px;" onclick="refreshBalance()">Refresh</button>
     </div>
 
-    <div class="card" id="createBox" style="display:none;">
-      <h3 style="margin:0 0 24px 0;font-size:22px;">➕ Create Voucher</h3>
-      <div class="vehicle-section">
-        <strong style="font-size:14px;">Vehicle</strong>
-        <div class="vehicle-grid">
-          <div class="form-group">
-            <span class="label">Type</span>
-            <select id="vehicleType">
-              <option value="Bike">🏍️ Bike</option>
-              <option value="Car" selected>🚗 Car</option>
-              <option value="Auto">🛺 Auto</option>
-              <option value="Truck">🚛 Truck</option>
-              <option value="Other">🚙 Other</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <span class="label">Number</span>
-            <input id="vehicleNo" maxlength="12" placeholder="AP05AB1234">
-          </div>
-        </div>
+    <div class="balance">
+      <div>
+        <div class="small">Balance</div>
+        <div class="bal-amt" id="balText">₹0</div>
       </div>
+      <div class="small" id="userText"></div>
+    </div>
 
-      <div class="form-group">
-        <span class="label">⛽ Fuel Station</span>
-        <select id="bunkSelect">
-          <option value="BUNK-1">BPCL Siripuram</option>
-          <option value="BUNK-2">Gajuwaka Expressway</option>
+    <label>Top-up amount</label>
+    <div class="chips">
+      <div class="chip" onclick="setTopup(200)">₹200</div>
+      <div class="chip" onclick="setTopup(500)">₹500</div>
+      <div class="chip" onclick="setTopup(1000)">₹1000</div>
+      <div class="chip" onclick="setTopup(2000)">₹2000</div>
+    </div>
+    <input id="topupAmount" placeholder="Custom amount (min ₹50)" inputmode="decimal"/>
+
+    <button class="btn-green" onclick="topupWallet()">Add Money</button>
+
+    <div class="muted">
+      Tip: Load once during non-peak time. At bunk, voucher becomes instant (no payment screen).
+    </div>
+  </div>
+
+  <!-- CREATE VOUCHER -->
+  <div class="card" id="voucherCard" style="display:none;">
+    <div style="font-weight:900;">Create Voucher</div>
+    <div class="muted">
+      Choose amount or litres. Prefer Wallet for fastest bunk experience.
+    </div>
+
+    <label>Bunk</label>
+    <select id="bunk">
+      <option value="BUNK-1">BUNK-1</option>
+      <option value="BUNK-2">BUNK-2</option>
+    </select>
+
+    <div class="row">
+      <div>
+        <label>Amount (₹)</label>
+        <input id="amount" placeholder="e.g. 300" inputmode="decimal"/>
+      </div>
+      <div>
+        <label>Litres (L)</label>
+        <input id="litres" placeholder="e.g. 3" inputmode="decimal"/>
+      </div>
+    </div>
+
+    <div class="chips">
+      <div class="chip" onclick="quickAmount(200)">₹200</div>
+      <div class="chip" onclick="quickAmount(300)">₹300</div>
+      <div class="chip" onclick="quickAmount(500)">₹500</div>
+      <div class="chip" onclick="quickAmount(1000)">₹1000</div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Vehicle Type</label>
+        <select id="vehicleType">
+          <option value="">-</option>
+          <option value="Bike">Bike</option>
+          <option value="Car">Car</option>
+          <option value="Auto">Auto</option>
+          <option value="Truck">Truck</option>
         </select>
       </div>
-
-      <div class="card" style="margin-top:8px;padding:18px;">
-        <h4 style="margin:0 0 10px 0;font-size:16px;">📍 Nearby Bunks</h4>
-        <button class="btn-primary" style="margin-top:4px;" onclick="findNearbyBunks()">📡 Find nearby bunks</button>
-        <div id="nearbyList" style="margin-top:10px;font-size:13px;color:#4b5563;">
-          Allow location to see nearby petrol bunks.
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0 20px;">
-        <div class="form-group">
-          <span class="label">💰 Amount (₹)</span>
-          <input id="amount" type="number" min="50" max="5000" placeholder="500">
-        </div>
-        <div class="form-group">
-          <span class="label">⛽ OR Litres</span>
-          <input id="litres" type="number" min="5" max="500" step="0.1" placeholder="25">
-        </div>
-      </div>
-
-      <button class="btn-primary" onclick="createVoucher()">✨ Generate Voucher</button>
-      <div id="createMsg" class="status-msg" style="display:none;"></div>
-    </div>
-
-    <div class="card" id="voucherBox" style="display:none;">
-      <h3 style="margin:0 0 24px 0;font-size:22px;">✅ Voucher Ready!</h3>
-      <div id="voucherDetails"></div>
-      <button class="btn-primary" id="payBtn" onclick="payNow()">💳 Pay Now</button>
-      <div id="qrSection" style="display:none;">
-        <p style="font-size:14px;text-align:center;margin-bottom:16px;">Show QR to attendant</p>
-        <div id="qrContainer"></div>
-        <div style="text-align:center;margin-top:20px;padding:16px;background:#f8fafc;border-radius:12px;">
-          <strong>Voucher ID:</strong><br>
-          <span id="voucherIdDisplay" style="font-family:monospace;font-size:18px;color:#6366f1;"></span>
-        </div>
+      <div>
+        <label>Vehicle No</label>
+        <input id="vehicleNo" placeholder="AP.. / TS.." />
       </div>
     </div>
 
-    <div class="card" id="historyBox" style="display:none;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <h3 style="margin:0;font-size:22px;">📋 My Vouchers</h3>
-        <button class="btn-primary" style="width:auto;padding:10px 16px;font-size:14px;" onclick="loadMyVouchers()">⟲ Refresh</button>
-      </div>
-      <div id="myVouchers" style="font-size:14px;color:#64748b;">Loading...</div>
+    <label>Payment method</label>
+    <div class="toggle">
+      <button id="btnWallet" class="btn-green activePay" onclick="setPay('wallet')">Wallet (Fast)</button>
+      <button id="btnRzp" class="btn-blue" onclick="setPay('razorpay')">Razorpay</button>
     </div>
+
+    <button class="btn-green" onclick="createVoucher()">Generate Voucher</button>
+
+    <div class="muted" id="statusLine"></div>
   </div>
 
-  <div id="dashboard" class="page-section">
-    <h3 style="font-size:26px;margin:0 0 28px 0;">📊 Analytics</h3>
-    <div class="dash-grid">
-      <div class="dash-card">
-        <div style="font-size:11px;text-transform:uppercase;color:#64748b;">Total Spend</div>
-        <div style="font-size:24px;font-weight:800;" id="dashTotalSpend">₹0</div>
-        <div style="font-size:12px;color:#6366f1;">Lifetime</div>
-      </div>
-      <div class="dash-card" style="background:linear-gradient(135deg,#e0f2fe,#bfdbfe);">
-        <div style="font-size:11px;text-transform:uppercase;color:#64748b;">Total Fills</div>
-        <div style="font-size:24px;font-weight:800;" id="dashTotalFills">0</div>
-        <div style="font-size:12px;color:#0ea5e9;">Transactions</div>
-      </div>
-      <div class="dash-card" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);">
-        <div style="font-size:11px;text-transform:uppercase;color:#64748b;">Avg Fill</div>
-        <div style="font-size:24px;font-weight:800;" id="dashAvgFill">₹0</div>
-        <div style="font-size:12px;color:#22c55e;">Per Fill</div>
-      </div>
+  <!-- QR OUTPUT -->
+  <div class="card" id="qrWrap">
+    <div style="font-weight:900;">Your Voucher QR</div>
+    <div class="muted">
+      Show this to attendant (they will scan inside their page).
     </div>
-    <div class="card">
-      <p style="font-size:14px;margin:0;color:#64748b;">🚗 Top vehicle: <strong id="dashTopVehicle" style="color:#1e293b;">-</strong></p>
+
+    <div id="qrBox"><div id="qr"></div></div>
+
+    <div class="muted" style="margin-top:10px;">
+      Voucher: <code id="vId"></code><br/>
+      Signature: <code id="vSig"></code><br/>
+      Link: <code id="vLink"></code>
     </div>
-  </div>
 
-  <div id="vouchers" class="page-section">
-    <h3 style="font-size:26px;margin:0 0 28px 0;">🎫 Vouchers</h3>
-    <div id="voucherStats" class="card" style="padding:24px;color:#64748b;">No data available</div>
+    <button class="btn-gray" onclick="resetVoucherUI()">Create another voucher</button>
   </div>
-
-  <div id="vehicles" class="page-section">
-    <h3 style="font-size:26px;margin:0 0 28px 0;">🚗 Vehicles</h3>
-    <div id="vehicleList" class="card" style="padding:32px;text-align:center;color:#64748b;">No data available</div>
-  </div>
-
-  <div id="bunks" class="page-section">
-    <h3 style="font-size:26px;margin:0 0 28px 0;">⛽ Stations</h3>
-    <div id="bunkList" class="card" style="padding:32px;text-align:center;color:#64748b;">No data available</div>
-  </div>
-
-  <div id="profile" class="page-section">
-    <h3 style="font-size:26px;margin:0 0 28px 0;">👤 Profile</h3>
-    <div id="profileInfo" class="card" style="padding:32px;text-align:center;color:#64748b;">Loading...</div>
-  </div>
-</div>
 </div>
 
 <script>
-const API = "https://fuelskip-production.up.railway.app";
-const FRONTEND_BASE = window.location.origin;
+  const API = window.location.origin;
 
-let lastVoucherId = null;
-let lastQrSig = "";          // ✅ NEW
-let razorpayOrderId = null;
-let razorpayKeyId = null;
-let pollTimer = null;
-
-function getUserId(){ return localStorage.getItem("fuelskip_user_id"); }
-function setUserId(id){ localStorage.setItem("fuelskip_user_id", id); }
-function setUserName(n){ localStorage.setItem("fuelskip_user_name", n || ""); }
-function setUserPhone(p){ localStorage.setItem("fuelskip_user_phone", p || ""); }
-function setUserEmail(e){ localStorage.setItem("fuelskip_user_email", e || ""); }
-function getUserEmail(){ return localStorage.getItem("fuelskip_user_email") || ""; }
-
-function getAnalyticsKey(){
-  const uid = getUserId();
-  return uid ? `fuelskip_analytics_${uid}` : null;
-}
-
-function showStatus(id,msg,type="info"){
-  const el=document.getElementById(id);
-  el.textContent=msg;
-  el.className=`status-msg status-${type}`;
-  el.style.display="block";
-  setTimeout(()=>{el.style.display="none";},5000);
-}
-
-function bunkName(id){
-  const map={"BUNK-1":"BPCL Siripuram","BUNK-2":"Gajuwaka Expressway"};
-  return map[id]||id||"Unknown";
-}
-
-function toggleSidebar(){
-  const s=document.getElementById("sidebar");
-  const b=document.getElementById("backdrop");
-  if(s.classList.contains("sidebar-hidden")){
-    s.classList.remove("sidebar-hidden"); b.classList.remove("sidebar-hidden");
-    requestAnimationFrame(()=>{s.classList.add("open");b.classList.add("show");});
-  }else closeSidebar();
-}
-function closeSidebar(){
-  const s=document.getElementById("sidebar");
-  const b=document.getElementById("backdrop");
-  s.classList.remove("open"); b.classList.remove("show");
-  setTimeout(()=>{s.classList.add("sidebar-hidden");b.classList.add("sidebar-hidden");},300);
-}
-
-function refreshUserDisplay(){
-  const n=localStorage.getItem("fuelskip_user_name")||"";
-  const p=localStorage.getItem("fuelskip_user_phone")||"";
-  const text=p?(n?`${n.slice(0,15)}${n.length>15?'...':''}`:p.slice(-10)):"";
-  document.getElementById("userDisplay").textContent=text;
-  document.getElementById("sidebarUser").textContent=p?(n?`${n} • ${p}`:p):"Not logged in";
-}
-
-function updateActiveMenu(section){
-  document.querySelectorAll('.sidebar-menu a').forEach(a=>a.classList.remove('active'));
-  const id={
-    create:"homeLink",
-    dashboard:"dashLink",
-    vouchers:"vouchLink",
-    vehicles:"vehLink",
-    bunks:"bunkLink",
-    profile:"profLink"
-  }[section];
-  if(id) document.getElementById(id).classList.add("active");
-}
-
-function openSection(id){
-  document.querySelectorAll(".page-section").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  updateActiveMenu(id);
-  if(id==="profile") loadProfile();
-  else if(id!=="create") loadAnalytics();
-}
-
-function logout(){
-  if(!confirm("Logout? All local data will be cleared.")) return;
-  ["fuelskip_user_id","fuelskip_user_name","fuelskip_user_phone","fuelskip_user_email"]
-    .forEach(k=>localStorage.removeItem(k));
-  Object.keys(localStorage).forEach(k=>{if(k.startsWith("fuelskip_"))localStorage.removeItem(k);});
-  ["phone","name","email","amount","litres","vehicleNo"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("loginBox").style.display="block";
-  document.getElementById("createBox").style.display="none";
-  document.getElementById("voucherBox").style.display="none";
-  document.getElementById("historyBox").style.display="none";
-  document.getElementById("sidebar").classList.add("sidebar-hidden");
-  document.getElementById("backdrop").classList.add("sidebar-hidden");
-  openSection("create");
-  refreshUserDisplay();
-  if(pollTimer) clearInterval(pollTimer);
-}
-
-async function login(){
-  const phone=document.getElementById("phone").value.trim().replace(/\D/g,"");
-  const name=document.getElementById("name").value.trim();
-  const email=document.getElementById("email").value.trim()||null;
-  if(!phone||phone.length!==10){showStatus("loginMsg","Enter valid 10-digit phone number","error");return;}
-  if(!name||name.length<2){showStatus("loginMsg","Enter your full name","error");return;}
-  showStatus("loginMsg","🔄 Logging in...","info");
-  try{
-    const res=await fetch(`${API}/login`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({phone,name,email})
-    });
-    if(!res.ok){const err=await res.json();throw new Error(err.detail||`HTTP ${res.status}`);}
-    const data=await res.json();
-    const oldUid=getUserId();
-    setUserId(data.user_id); setUserName(name); setUserPhone(phone); setUserEmail(email||"");
-    if(oldUid && String(oldUid)!==String(data.user_id)){
-      localStorage.removeItem(`fuelskip_vehicle_history_${oldUid}`);
-      localStorage.removeItem(`fuelskip_analytics_${oldUid}`);
-    }
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("createBox").style.display="block";
-    document.getElementById("historyBox").style.display="block";
-    document.getElementById("sidebar").classList.remove("sidebar-hidden");
-    document.getElementById("backdrop").classList.add("sidebar-hidden");
-    refreshUserDisplay();
-    loadMyVouchers();
-    loadAnalytics();
-    showStatus("loginMsg",`✅ Welcome ${name}!`,"success");
-  }catch(e){
-    showStatus("loginMsg",`❌ ${e.message}`,"error");
-  }
-}
-
-function saveVehicleToAnalytics(v){
-  const key=getAnalyticsKey(); if(!key) return;
-  let arr=JSON.parse(localStorage.getItem(key)||"[]");
-  arr.unshift(v); arr=arr.slice(0,100);
-  localStorage.setItem(key,JSON.stringify(arr));
-}
-
-function updateAnalyticsStatus(voucherId,status){
-  const key=getAnalyticsKey(); if(!key) return;
-  let arr=JSON.parse(localStorage.getItem(key)||"[]");
-  arr=arr.map(f=>f.voucher_id===voucherId?{...f,status}:f);
-  localStorage.setItem(key,JSON.stringify(arr));
-}
-
-function syncAnalyticsFromServer(serverVouchers){
-  const key=getAnalyticsKey(); if(!key) return;
-  const local=JSON.parse(localStorage.getItem(key)||"[]");
-  if(!local.length) return;
-
-  const map = {};
-  serverVouchers.forEach(v => { map[String(v.id)] = v; });
-
-  let changed=false;
-  local.forEach(item=>{
-    const vid=String(item.voucher_id || item.id || "");
-    const sv=map[vid];
-    if(sv && item.status !== sv.status){
-      item.status = sv.status;
-      changed=true;
-    }
-  });
-
-  if(changed) localStorage.setItem(key, JSON.stringify(local));
-}
-
-async function createVoucher(){
-  const amountVal=document.getElementById("amount").value;
-  const litresVal=document.getElementById("litres").value;
-  const vehicleType=document.getElementById("vehicleType").value;
-  const vehicleNo=document.getElementById("vehicleNo").value.trim().toUpperCase();
-  const bunkId=document.getElementById("bunkSelect").value;
-  const userId=getUserId();
-  if(!amountVal && !litresVal){showStatus("createMsg","Enter amount OR litres","error");return;}
-  if(!vehicleNo || vehicleNo.length<3){showStatus("createMsg","Enter valid vehicle number","error");return;}
-  showStatus("createMsg","✨ Creating voucher...","info");
-  try{
-    const res=await fetch(`${API}/create-voucher`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        bunk_id:bunkId,
-        amount:amountVal?Number(amountVal):null,
-        litres:litresVal?Number(litresVal):null,
-        user_id:userId?Number(userId):null,
-        vehicle_type:vehicleType,
-        vehicle_no:vehicleNo
-      })
-    });
-    if(!res.ok){const err=await res.json();throw new Error(err.detail||`HTTP ${res.status}`);}
-    const data=await res.json();
-
-    lastVoucherId=data.voucher_id;
-    lastQrSig = data.qr_sig || ""; // ✅ NEW
-    razorpayOrderId=data.razorpay_order_id;
-    razorpayKeyId=data.razorpay_key_id;
-
-    saveVehicleToAnalytics({
-      vehicleType,
-      vehicleNo,
-      amount:data.amount,
-      litres:data.litres,
-      bunk_id:bunkId,
-      voucher_id:data.voucher_id,
-      created_at:new Date().toISOString(),
-      status:"pending"
-    });
-
-    document.getElementById("voucherDetails").innerHTML=`
-      <div style="font-size:18px;font-weight:800;color:#166534;margin-bottom:12px;">
-        ${data.voucher_id}
-      </div>
-      <div style="display:grid;gap:8px;font-size:15px;color:#374151;">
-        <div>💰 ₹<strong>${data.amount?.toLocaleString()||"TBD"}</strong></div>
-        <div>⛽ <strong>${data.litres||"TBD"} L</strong></div>
-        <div style="font-size:13px;color:#64748b;">
-          ${vehicleType} ${vehicleNo} • ${bunkName(bunkId)}
-        </div>
-      </div>`;
-    document.getElementById("voucherIdDisplay").textContent=data.voucher_id;
-    document.getElementById("voucherBox").style.display="block";
-    document.getElementById("qrSection").style.display="none";
-    const btn=document.getElementById("payBtn");
-    btn.disabled=false; btn.style.display="block"; btn.textContent="💳 Pay Now";
-    showStatus("createMsg","✅ Voucher created! Tap Pay Now","success");
-  }catch(e){
-    showStatus("createMsg",`❌ ${e.message}`,"error");
-  }
-}
-
-function payNow(){
-  if(!razorpayOrderId || !razorpayKeyId){alert("Create voucher first");return;}
-  const opts={
-    key:razorpayKeyId,
-    order_id:razorpayOrderId,
-    name:"FuelSkip",
-    description:`Voucher ${lastVoucherId}`,
-    currency:"INR",
-    theme:{color:"#22c55e"},
-    redirect:false,
-    handler:()=>startPollingStatus(),
-    modal:{ondismiss:()=>{}}
+  let state = {
+    user_id: null,
+    phone: "",
+    name: "",
+    wallet_balance: 0,
+    pay_method: "wallet",
   };
-  new Razorpay(opts).open();
-}
 
-function startPollingStatus(){
-  if(!lastVoucherId) return;
-  if(pollTimer) clearInterval(pollTimer);
-  pollTimer=setInterval(checkVoucherStatus,2500);
-  const btn=document.getElementById("payBtn");
-  btn.textContent="⏳ Processing..."; btn.disabled=true;
-}
-
-async function checkVoucherStatus(){
-  if(!lastVoucherId) return;
-  try{
-    const res=await fetch(`${API}/voucher-status/${lastVoucherId}`);
-    if(!res.ok) return;
-    const data=await res.json();
-    if(data.status==="paid"||data.status==="used"){
-      clearInterval(pollTimer);
-      updateAnalyticsStatus(lastVoucherId,data.status);
-      showQr();
-      loadMyVouchers();
-      loadAnalytics();
-      document.getElementById("payBtn").style.display="none";
-    }
-  }catch(e){console.log("Poll error:",e);}
-}
-
-function showQr(){
-  document.getElementById("qrSection").style.display="block";
-  document.getElementById("qrContainer").innerHTML="";
-
-  // ✅ Signed QR: include sig
-  const url =
-    `${FRONTEND_BASE}/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}&sig=${encodeURIComponent(lastQrSig)}`;
-
-  new QRCode(document.getElementById("qrContainer"),{
-    text:url,width:200,height:200,colorDark:"#1e293b",colorLight:"#f8fafc"
-  });
-}
-
-function statusBadge(status){
-  status=(status||"").toLowerCase();
-  const map={
-    paid:'<span class="badge badge-paid">✅ Paid</span>',
-    used:'<span class="badge badge-used">✔️ Used</span>',
-    failed:'<span class="badge badge-failed">❌ Failed</span>'
-  };
-  return map[status]||'<span class="badge badge-pending">⏳ Pending</span>';
-}
-
-async function loadMyVouchers(){
-  const uid=getUserId();
-  const box=document.getElementById("myVouchers");
-  if(!uid){box.textContent="Login required";return;}
-  try{
-    const res=await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(uid)}`);
-    if(!res.ok){box.textContent="Loading failed";return;}
-    const arr=await res.json();
-    if(!arr.length){box.textContent="No vouchers yet"; return;}
-
-    syncAnalyticsFromServer(arr);
-    loadAnalytics();
-
-    box.innerHTML=arr.map(v=>`
-      <div class="history-item">
-        <div>
-          <div style="font-weight:700;font-size:15px;">${v.id} • ₹${parseFloat(v.amount||0).toLocaleString()}</div>
-          <div style="font-size:13px;color:#64748b;">${new Date(v.created_at).toLocaleString()}</div>
-        </div>
-        <div>${statusBadge(v.status)}</div>
-      </div>`).join("");
-  }catch(e){box.textContent="Error loading";}
-}
-
-function loadAnalytics(){
-  const key=getAnalyticsKey(); if(!key) return;
-  try{
-    const a=JSON.parse(localStorage.getItem(key)||"[]");
-    if(!a.length) return;
-
-    const total=a.reduce((s,f)=>s+parseFloat(f.amount||0),0);
-    document.getElementById("dashTotalSpend").textContent=`₹${total.toLocaleString()}`;
-    document.getElementById("dashTotalFills").textContent=a.length;
-    document.getElementById("dashAvgFill").textContent=`₹${Math.round(total/a.length)}`;
-
-    const vehicleStats={};
-    a.forEach(f=>{
-      const k=`${f.vehicleType} ${f.vehicleNo}`;
-      vehicleStats[k]=(vehicleStats[k]||0)+parseFloat(f.amount||0);
-    });
-    const top=Object.entries(vehicleStats).sort(([,x],[,y])=>y-x)[0];
-    document.getElementById("dashTopVehicle").textContent=top?top[0]:"-";
-
-    const bunkStats={};
-    a.forEach(f=>{
-      const id=f.bunk_id||"UNKNOWN";
-      if(!bunkStats[id]) bunkStats[id]={amount:0,used:0,unused:0};
-      bunkStats[id].amount+=parseFloat(f.amount||0);
-      if((f.status||"").toLowerCase()==="used") bunkStats[id].used++;
-      else bunkStats[id].unused++;
-    });
-
-    {
-      const used=a.filter(f=>(f.status||"").toLowerCase()==="used");
-      const unused=a.filter(f=>(f.status||"").toLowerCase()!=="used");
-      const box=document.getElementById("voucherStats");
-      box.innerHTML=`
-        <div style="margin-bottom:12px;font-size:14px;">
-          <strong>${used.length}</strong> used • <strong>${unused.length}</strong> pending/unused
-        </div>
-        <div style="border-top:1px solid #e5e7eb;margin-top:8px;padding-top:8px;">
-          ${a.map(f=>`
-            <div class="history-item">
-              <div>
-                <div style="font-weight:600;font-size:14px;">${f.voucher_id||'-'}</div>
-                <div style="font-size:12px;color:#64748b;">
-                  ${bunkName(f.bunk_id)} • ${f.vehicleType} ${f.vehicleNo}
-                </div>
-              </div>
-              <div style="text-align:right;font-size:13px;">
-                <div>₹${parseFloat(f.amount||0).toLocaleString()}</div>
-                <div style="font-size:12px;color:${(f.status||"").toLowerCase()==='used'?'#16a34a':'#f97316'};">
-                  ${(f.status||"").toLowerCase()==='used'?'Used':'Pending/Unused'}
-                </div>
-              </div>
-            </div>`).join("")}
-        </div>`;
-    }
-
-    {
-      const box=document.getElementById("vehicleList");
-      box.innerHTML=Object.keys(vehicleStats).length?
-        Object.entries(vehicleStats).map(([n,amt])=>`
-          <div class="history-item">
-            <div>${n}</div>
-            <div>₹${amt.toLocaleString()}</div>
-          </div>`).join(""):
-        '<div style="padding:24px;text-align:center;color:#64748b;">No vehicles tracked</div>';
-    }
-
-    {
-      const box=document.getElementById("bunkList");
-      box.innerHTML=Object.keys(bunkStats).length?
-        Object.entries(bunkStats).map(([id,s])=>`
-          <div class="history-item">
-            <div>
-              <div style="font-weight:700;">${bunkName(id)}</div>
-              <div style="font-size:12px;color:#64748b;">ID: ${id}</div>
-            </div>
-            <div style="text-align:right;font-size:13px;">
-              <div>₹${s.amount.toLocaleString()}</div>
-              <div style="font-size:12px;color:#16a34a;">${s.used} used</div>
-              <div style="font-size:12px;color:#f97316;">${s.unused} unused</div>
-            </div>
-          </div>`).join(""):
-        '<div style="padding:24px;text-align:center;color:#64748b;">No stations yet</div>';
-    }
-
-  }catch(e){console.error("Analytics error",e);}
-}
-
-function loadProfile(){
-  const box=document.getElementById("profileInfo");
-  const uid=getUserId();
-  if(!uid){box.textContent="Login required";return;}
-  const n=localStorage.getItem("fuelskip_user_name")||"";
-  const p=localStorage.getItem("fuelskip_user_phone")||"";
-  const e=getUserEmail();
-  box.innerHTML=`
-    <div class="profile-grid">
-      <div class="profile-card">
-        <div style="font-size:13px;color:#64748b;">Name</div>
-        <div style="font-size:18px;font-weight:700;">${n}</div>
-      </div>
-      <div class="profile-card">
-        <div style="font-size:13px;color:#64748b;">Phone</div>
-        <div style="font-size:18px;font-weight:700;">${p}</div>
-      </div>
-      <div class="profile-card">
-        <div style="font-size:13px;color:#64748b;">Email</div>
-        <div style="font-size:18px;font-weight:700;">${e||"Not set"}</div>
-      </div>
-    </div>
-    <button class="btn-primary" onclick="openProfileEdit()">✏️ Edit Profile</button>`;
-}
-
-function openProfileEdit(){
-  const nOld=localStorage.getItem("fuelskip_user_name")||"";
-  const pOld=localStorage.getItem("fuelskip_user_phone")||"";
-  const eOld=getUserEmail();
-  const n=prompt("Name:",nOld); if(!n||n.length<2) return;
-  const p=prompt("Phone:",pOld); if(!p||p.replace(/\D/g,"").length!==10) return;
-  const e=prompt("Email:",eOld)||"";
-  setUserName(n.trim()); setUserPhone(p.replace(/\D/g,"")); setUserEmail(e.trim());
-  refreshUserDisplay(); loadProfile();
-}
-
-function findNearbyBunks(){
-  const list=document.getElementById("nearbyList");
-  if(!navigator.geolocation){list.textContent="Location not supported.";return;}
-  list.textContent="Getting your location...";
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    const lat=pos.coords.latitude, lon=pos.coords.longitude;
-    try{
-      const res=await fetch(`${API}/nearby-bunks?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`);
-      if(!res.ok){list.textContent="Could not load nearby bunks.";return;}
-      const arr=await res.json();
-      if(!arr.length){list.textContent="No bunks found nearby.";return;}
-      list.innerHTML=arr.slice(0,5).map(b=>`
-        <div class="near-item">
-          <div>
-            <div class="near-name">${b.name}</div>
-            <div class="near-addr">${b.address||""}</div>
-            <div class="near-dist">${(b.distance_km||0).toFixed(1)} km away</div>
-          </div>
-          <button class="near-btn" onclick="useNearbyBunk('${b.name.replace(/'/g,"\\'")}')">Use</button>
-        </div>`).join("");
-    }catch(e){list.textContent="Error loading nearby bunks.";}
-  },()=>{list.textContent="Location permission denied.";},{timeout:8000});
-}
-function useNearbyBunk(name){
-  const map={"BPCL Siripuram":"BUNK-1","Gajuwaka Expressway":"BUNK-2"};
-  const id=map[name]||null;
-  if(id){document.getElementById("bunkSelect").value=id;}
-  showStatus("createMsg",`Using nearby bunk: ${name}`,"info");
-}
-
-window.addEventListener("load",()=>{
-  const s=document.getElementById("sidebar");
-  const b=document.getElementById("backdrop");
-  if(getUserId()){
-    s.classList.remove("sidebar-hidden"); b.classList.add("sidebar-hidden");
-    document.getElementById("loginBox").style.display="none";
-    document.getElementById("createBox").style.display="block";
-    document.getElementById("historyBox").style.display="block";
-    refreshUserDisplay(); loadMyVouchers(); loadAnalytics();
-  }else{
-    s.classList.add("sidebar-hidden"); b.classList.add("sidebar-hidden");
+  function loadState() {
+    const raw = localStorage.getItem("FUELSKIP_USER");
+    if (!raw) return;
+    try {
+      const s = JSON.parse(raw);
+      if (s && s.user_id) state = {...state, ...s};
+    } catch {}
   }
-});
+
+  function saveState() {
+    localStorage.setItem("FUELSKIP_USER", JSON.stringify({
+      user_id: state.user_id,
+      phone: state.phone,
+      name: state.name,
+      wallet_balance: state.wallet_balance,
+      pay_method: state.pay_method,
+    }));
+  }
+
+  function fmtINR(x) {
+    const n = Number(x || 0);
+    return "₹" + n.toLocaleString("en-IN", {maximumFractionDigits: 2});
+  }
+
+  function setPay(m) {
+    state.pay_method = m;
+    saveState();
+    document.getElementById("btnWallet").classList.toggle("activePay", m === "wallet");
+    document.getElementById("btnRzp").classList.toggle("activePay", m === "razorpay");
+  }
+
+  function setTopup(v) {
+    document.getElementById("topupAmount").value = String(v);
+  }
+
+  function quickAmount(v) {
+    document.getElementById("amount").value = String(v);
+    document.getElementById("litres").value = "";
+  }
+
+  function show(el, on=true) {
+    document.getElementById(el).style.display = on ? "" : "none";
+  }
+
+  async function login() {
+    const phone = (document.getElementById("phone").value || "").trim();
+    const name = (document.getElementById("name").value || "").trim();
+
+    if (!phone || phone.length < 8) return alert("Enter phone");
+
+    const res = await fetch(`${API}/login`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({phone, name})
+    });
+
+    const data = await res.json();
+    if (!res.ok) return alert(data.detail || "Login failed");
+
+    state.user_id = data.user_id;
+    state.phone = data.phone;
+    state.name = data.name || "";
+    state.wallet_balance = Number(data.wallet_balance || 0);
+
+    saveState();
+
+    initAfterLogin();
+  }
+
+  async function refreshBalance() {
+    if (!state.user_id) return;
+    const res = await fetch(`${API}/wallet/balance?user_id=${encodeURIComponent(state.user_id)}`, {cache:"no-store"});
+    const data = await res.json();
+    if (res.ok) {
+      state.wallet_balance = Number(data.wallet_balance || 0);
+      saveState();
+      renderWallet();
+    }
+  }
+
+  function renderWallet() {
+    document.getElementById("balText").textContent = fmtINR(state.wallet_balance);
+    document.getElementById("userText").innerHTML = `
+      <div style="font-weight:900;color:#e5e7eb;">${state.name || "User"}</div>
+      <div class="small">${state.phone}</div>
+    `;
+  }
+
+  function initAfterLogin() {
+    show("loginCard", false);
+    show("walletCard", true);
+    show("voucherCard", true);
+    show("qrWrap", false);
+
+    renderWallet();
+    setPay(state.pay_method || "wallet");
+    refreshBalance();
+  }
+
+  async function topupWallet() {
+    if (!state.user_id) return alert("Login first");
+
+    const amt = Number((document.getElementById("topupAmount").value || "").trim());
+    if (!amt || amt < 50) return alert("Minimum topup is ₹50");
+
+    // Create order
+    const res = await fetch(`${API}/wallet/topup/create-order`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({user_id: state.user_id, amount: amt})
+    });
+
+    const data = await res.json();
+    if (!res.ok) return alert(data.detail || "Topup create failed");
+
+    // Open Razorpay
+    const options = {
+      key: data.razorpay_key_id,
+      amount: Math.round(amt * 100),
+      currency: "INR",
+      name: "FuelSkip Wallet",
+      description: "Wallet Top-up",
+      order_id: data.razorpay_order_id,
+      handler: async function () {
+        // Payment success UI; actual credit comes from webhook.
+        alert("✅ Payment done. Updating wallet balance…");
+        await pollBalanceIncrease(amt);
+      },
+      modal: {
+        ondismiss: function () {
+          // nothing
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  }
+
+  async function pollBalanceIncrease(expectedDelta) {
+    // Poll wallet balance for up to ~25 seconds
+    const start = Number(state.wallet_balance || 0);
+    const target = start + Number(expectedDelta || 0) * 0.3; // don't require full delta; just detect increase
+    for (let i=0; i<10; i++) {
+      await new Promise(r => setTimeout(r, 2500));
+      await refreshBalance();
+      if (Number(state.wallet_balance || 0) > target) return;
+    }
+    // If webhook is delayed, user can press Refresh
+    alert("If balance not updated yet, press Refresh (webhook may be delayed).");
+  }
+
+  function resetVoucherUI() {
+    show("qrWrap", false);
+    show("voucherCard", true);
+    document.getElementById("statusLine").textContent = "";
+    document.getElementById("amount").value = "";
+    document.getElementById("litres").value = "";
+  }
+
+  async function createVoucher() {
+    if (!state.user_id) return alert("Login first");
+
+    const bunk_id = document.getElementById("bunk").value;
+    const amountStr = (document.getElementById("amount").value || "").trim();
+    const litresStr = (document.getElementById("litres").value || "").trim();
+
+    const vehicle_type = document.getElementById("vehicleType").value || "";
+    const vehicle_no = (document.getElementById("vehicleNo").value || "").trim();
+
+    const payload = {
+      bunk_id,
+      user_id: state.user_id,
+      vehicle_type: vehicle_type || null,
+      vehicle_no: vehicle_no || null,
+      pay_method: state.pay_method || "wallet",
+    };
+
+    if (amountStr) payload.amount = Number(amountStr);
+    if (litresStr) payload.litres = Number(litresStr);
+
+    if (!payload.amount && !payload.litres) return alert("Enter amount or litres");
+
+    const statusLine = document.getElementById("statusLine");
+    statusLine.textContent = "Creating voucher…";
+
+    const res = await fetch(`${API}/create-voucher`, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      statusLine.innerHTML = `<span class="warn">❌</span> ${data.detail || "Create failed"}`;
+      return;
+    }
+
+    // WALLET = instant paid → show QR right away
+    if ((data.pay_method || "") === "wallet" || (payload.pay_method === "wallet")) {
+      if (typeof data.wallet_balance !== "undefined") {
+        state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
+        saveState();
+        renderWallet();
+      }
+      statusLine.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet).`;
+      showVoucherQR(data.voucher_id, data.qr_sig);
+      return;
+    }
+
+    // Razorpay flow: open checkout, then poll voucher-status until paid
+    statusLine.textContent = "Opening payment…";
+
+    const options = {
+      key: data.razorpay_key_id,
+      amount: Math.round(Number(data.amount) * 100),
+      currency: "INR",
+      name: "FuelSkip",
+      description: "Fuel Voucher",
+      order_id: data.razorpay_order_id,
+      handler: async function () {
+        statusLine.innerHTML = `<span class="ok">✅</span> Payment done. Waiting for confirmation…`;
+        const ok = await pollVoucherPaid(data.voucher_id);
+        if (ok) {
+          showVoucherQR(data.voucher_id, data.qr_sig);
+        } else {
+          statusLine.innerHTML = `<span class="warn">⏳</span> Payment received but confirmation delayed. Try again in a few seconds.`;
+        }
+      },
+      modal: {
+        ondismiss: function () {
+          statusLine.textContent = "Payment cancelled / closed.";
+        }
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  }
+
+  async function pollVoucherPaid(voucher_id) {
+    for (let i=0; i<12; i++) { // ~30s
+      await new Promise(r => setTimeout(r, 2500));
+      const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucher_id)}`, {cache:"no-store"});
+      const data = await res.json();
+      if (res.ok && (data.status === "paid" || data.status === "used")) return true;
+    }
+    return false;
+  }
+
+  function showVoucherQR(voucherId, sig) {
+    show("voucherCard", false);
+    show("qrWrap", true);
+
+    const link = `${window.location.origin}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`;
+
+    document.getElementById("vId").textContent = voucherId;
+    document.getElementById("vSig").textContent = sig;
+    document.getElementById("vLink").textContent = link;
+
+    const qrEl = document.getElementById("qr");
+    qrEl.innerHTML = "";
+    new QRCode(qrEl, { text: link, width: 220, height: 220 });
+  }
+
+  // Boot
+  loadState();
+  if (state.user_id) initAfterLogin();
+  else {
+    // Prefill phone if user had it
+    if (state.phone) document.getElementById("phone").value = state.phone;
+    if (state.name) document.getElementById("name").value = state.name;
+  }
 </script>
 </body>
 </html>
