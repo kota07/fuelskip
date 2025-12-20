@@ -533,7 +533,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 </div>
 
 <script>
-const API = "https://fuelskip-production.up.railway.app";
+const API = localStorage.getItem('FUELSKIP_API') || window.location.origin;
+const FRONTEND_BASE = localStorage.getItem('FUELSKIP_FRONTEND') || window.location.origin;
 
 let lastVoucherId = null;
 let razorpayOrderId = null;
@@ -754,12 +755,13 @@ function payNow(){
 function startPollingStatus(){
   if(!lastVoucherId) return;
   if(pollTimer) clearInterval(pollTimer);
-  pollTimer=setInterval(checkVoucherStatus,2500);
+  const startedAt = Date.now();
+  pollTimer=setInterval(()=>checkVoucherStatus(startedAt),4000);
   const btn=document.getElementById("payBtn");
   btn.textContent="⏳ Processing..."; btn.disabled=true;
 }
 
-async function checkVoucherStatus(){
+async function checkVoucherStatus(startedAt){
   if(!lastVoucherId) return;
   try{
     const res=await fetch(`${API}/voucher-status/${lastVoucherId}`);
@@ -772,6 +774,19 @@ async function checkVoucherStatus(){
       loadMyVouchers();
       loadAnalytics();
       document.getElementById("payBtn").style.display="none";
+    } else if (data.status==="failed"){
+      clearInterval(pollTimer);
+      updateAnalyticsStatus(lastVoucherId,data.status);
+      showStatus("createStatus","Payment failed. Please try again.","error");
+      const btn=document.getElementById("payBtn");
+      btn.textContent="Pay Now"; btn.disabled=false;
+    } else {
+      // Stop polling after 3 minutes (network issues / user closed page)
+      if(Date.now() - (startedAt||Date.now()) > 180000){
+        clearInterval(pollTimer);
+        const btn=document.getElementById("payBtn");
+        btn.textContent="Check Status"; btn.disabled=false;
+      }
     }
   }catch(e){console.log("Poll error:",e);}
 }
@@ -779,7 +794,7 @@ async function checkVoucherStatus(){
 function showQr(){
   document.getElementById("qrSection").style.display="block";
   document.getElementById("qrContainer").innerHTML="";
-  const url=`${API.replace("/production","")}/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
+  const url=`${FRONTEND_BASE}/attendant.html?voucher=${encodeURIComponent(lastVoucherId)}`;
   new QRCode(document.getElementById("qrContainer"),{
     text:url,width:200,height:200,colorDark:"#1e293b",colorLight:"#f8fafc"
   });

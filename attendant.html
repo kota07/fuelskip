@@ -139,7 +139,18 @@
 </div>
 
 <script>
-const API = "https://fuelskip-production.up.railway.app";
+// If you host frontend and backend together (current setup), this works automatically.
+// If you later host frontend separately, set localStorage.FUELSKIP_API = "https://...".
+const API = localStorage.getItem('FUELSKIP_API') || window.location.origin;
+
+function getAttendantToken() {
+  let tok = localStorage.getItem('FUELSKIP_ATTENDANT_TOKEN');
+  if (!tok) {
+    tok = prompt('Enter Attendant Token (one-time on this device):');
+    if (tok) localStorage.setItem('FUELSKIP_ATTENDANT_TOKEN', tok);
+  }
+  return tok || '';
+}
 let currentVoucherId     = null;
 let currentVoucherStatus = null;
 
@@ -208,6 +219,7 @@ async function loadVoucher() {
       }</p>
       <p><strong>Amount:</strong> ₹${voucher.amount}</p>
       <p><strong>Litres:</strong> ${voucher.litres} L</p>
+      <p><strong>Vehicle:</strong> ${voucher.vehicle_type || '-'} ${voucher.vehicle_no ? '• ' + voucher.vehicle_no : ''}</p>
       <p><strong>Status:</strong> ${statusChip}</p>
       <p><strong>Expires:</strong> Never</p>
     `;
@@ -228,6 +240,10 @@ async function loadVoucher() {
       statusDiv.innerHTML = '<p style="color:#6b7280;">⚠️ This voucher is already used.</p>';
     } else if (voucher.status === 'pending') {
       statusDiv.innerHTML = '<p style="color:#f97316;">⏳ Payment pending – ask customer to complete payment.</p>';
+    } else if (voucher.status === 'failed') {
+      statusDiv.innerHTML = '<p style="color:#ef4444;">❌ Payment failed – ask customer to retry.</p>';
+    } else if (voucher.status === 'failed') {
+      statusDiv.innerHTML = '<p style="color:#ef4444;">❌ Payment failed – ask customer to retry.</p>';
     } else {
       statusDiv.innerHTML = '<p style="color:#ef4444;">❌ Invalid voucher – cannot dispense.</p>';
     }
@@ -247,7 +263,10 @@ async function validateAndDispense() {
 
   try {
     const res = await fetch(`${API}/validate/${encodeURIComponent(currentVoucherId)}`, {
-      method: 'POST'
+      method: 'POST',
+      headers: {
+        'X-ATTENDANT-TOKEN': getAttendantToken()
+      }
     });
     if (res.ok) {
       statusDiv.innerHTML =

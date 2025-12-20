@@ -5,6 +5,9 @@ razorpay
 python-dotenv
 python-multipart
 
+# For Railway Postgres
+psycopg2-binary
+
 
 
 

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Depends
+from fastapi import FastAPI, HTTPException, Request, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -11,16 +11,30 @@ load_dotenv()   # this reads .env into environment
 
 import razorpay
 
-from sqlalchemy import create_engine, Column, String, Float, DateTime, Boolean, Integer
+from sqlalchemy import create_engine, Column, String, Float, DateTime, Boolean, Integer, Text
+from sqlalchemy import text as sql_text
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
-# --- DB setup ---
-SQLALCHEMY_DATABASE_URL = "sqlite:///./fuelskip.db"
+"""FuelSkip backend.
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
+Notes on security:
+- /validate and admin list endpoints are protected by simple header tokens.
+- For pilots, keep these tokens on the attendant/owner device only.
+"""
+
+# --- DB setup ---
+# Railway (and most managed hosts) work best with Postgres. Keep SQLite only for local testing.
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fuelskip.db")
+
+# If Railway provides postgres://, SQLAlchemy prefers postgresql://
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine_kwargs = {}
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL, **engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -47,7 +61,26 @@ class VoucherDB(Base):
     expires_at = Column(DateTime)
     used = Column(Boolean, default=False)
     razorpay_order_id = Column(String, index=True)
+    razorpay_payment_id = Column(String, index=True, nullable=True)
     user_id = Column(Integer, index=True, nullable=True)    # link to users
+
+    # Customer-provided metadata (useful for attendant confirmation & owner analytics)
+    vehicle_type = Column(String, nullable=True)
+    vehicle_no = Column(String, nullable=True)
+
+
+class WebhookEventDB(Base):
+    """Store Razorpay event ids for idempotency."""
+
+    __tablename__ = "webhook_events"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    event_id = Column(String, unique=True, index=True)
+    event_type = Column(String, index=True)
+    order_id = Column(String, index=True, nullable=True)
+    payment_id = Column(String, index=True, nullable=True)
+    raw = Column(Text, nullable=True)
+    created_at = Column(DateTime)
 
 
 class ErrorLogDB(Base):
@@ -70,12 +103,33 @@ def get_db():
 
 app = FastAPI(title="FuelSkip Flow A")
 
+# ---- Basic access control tokens (keep in env) ----
+# Example values you can set on Railway:
+#   ATTENDANT_TOKEN=...
+#   OWNER_TOKEN=...
+ATTENDANT_TOKEN = os.getenv("ATTENDANT_TOKEN", "")
+OWNER_TOKEN = os.getenv("OWNER_TOKEN", "")
+
+def _require_token(expected: str, provided: str | None, label: str):
+    if not expected:
+        # If token isn't configured, fail closed in prod-like deployments.
+        # (For local dev you can set expected to empty and skip by changing this logic.)
+        raise HTTPException(status_code=500, detail=f"{label} token not configured")
+    if not provided or provided != expected:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+# ---- CORS ----
+# Comma-separated origins, e.g. "https://your-frontend.com,https://..."
+cors_origins_raw = os.getenv("CORS_ORIGINS", "*")
+cors_origins = [o.strip() for o in cors_origins_raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # OK for testing
+    allow_origins=cors_origins if cors_origins_raw != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
 # ---- Static / HTML pages ----
@@ -114,6 +168,19 @@ def owner_page():
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+
+    # Lightweight schema patching for SQLite dev DBs (create_all does not add new columns).
+    # For Postgres, prefer Alembic migrations.
+    if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+        with engine.begin() as conn:
+            # vouchers.vehicle_type, vouchers.vehicle_no, vouchers.razorpay_payment_id
+            cols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(vouchers)")).fetchall()]
+            if "vehicle_type" not in cols:
+                conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_type VARCHAR"))
+            if "vehicle_no" not in cols:
+                conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_no VARCHAR"))
+            if "razorpay_payment_id" not in cols:
+                conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN razorpay_payment_id VARCHAR"))
 
 
 # ----- Razorpay setup -----
@@ -185,6 +252,8 @@ class CreateVoucher(BaseModel):
     amount: float | None = None
     litres: float | None = None
     user_id: int | None = None
+    vehicle_type: str | None = None
+    vehicle_no: str | None = None
 
 
 class PaymentUpdate(BaseModel):
@@ -263,13 +332,24 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     amount = req.amount
     litres = req.litres
 
+    # ---- server-side validation (don't trust only frontend) ----
+    if amount is not None and amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be > 0")
+    if litres is not None and litres <= 0:
+        raise HTTPException(status_code=400, detail="Litres must be > 0")
+    if amount is not None and amount > 20000:
+        raise HTTPException(status_code=400, detail="Amount too high")
+    if litres is not None and litres > 200:
+        raise HTTPException(status_code=400, detail="Litres too high")
+
     # calculate missing side from price_per_litre
     if amount is not None and litres is None:
         litres = round(amount / price, 2)
     elif litres is not None and amount is None:
         amount = round(litres * price, 2)
 
-    voucher_id = str(uuid.uuid4())[:8]
+    # Use a longer id to reduce guessing + collision risk
+    voucher_id = uuid.uuid4().hex[:12]
 
     # ----- Razorpay ORDER instead of UPI link -----
     try:
@@ -302,6 +382,8 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         razorpay_order_id=order["id"],
         used=False,
         user_id=req.user_id,
+        vehicle_type=req.vehicle_type,
+        vehicle_no=req.vehicle_no,
     )
     db.add(voucher_db)
     db.commit()
@@ -344,7 +426,12 @@ def voucher_status(voucher_id: str, db: Session = Depends(get_db)):
 
 
 @app.post("/validate/{voucher_id}")
-def validate_voucher(voucher_id: str, db: Session = Depends(get_db)):
+def validate_voucher(
+    voucher_id: str,
+    db: Session = Depends(get_db),
+    x_attendant_token: str | None = Header(None, alias="X-ATTENDANT-TOKEN"),
+):
+    _require_token(ATTENDANT_TOKEN, x_attendant_token, "Attendant")
     v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Voucher not found")
@@ -391,19 +478,43 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 
     payload = await request.json()
     event = payload.get("event")
+    event_id = payload.get("event_id") or payload.get("id")  # Razorpay uses event_id
 
-    if event == "payment.captured":
-        payment_entity = payload["payload"]["payment"]["entity"]
+    # ---- idempotency: ignore duplicate deliveries ----
+    if event_id:
+        already = db.query(WebhookEventDB).filter(WebhookEventDB.event_id == event_id).first()
+        if already:
+            return {"ok": True, "deduped": True}
+
+        # store event first (fail-safe: if processing crashes mid-way, we still won't double-run)
+        db.add(
+            WebhookEventDB(
+                event_id=event_id,
+                event_type=event or "",
+                raw=str(payload)[:20000],
+                created_at=datetime.datetime.utcnow(),
+            )
+        )
+        db.commit()
+
+    # ---- process common outcomes ----
+    if event in ("payment.captured", "payment.authorized", "payment.failed"):
+        payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
         order_id = payment_entity.get("order_id")
+        payment_id = payment_entity.get("id")
 
         if order_id:
-            v = (
-                db.query(VoucherDB)
-                .filter(VoucherDB.razorpay_order_id == order_id)
-                .first()
-            )
+            v = db.query(VoucherDB).filter(VoucherDB.razorpay_order_id == order_id).first()
             if v:
-                v.status = "paid"
+                # record payment_id for traceability
+                if payment_id:
+                    v.razorpay_payment_id = payment_id
+
+                if event == "payment.captured":
+                    v.status = "paid"
+                elif event == "payment.failed":
+                    v.status = "failed"
+
                 db.commit()
 
     return {"ok": True}
@@ -415,7 +526,9 @@ def list_vouchers(
     bunk_id: Optional[str] = None,
     status: Optional[str] = None,
     db: Session = Depends(get_db),
+    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
 ):
+    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
     q = db.query(VoucherDB)
     if bunk_id:
         q = q.filter(VoucherDB.bunk_id == bunk_id)
@@ -436,13 +549,22 @@ def my_vouchers(user_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/admin/users")
-def list_users(db: Session = Depends(get_db)):
+def list_users(
+    db: Session = Depends(get_db),
+    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
+):
+    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
     users = db.query(UserDB).order_by(UserDB.created_at.desc()).all()
     return [u.__dict__ for u in users]
 
 
 @app.get("/admin/errors")
-def list_errors(limit: int = 100, db: Session = Depends(get_db)):
+def list_errors(
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
+):
+    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
     q = (
         db.query(ErrorLogDB)
         .order_by(ErrorLogDB.created_at.desc())

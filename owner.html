@@ -157,7 +157,16 @@
   </div>
 
 <script>
-const API = "https://fuelskip-production.up.railway.app";
+const API = localStorage.getItem('FUELSKIP_API') || window.location.origin;
+
+function getOwnerToken() {
+  let tok = localStorage.getItem('FUELSKIP_OWNER_TOKEN');
+  if (!tok) {
+    tok = prompt('Enter Owner Token (one-time on this device):');
+    if (tok) localStorage.setItem('FUELSKIP_OWNER_TOKEN', tok);
+  }
+  return tok || '';
+}
 
 function fmtIST(ts) {
   if (!ts) return "";
@@ -192,7 +201,10 @@ async function loadVouchers() {
 
   try {
     const res = await fetch(`${API}/vouchers?` + params.toString(), {
-      cache: "no-store"
+      cache: "no-store",
+      headers: {
+        'X-OWNER-TOKEN': getOwnerToken()
+      }
     });
     if (!res.ok) {
       tbody.innerHTML = "<tr><td colspan='6'>Error loading vouchers</td></tr>";
