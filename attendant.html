@@ -23,11 +23,7 @@
       margin-top: 12px;
       box-shadow: 0 10px 25px rgba(15,23,42,0.25);
     }
-
-    .input-row {
-      display: flex; gap: 8px; align-items: center;
-    }
-
+    .input-row { display: flex; gap: 8px; align-items: center; }
     input {
       flex: 1;
       padding: 10px 12px;
@@ -35,7 +31,6 @@
       border: 1px solid #d4d4d8;
       font-size: 14px;
     }
-
     button {
       padding: 10px 14px;
       border-radius: 10px;
@@ -45,13 +40,11 @@
       font-size: 14px;
       transition: all 0.15s ease;
     }
-
     button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .btn-blue   { background: #3b82f6; color: #fff; }
-    .btn-green  { background: #10b981; color: #fff; width: 100%; margin-top: 10px; }
-    .btn-red    { background: #ef4444; color: #fff; }
-    .btn-dark   { background: #111827; color: #fff; }
+    .btn-blue { background: #3b82f6; color: #fff; }
+    .btn-green { background: #10b981; color: #fff; width: 100%; margin-top: 10px; }
+    .btn-red { background: #ef4444; color: #fff; }
+    .btn-dark { background: #111827; color: #fff; }
 
     .status-chip {
       display: inline-block;
@@ -66,18 +59,9 @@
     .pend { background: #f97316; }
     .bad  { background: #ef4444; }
 
-    #voucherData p {
-      margin: 4px 0;
-      font-size: 14px;
-      color: #374151;
-    }
+    #voucherData p { margin: 4px 0; font-size: 14px; color: #374151; }
     #voucherData strong { color: #111827; }
-
-    #statusMsg {
-      margin-top: 10px;
-      font-size: 14px;
-      font-weight: 600;
-    }
+    #statusMsg { margin-top: 10px; font-size: 14px; font-weight: 600; }
   </style>
 </head>
 
@@ -85,29 +69,31 @@
 <div class="wrap">
   <h2>⛽ FuelSkip – Attendant</h2>
 
-  <!-- INPUT -->
   <div class="box">
-    <div class="input-row">
-      <input id="voucherInput" placeholder="Paste voucher ID or scan QR">
-      <button class="btn-blue" onclick="loadVoucher()">Check</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div style="font-size:13px;font-weight:700;color:#111827;">
+        Device Pairing:
+        <span id="pairState" style="font-weight:800;color:#ef4444;">NOT PAIRED</span>
+      </div>
+
+      <button class="btn-red" onclick="resetPairing()">Reset Pairing</button>
     </div>
 
     <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
-      Tip: Scan customer QR — voucher + signature auto-loads.
-    </p>
-
-    <!-- TOKEN CONTROLS -->
-    <div style="margin-top:10px;display:flex;gap:8px;">
-      <button class="btn-red" onclick="resetToken()">Reset Token</button>
-      <button class="btn-dark" onclick="setToken()">Set Token</button>
-    </div>
-
-    <p style="margin:8px 0 0;font-size:12px;color:#94a3b8;">
-      Use Reset if you see “Unauthorized”.
+      Owner will show a “Pair Device” QR. Scan it once. Then dispensing works without typing token.
     </p>
   </div>
 
-  <!-- VOUCHER DETAILS -->
+  <div class="box">
+    <div class="input-row">
+      <input id="voucherInput" placeholder="Paste voucher ID or scan customer QR">
+      <button class="btn-blue" onclick="loadVoucher()">Check</button>
+    </div>
+    <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
+      Tip: Scan customer QR — voucher + signature auto-loads.
+    </p>
+  </div>
+
   <div class="box" id="voucherInfo" style="display:none;">
     <h3 style="margin:0 0 8px 0;">Voucher Details</h3>
     <div id="voucherData"></div>
@@ -124,40 +110,45 @@ const API = window.location.origin;
 let currentVoucherId = null;
 let currentSig = "";
 
-/* ---------- TOKEN HANDLING ---------- */
-function getAttendantToken() {
-  let tok = localStorage.getItem("FUELSKIP_ATTENDANT_TOKEN");
-  if (!tok) {
-    tok = prompt("Enter Attendant Token:");
-    if (tok) localStorage.setItem("FUELSKIP_ATTENDANT_TOKEN", tok.trim());
-  }
-  return tok ? tok.trim() : "";
+function getDeviceToken() {
+  return (localStorage.getItem("FUELSKIP_DEVICE_TOKEN") || "").trim();
 }
 
-function resetToken() {
-  localStorage.removeItem("FUELSKIP_ATTENDANT_TOKEN");
-  alert("Attendant token cleared. Tap Set Token to enter again.");
+function setPairState() {
+  const paired = !!getDeviceToken();
+  const el = document.getElementById("pairState");
+  el.textContent = paired ? "PAIRED" : "NOT PAIRED";
+  el.style.color = paired ? "#16a34a" : "#ef4444";
 }
 
-function setToken() {
-  const tok = prompt("Enter Attendant Token:");
-  if (tok) {
-    localStorage.setItem("FUELSKIP_ATTENDANT_TOKEN", tok.trim());
-    alert("Token saved.");
-  }
+function resetPairing() {
+  localStorage.removeItem("FUELSKIP_DEVICE_TOKEN");
+  alert("Pairing removed. Scan owner pairing QR again.");
+  setPairState();
 }
 
-/* ---------- URL PARAMS ---------- */
 function getParams() {
   const p = new URLSearchParams(window.location.search);
   return {
     voucher: p.get("voucher") || "",
-    sig: p.get("sig") || ""
+    sig: p.get("sig") || "",
+    dt: p.get("dt") || ""   // device token from owner QR
   };
 }
 
 window.addEventListener("load", () => {
   const p = getParams();
+
+  // ✅ Pair-by-QR: if dt is present, store it once
+  if (p.dt) {
+    localStorage.setItem("FUELSKIP_DEVICE_TOKEN", p.dt.trim());
+    history.replaceState({}, "", window.location.pathname); // remove dt from URL
+    alert("✅ Device paired successfully!");
+  }
+
+  setPairState();
+
+  // customer QR flow
   if (p.voucher) {
     document.getElementById("voucherInput").value = p.voucher;
     currentSig = p.sig || "";
@@ -165,7 +156,6 @@ window.addEventListener("load", () => {
   }
 });
 
-/* ---------- UI HELPERS ---------- */
 function statusChip(status, used) {
   if (used) return '<span class="status-chip used">USED</span>';
   if (status === "paid") return '<span class="status-chip paid">PAID</span>';
@@ -173,7 +163,6 @@ function statusChip(status, used) {
   return '<span class="status-chip bad">INVALID</span>';
 }
 
-/* ---------- LOAD VOUCHER ---------- */
 async function loadVoucher() {
   const id = document.getElementById("voucherInput").value.trim();
   if (!id) return alert("Enter voucher ID");
@@ -191,9 +180,8 @@ async function loadVoucher() {
   msg.textContent = "";
 
   try {
-    const res = await fetch(`${API}/voucher/${id}`);
+    const res = await fetch(`${API}/voucher/${encodeURIComponent(id)}`);
     if (!res.ok) throw new Error("Voucher not found");
-
     const v = await res.json();
     currentVoucherId = id;
 
@@ -205,8 +193,8 @@ async function loadVoucher() {
       <p><strong>Vehicle:</strong> ${v.vehicle_type || "-"} • ${v.vehicle_no || "-"}</p>
       <p><strong>Status:</strong> ${statusChip(v.status, v.used)}</p>
       <p><strong>QR Signature:</strong>
-        ${currentSig ? "<span style='color:#16a34a'>OK</span>" :
-                       "<span style='color:#ef4444'>MISSING</span>"}
+        ${currentSig ? "<span style='color:#16a34a;font-weight:800;'>OK</span>" :
+                       "<span style='color:#ef4444;font-weight:800;'>MISSING</span>"}
       </p>
     `;
 
@@ -215,6 +203,10 @@ async function loadVoucher() {
     if (v.status === "paid" && !v.used) {
       if (!currentSig) {
         msg.innerHTML = "❌ QR signature missing. Scan customer QR.";
+        return;
+      }
+      if (!getDeviceToken()) {
+        msg.innerHTML = "❌ Device not paired. Scan owner pairing QR first.";
         return;
       }
       msg.innerHTML = "✅ Ready to dispense.";
@@ -230,7 +222,6 @@ async function loadVoucher() {
   }
 }
 
-/* ---------- VALIDATE & DISPENSE ---------- */
 async function validateAndDispense() {
   const btn = document.getElementById("dispenseBtn");
   const msg = document.getElementById("statusMsg");
@@ -240,18 +231,17 @@ async function validateAndDispense() {
 
   try {
     const res = await fetch(
-      `${API}/validate/${currentVoucherId}?sig=${encodeURIComponent(currentSig)}`,
+      `${API}/validate/${encodeURIComponent(currentVoucherId)}?sig=${encodeURIComponent(currentSig)}`,
       {
         method: "POST",
         headers: {
-          "X-ATTENDANT-TOKEN": getAttendantToken()
+          "X-DEVICE-TOKEN": getDeviceToken()
         }
       }
     );
 
     const data = await res.json();
-
-    if (!res.ok) throw new Error(data.detail || "Unauthorized");
+    if (!res.ok) throw new Error(data.detail || "Validation failed");
 
     if (data.already_used) {
       msg.innerHTML = "⚠️ Already used.";

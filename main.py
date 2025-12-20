@@ -4,12 +4,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Optional, List
-import uuid, datetime, os, math
+import uuid
+import datetime
+import os
+import math
 import hmac
 import hashlib
 
 from dotenv import load_dotenv
-load_dotenv()   # this reads .env into environment
+load_dotenv()
 
 import razorpay
 
@@ -17,18 +20,25 @@ from sqlalchemy import create_engine, Column, String, Float, DateTime, Boolean, 
 from sqlalchemy import text as sql_text
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 
-"""FuelSkip backend.
 
-Security upgrades:
-- Signed QR (HMAC) to prevent tampering/forged voucher dispense
-- Bunk binding: attendant device can dispense only its configured bunk_id
+"""
+FuelSkip backend upgrades:
+- Signed QR (HMAC) so voucher QR cannot be forged/tampered
+- Device pairing (Owner generates QR once, Attendant scans once)
+- Bunk binding via device token (device can dispense only its bunk)
 
-Env vars needed:
-- QR_SIGNING_SECRET (>= 32 chars recommended)
-- ATTENDANT_BUNK_ID (ex: BUNK-1)
+Railway env vars:
+- DATABASE_URL (Railway Postgres)
+- RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET
+- RAZORPAY_WEBHOOK_SECRET
+- QR_SIGNING_SECRET  (strong random string, 32+ chars recommended)
+- OWNER_TOKEN
+Optional fallback:
+- ATTENDANT_TOKEN (old method)
+- ATTENDANT_BUNK_ID (old method)
 """
 
-# --- DB setup ---
+# ---------------- DB Setup ----------------
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fuelskip.db")
 
 # If Railway provides postgres://, SQLAlchemy prefers postgresql://
@@ -56,18 +66,23 @@ class UserDB(Base):
 class VoucherDB(Base):
     __tablename__ = "vouchers"
 
-    id = Column(String, primary_key=True, index=True)       # voucher_id
+    id = Column(String, primary_key=True, index=True)  # voucher_id
     bunk_id = Column(String, index=True)
+
     amount = Column(Float)
     litres = Column(Float)
-    status = Column(String, index=True)                     # pending/paid/used/failed
+    status = Column(String, index=True)  # pending/paid/used/failed
     price_per_litre = Column(Float)
+
     created_at = Column(DateTime)
     expires_at = Column(DateTime)
+
     used = Column(Boolean, default=False)
+
     razorpay_order_id = Column(String, index=True)
     razorpay_payment_id = Column(String, index=True, nullable=True)
-    user_id = Column(Integer, index=True, nullable=True)    # link to users
+
+    user_id = Column(Integer, index=True, nullable=True)
 
     vehicle_type = Column(String, nullable=True)
     vehicle_no = Column(String, nullable=True)
@@ -95,23 +110,33 @@ class ErrorLogDB(Base):
     created_at = Column(DateTime)
 
 
+class DeviceDB(Base):
+    __tablename__ = "devices"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    name = Column(String, nullable=True)
+    bunk_id = Column(String, index=True)
+    device_token = Column(String, unique=True, index=True)  # secret token for this device
+    created_at = Column(DateTime)
+    last_seen_at = Column(DateTime, nullable=True)
+
+
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-# --- end DB setup ---
+# -------------- end DB setup --------------
 
 
-app = FastAPI(title="FuelSkip Flow A")
+app = FastAPI(title="FuelSkip")
 
-# ---- Basic access control tokens (keep in env) ----
-ATTENDANT_TOKEN = os.getenv("ATTENDANT_TOKEN", "")
+# ---- Tokens (env) ----
+ATTENDANT_TOKEN = os.getenv("ATTENDANT_TOKEN", "")  # old fallback
 OWNER_TOKEN = os.getenv("OWNER_TOKEN", "")
+ATTENDANT_BUNK_ID = os.getenv("ATTENDANT_BUNK_ID", "")  # old fallback (optional)
 
-# NEW: bunk binding + QR signing
-ATTENDANT_BUNK_ID = os.getenv("ATTENDANT_BUNK_ID", "")  # e.g. "BUNK-1"
 
 def _require_token(expected: str, provided: str | None, label: str):
     if not expected:
@@ -120,10 +145,10 @@ def _require_token(expected: str, provided: str | None, label: str):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
+# -------- Signed QR helpers --------
 def _qr_secret() -> bytes:
     secret = os.getenv("QR_SIGNING_SECRET", "")
     if not secret or len(secret) < 16:
-        # fail closed - signed QR is required for secure dispensing
         raise HTTPException(status_code=500, detail="QR_SIGNING_SECRET not configured")
     return secret.encode("utf-8")
 
@@ -157,7 +182,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# ---- Static / HTML pages ----
+# ---- Static mount ----
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
@@ -185,14 +210,13 @@ def attendant_page():
 @app.get("/owner.html")
 def owner_page():
     return FileResponse(os.path.join(BASE_DIR, "owner.html"))
-# ------------------------------
 
 
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
 
-    # Lightweight schema patching for SQLite dev DBs
+    # lightweight schema patching for SQLite dev only
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         with engine.begin() as conn:
             cols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(vouchers)")).fetchall()]
@@ -202,14 +226,13 @@ def on_startup():
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_no VARCHAR"))
             if "razorpay_payment_id" not in cols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN razorpay_payment_id VARCHAR"))
+# -----------------------------------
 
 
 # ----- Razorpay setup -----
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET")
 WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET")
-
-print("KEY_ID =", RAZORPAY_KEY_ID)
 
 if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
     print("WARNING: Razorpay keys not set in env; set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET")
@@ -218,6 +241,7 @@ razor_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 # --------------------------
 
 
+# -------- Bunks (static for now) --------
 bunks = {
     "BUNK-1": {
         "id": "BUNK-1",
@@ -225,7 +249,6 @@ bunks = {
         "lat": 17.6868,
         "lon": 83.2185,
         "address": "Siripuram, Visakhapatnam",
-        "vpa": "bunk1@icici",
         "pumps": [1, 2, 3],
         "price_per_litre": 108.16,
     },
@@ -235,11 +258,11 @@ bunks = {
         "lat": 17.6860,
         "lon": 83.1470,
         "address": "Gajuwaka, Visakhapatnam",
-        "vpa": "bunk2@icici",
         "pumps": [1, 2],
         "price_per_litre": 108.16,
     },
 }
+
 
 def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371.0
@@ -265,7 +288,7 @@ def log_error(db: Session, where: str, message: str):
         pass
 
 
-# ---------- Pydantic models ----------
+# -------- Pydantic models --------
 class CreateVoucher(BaseModel):
     bunk_id: str
     amount: float | None = None
@@ -284,7 +307,12 @@ class LoginResponse(BaseModel):
     user_id: int
     phone: str
     name: str | None = None
-# ------------------------------------
+
+
+class RegisterDeviceRequest(BaseModel):
+    name: str | None = None
+    bunk_id: str
+# --------------------------------
 
 
 @app.get("/health")
@@ -403,17 +431,12 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         "expires_at": expires,
         "razorpay_order_id": order["id"],
         "razorpay_key_id": RAZORPAY_KEY_ID,
-        "qr_sig": qr_sig,  # ✅ NEW
+        "qr_sig": qr_sig,
     }
 
 
 @app.get("/voucher/{voucher_id}")
 def get_voucher(voucher_id: str, db: Session = Depends(get_db)):
-    """
-    NOTE:
-    - We allow viewing voucher details without sig (for manual paste use).
-    - BUT dispensing will require sig in /validate.
-    """
     v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Voucher not found")
@@ -437,33 +460,99 @@ def voucher_status(voucher_id: str, db: Session = Depends(get_db)):
     return {"status": v.status}
 
 
+# ------------------ DEVICE PAIRING (OWNER) ------------------
+@app.post("/devices/register")
+def register_device(
+    req: RegisterDeviceRequest,
+    db: Session = Depends(get_db),
+    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
+):
+    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
+
+    if req.bunk_id not in bunks:
+        raise HTTPException(status_code=404, detail="Bunk not found")
+
+    token = uuid.uuid4().hex  # long random token
+    d = DeviceDB(
+        name=req.name or "Attendant Device",
+        bunk_id=req.bunk_id,
+        device_token=token,
+        created_at=datetime.datetime.utcnow(),
+        last_seen_at=None,
+    )
+    db.add(d)
+    db.commit()
+    db.refresh(d)
+
+    return {
+        "device_id": d.id,
+        "name": d.name,
+        "bunk_id": d.bunk_id,
+        "device_token": d.device_token,
+    }
+
+
+@app.get("/devices")
+def list_devices(
+    db: Session = Depends(get_db),
+    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
+):
+    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
+    devices = db.query(DeviceDB).order_by(DeviceDB.created_at.desc()).all()
+    return [
+        {
+            "id": d.id,
+            "name": d.name,
+            "bunk_id": d.bunk_id,
+            "created_at": d.created_at,
+            "last_seen_at": d.last_seen_at,
+        }
+        for d in devices
+    ]
+# ------------------------------------------------------------
+
+
 @app.post("/validate/{voucher_id}")
 def validate_voucher(
     voucher_id: str,
     sig: str | None = None,
     db: Session = Depends(get_db),
+    x_device_token: str | None = Header(None, alias="X-DEVICE-TOKEN"),
     x_attendant_token: str | None = Header(None, alias="X-ATTENDANT-TOKEN"),
 ):
-    # 1) attendant auth
-    _require_token(ATTENDANT_TOKEN, x_attendant_token, "Attendant")
+    # ✅ Prefer device token (paired device)
+    device = None
+    if x_device_token:
+        device = db.query(DeviceDB).filter(DeviceDB.device_token == x_device_token).first()
+
+    # Fallback to old attendant token (optional)
+    if not device:
+        _require_token(ATTENDANT_TOKEN, x_attendant_token, "Attendant")
 
     v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Voucher not found")
 
-    # 2) Signed QR required for dispensing
+    # Signed QR required for dispensing
     if not verify_voucher_sig(v, sig):
         raise HTTPException(status_code=403, detail="Invalid QR signature")
 
-    # 3) Bunk binding
-    if ATTENDANT_BUNK_ID and v.bunk_id != ATTENDANT_BUNK_ID:
-        raise HTTPException(status_code=403, detail=f"Wrong bunk. This device is for {ATTENDANT_BUNK_ID}")
+    # ✅ Bunk binding via device token (best)
+    if device:
+        device.last_seen_at = datetime.datetime.utcnow()
+        db.commit()
+        if v.bunk_id != device.bunk_id:
+            raise HTTPException(status_code=403, detail=f"Wrong bunk. This device is for {device.bunk_id}")
+    else:
+        # fallback old env bunk binding if you still want
+        if ATTENDANT_BUNK_ID and v.bunk_id != ATTENDANT_BUNK_ID:
+            raise HTTPException(status_code=403, detail=f"Wrong bunk. This device is for {ATTENDANT_BUNK_ID}")
 
-    # 4) Payment state checks
+    # Payment checks
     if v.status not in ("paid", "used"):
         raise HTTPException(status_code=400, detail="Payment not completed yet")
 
-    # 5) Idempotent behavior
+    # Idempotent
     if v.used or v.status == "used":
         return {
             "approved": True,
@@ -474,7 +563,6 @@ def validate_voucher(
             "litres": v.litres,
         }
 
-    # 6) Mark used
     v.used = True
     v.status = "used"
     db.commit()
@@ -489,7 +577,7 @@ def validate_voucher(
     }
 
 
-# ---------- Razorpay webhook ----------
+# ---------------- Razorpay webhook ----------------
 @app.post("/razorpay-webhook")
 async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
     body_bytes = await request.body()
@@ -547,7 +635,7 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
                 db.commit()
 
     return {"ok": True}
-# --------------------------------------
+# -------------------------------------------------
 
 
 @app.get("/vouchers")
