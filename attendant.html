@@ -63,6 +63,7 @@
     #voucherData p { margin: 4px 0; font-size: 14px; color: #374151; }
     #voucherData strong { color: #111827; }
     #statusMsg { margin-top: 10px; font-size: 14px; font-weight: 600; }
+    .mini { margin-top: 6px; font-size: 12px; color: #6b7280; }
   </style>
 </head>
 
@@ -80,9 +81,11 @@
       <button class="btn-red" onclick="resetPairing()">Reset</button>
     </div>
 
-    <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
-      Scan Owner pairing QR once. This device will stay paired.
-    </p>
+    <div class="mini">
+      If voucher scan shows NOT PAIRED, open this page once in Safari and pair again.
+    </div>
+
+    <div class="mini" id="debugLine"></div>
   </div>
 
   <!-- INPUT -->
@@ -114,38 +117,56 @@ const API = window.location.origin;
 let currentVoucherId = null;
 let currentSig = "";
 
-/* ---------------- COOKIES (iPhone-safe) ---------------- */
+/* ---------------- COOKIES (more robust) ---------------- */
 function setCookie(name, value, days=365) {
   const maxAge = days * 24 * 60 * 60;
-  document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+  const secure = (location.protocol === "https:") ? "; Secure" : "";
+  // SameSite=Lax + Secure helps iOS/Safari consistency for https sites
+  document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
 }
 function getCookie(name) {
   const cookies = document.cookie.split(";").map(c => c.trim());
   for (const c of cookies) {
-    if (c.startsWith(name + "=")) {
-      return decodeURIComponent(c.substring(name.length + 1));
-    }
+    if (c.startsWith(name + "=")) return decodeURIComponent(c.substring(name.length + 1));
   }
   return "";
 }
 
-/* ---------------- DEVICE TOKEN ---------------- */
+/* ---------------- DEVICE TOKEN (multi-store) ---------------- */
+function saveDeviceToken(token) {
+  const t = (token || "").trim();
+  if (!t) return;
+  try { sessionStorage.setItem("FUELSKIP_DEVICE_TOKEN", t); } catch(e){}
+  try { localStorage.setItem("FUELSKIP_DEVICE_TOKEN", t); } catch(e){}
+  setCookie("fuelskip_dt", t, 365);
+}
+
 function getDeviceToken() {
-  let t = (localStorage.getItem("FUELSKIP_DEVICE_TOKEN") || "").trim();
+  let t = "";
+  try { t = (sessionStorage.getItem("FUELSKIP_DEVICE_TOKEN") || "").trim(); } catch(e){}
+  if (!t) {
+    try { t = (localStorage.getItem("FUELSKIP_DEVICE_TOKEN") || "").trim(); } catch(e){}
+  }
   if (!t) t = (getCookie("fuelskip_dt") || "").trim();
   return t;
 }
 
 function setPairState() {
-  const paired = !!getDeviceToken();
+  const t = getDeviceToken();
+  const paired = !!t;
   const el = document.getElementById("pairState");
   el.textContent = paired ? "PAIRED" : "NOT PAIRED";
   el.style.color = paired ? "#16a34a" : "#ef4444";
+
+  // Debug line to confirm where it’s running
+  const d = document.getElementById("debugLine");
+  d.textContent = `Origin: ${window.location.origin} • Token: ${paired ? (t.slice(0,8) + "…") : "none"}`;
 }
 
 function resetPairing() {
-  localStorage.removeItem("FUELSKIP_DEVICE_TOKEN");
-  setCookie("fuelskip_dt", "", -1);
+  try { sessionStorage.removeItem("FUELSKIP_DEVICE_TOKEN"); } catch(e){}
+  try { localStorage.removeItem("FUELSKIP_DEVICE_TOKEN"); } catch(e){}
+  setCookie("fuelskip_dt", "", -1); // delete
   alert("Pairing removed. Scan Owner QR again.");
   setPairState();
 }
@@ -165,9 +186,7 @@ window.addEventListener("load", () => {
 
   // Pair-by-QR
   if (p.dt) {
-    const token = p.dt.trim();
-    localStorage.setItem("FUELSKIP_DEVICE_TOKEN", token);
-    setCookie("fuelskip_dt", token, 365);
+    saveDeviceToken(p.dt);
     history.replaceState({}, "", window.location.pathname);
     alert("✅ Device paired successfully!");
   }
@@ -233,7 +252,7 @@ async function loadVoucher() {
         return;
       }
       if (!getDeviceToken()) {
-        msg.innerHTML = "❌ Device not paired. Scan Owner QR.";
+        msg.innerHTML = "❌ Device not paired. Scan Owner pairing QR again.";
         return;
       }
       msg.innerHTML = "✅ Ready to dispense.";
