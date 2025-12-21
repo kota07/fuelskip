@@ -39,7 +39,6 @@
       --warn:#f59e0b;
 
       --gray:#e2e8f0;
-      --dark:#0f172a;
     }
 
     *{ box-sizing:border-box; }
@@ -404,7 +403,7 @@
       <button class="logoutBtn" onclick="logout()">Logout</button>
 
       <div class="muted" style="margin-top:12px;">
-        Tip: iPhone Safari → Share → “Add to Home Screen” for fastest open.
+        Tip: Android Chrome → ⋮ → “Add to Home screen”.
       </div>
     </aside>
 
@@ -575,6 +574,7 @@
       return (BUNK_META[id] && BUNK_META[id].address) ? BUNK_META[id].address : "";
     }
 
+    // ✅ state includes qr_cache so old vouchers can show QR again on same device
     let state = {
       user_id: null, phone: "", name: "",
       wallet_balance: 0,
@@ -585,7 +585,8 @@
       last_vehicle_no: "",
       last_voucher_id: "",
       last_sig: "",
-      last_qr_station: "BUNK-1"
+      last_qr_station: "BUNK-1",
+      qr_cache: {} // voucher_id -> { sig, station, ts }
     };
 
     let vouchersAutoRefreshTimer = null;
@@ -596,7 +597,10 @@
       try{
         const s = JSON.parse(raw);
         if(s && s.user_id) state = {...state, ...s};
-      }catch{}
+        if(!state.qr_cache) state.qr_cache = {};
+      }catch{
+        state.qr_cache = state.qr_cache || {};
+      }
     }
     function saveState(){ localStorage.setItem("FUELSKIP_USER", JSON.stringify(state)); }
 
@@ -712,6 +716,7 @@
         state.phone = data.phone;
         state.name = data.name || name || "";
         state.wallet_balance = Number(data.wallet_balance || 0);
+        if(!state.qr_cache) state.qr_cache = {};
         saveState();
 
         bootAfterLogin();
@@ -799,7 +804,7 @@
     }
 
     function statusPill(v){
-      const st = (v.status || "").toLowerCase();
+      const st = String(v.status || "").toLowerCase();
       const used = !!v.used || st === "used";
       if(used) return `<span class="pill pillUsed">USED</span>`;
       if(st === "paid") return `<span class="pill pillPaid">PAID</span>`;
@@ -874,14 +879,38 @@
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    function tryShowQR(voucherId){
-      if(state.last_voucher_id === voucherId && state.last_sig){
-        showVoucherQR(voucherId, state.last_sig, state.last_qr_station || state.last_bunk || "BUNK-1");
+    // ✅ Show QR for older vouchers if present in local cache on this device
+    async function tryShowQR(voucherId){
+      const cache = (state.qr_cache && state.qr_cache[voucherId]) ? state.qr_cache[voucherId] : null;
+
+      if(!cache){
+        alert("QR not available for this old voucher on this device. Use Repeat to generate a fresh voucher.");
+        return;
+      }
+
+      try{
+        const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, { cache:"no-store" });
+        const data = await res.json();
+
+        const st = String(data.status || "").toLowerCase();
+        const used = !!data.used || st === "used";
+
+        if(used){
+          alert("This voucher is already USED.");
+          // We still show it (useful for proof), comment return if you don't want:
+          // return;
+        }
+
+        showVoucherQR(voucherId, cache.sig, cache.station || state.last_bunk || "BUNK-1");
         go("dashboard");
-        document.getElementById("qrWrap").scrollIntoView({ behavior: "smooth", block: "start" });
+
+        setTimeout(() => {
+          document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
+        }, 1100);
+
         loadVouchers(false);
-      } else {
-        alert("Pilot: QR is shown for the latest voucher only. Use Repeat to generate a fresh QR quickly.");
+      }catch(e){
+        alert("Unable to verify voucher status. Try again.");
       }
     }
 
@@ -996,23 +1025,37 @@
         const data = await res.json();
         if(!res.ok) throw new Error(data.detail || "Create failed");
 
-        if((data.pay_method || "") === "wallet" || payload.pay_method === "wallet"){
+        // WALLET path (instant)
+        if((data.pay_method || "").toLowerCase() === "wallet" || (payload.pay_method || "").toLowerCase() === "wallet"){
           if(typeof data.wallet_balance !== "undefined"){
             state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
           }
+
           state.last_voucher_id = data.voucher_id;
           state.last_sig = data.qr_sig;
           state.last_qr_station = bunk_id;
+
+          // ✅ cache QR info so old vouchers can be shown again (on this device)
+          if(!state.qr_cache) state.qr_cache = {};
+          state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, ts: Date.now() };
+
           saveState();
           setSidebarUser();
 
           status.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet). Showing QR…`;
           showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
           loadVouchers(false);
+
+          // ✅ scroll to QR after render
+          setTimeout(() => {
+            document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
+          }, 350);
+
           btn.disabled = false;
           return;
         }
 
+        // RAZORPAY path
         status.innerHTML = `<span class="info">⏳</span> Opening payment…`;
 
         const options = {
@@ -1029,10 +1072,19 @@
               state.last_voucher_id = data.voucher_id;
               state.last_sig = data.qr_sig;
               state.last_qr_station = bunk_id;
+
+              // ✅ cache QR info so old vouchers can be shown again (on this device)
+              if(!state.qr_cache) state.qr_cache = {};
+              state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, ts: Date.now() };
+
               saveState();
               status.innerHTML = `<span class="ok">✅</span> Voucher confirmed. Showing QR…`;
               showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
               loadVouchers(false);
+
+              setTimeout(() => {
+                document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
+              }, 350);
             } else {
               status.innerHTML = `<span class="warn">⏳</span> Confirmation delayed. Refresh later.`;
             }
@@ -1059,37 +1111,42 @@
         await new Promise(r=>setTimeout(r,2500));
         const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucher_id)}`, { cache:"no-store" });
         const data = await res.json();
-        if(res.ok && (data.status === "paid" || data.status === "used")) return true;
+        const st = String(data.status || "").toLowerCase();
+        const used = !!data.used || st === "used";
+        if(res.ok && (st === "paid" || used)) return true;
       }
       return false;
     }
 
-    /* ✅ AUTO-OPEN LAST QR ON APP LAUNCH (NEW) */
+    // ✅ AUTO-OPEN LAST VALID (CACHED) QR ON APP LAUNCH
     async function autoOpenLastQR(){
-      if(!state.last_voucher_id || !state.last_sig) return;
+      const cacheObj = state.qr_cache || {};
+      const ids = Object.keys(cacheObj);
+      if(!ids.length) return;
+
+      // newest first
+      ids.sort((a,b) => (cacheObj[b]?.ts || 0) - (cacheObj[a]?.ts || 0));
+      const voucherId = ids[0];
+      const cached = cacheObj[voucherId];
+      if(!cached || !cached.sig) return;
 
       try{
-        const res = await fetch(
-          `${API}/voucher-status/${encodeURIComponent(state.last_voucher_id)}`,
-          { cache:"no-store" }
-        );
+        const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, { cache:"no-store" });
         const data = await res.json();
 
-        // Only auto-open if still PAID (not used)
-        if(res.ok && data.status === "paid"){
-          showVoucherQR(
-            state.last_voucher_id,
-            state.last_sig,
-            state.last_qr_station || state.last_bunk || "BUNK-1"
-          );
+        const st = String(data.status || "").toLowerCase();
+        const used = !!data.used || st === "used";
 
+        if(res.ok && st === "paid" && !used){
+          showVoucherQR(voucherId, cached.sig, cached.station || state.last_bunk || "BUNK-1");
+
+          // scroll after splash/layout
           setTimeout(() => {
-            document.getElementById("qrWrap")
-              ?.scrollIntoView({ behavior:"smooth", block:"start" });
-          }, 200);
+            document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
+          }, 1200);
         }
       }catch(e){
-        console.log("Auto QR skipped:", e.message);
+        console.log("AutoOpen QR skipped:", e.message);
       }
     }
 
@@ -1102,7 +1159,7 @@
       loadStations();
       loadVouchers(false);
 
-      autoOpenLastQR(); // ✅ NEW
+      autoOpenLastQR(); // ✅ important
     }
 
     /* Splash timing */
