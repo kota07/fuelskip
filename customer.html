@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <title>FuelSkip – Customer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- ✅ PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#00baf2">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -8,11 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="FuelSkip">
   <link rel="apple-touch-icon" href="/icon-192.png">
 
-  <meta charset="UTF-8" />
-  <title>FuelSkip – Customer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- ✅ Optional: tab icon (add these files later if you want) -->
+  <!-- ✅ Optional tab icon -->
   <link rel="icon" type="image/png" href="/icon-192.png" />
 
   <!-- QR render -->
@@ -21,7 +22,6 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <style>
-    /* ===== FORCE LIGHT THEME ===== */
     :root{
       --primary:#00baf2;
       --primary2:#009ad0;
@@ -54,7 +54,6 @@
 
     .app{ display:flex; min-height:100vh; }
 
-    /* Sidebar */
     .sidebar{
       width:260px;
       background:var(--panel) !important;
@@ -122,7 +121,6 @@
       font-weight:1000;
     }
 
-    /* Main */
     .main{ flex:1; padding:18px; display:flex; justify-content:center; }
     .container{ width:100%; max-width:900px; }
 
@@ -225,7 +223,6 @@
     .warn{ color:var(--danger); }
     .info{ color:#0284c7; }
 
-    /* QR */
     #qrWrap{ display:none; }
     #qrBox{
       background:#fff;
@@ -240,7 +237,6 @@
     }
     code{ color:#0284c7; word-break:break-all; }
 
-    /* Lists */
     .list{ margin-top:10px; display:flex; flex-direction:column; gap:10px; }
     .item{
       background:#fff;
@@ -263,7 +259,6 @@
     .pillPending{ background: rgba(245,158,11,0.18); color:#92400e; border:1px solid rgba(245,158,11,0.25); }
     .pillFailed{ background: rgba(239,68,68,0.15); color:#b91c1c; border:1px solid rgba(239,68,68,0.25); }
 
-    /* Mobile topbar */
     .topbar{
       display:none;
       padding:14px 16px;
@@ -324,7 +319,6 @@
       min-width: 260px;
     }
 
-    /* simple modern: fuel drop + FuelSkip text */
     .splashLogoWrap{
       width: 72px; height: 72px;
       border-radius: 22px;
@@ -337,7 +331,6 @@
       width: 30px; height: 40px;
       background: linear-gradient(180deg, var(--primary), var(--primary2));
       border-radius: 18px 18px 20px 20px;
-      transform: rotate(0deg);
       position: relative;
       box-shadow: 0 10px 20px rgba(0,186,242,0.22);
     }
@@ -570,7 +563,6 @@
   <script>
     const API = window.location.origin;
 
-    /* Station mapping */
     const BUNK_META = {
       "BUNK-1": { name: "BPCL Siripuram", address: "Siripuram, Visakhapatnam" },
       "BUNK-2": { name: "Gajuwaka Expressway", address: "Gajuwaka, Visakhapatnam" }
@@ -1072,6 +1064,35 @@
       return false;
     }
 
+    /* ✅ AUTO-OPEN LAST QR ON APP LAUNCH (NEW) */
+    async function autoOpenLastQR(){
+      if(!state.last_voucher_id || !state.last_sig) return;
+
+      try{
+        const res = await fetch(
+          `${API}/voucher-status/${encodeURIComponent(state.last_voucher_id)}`,
+          { cache:"no-store" }
+        );
+        const data = await res.json();
+
+        // Only auto-open if still PAID (not used)
+        if(res.ok && data.status === "paid"){
+          showVoucherQR(
+            state.last_voucher_id,
+            state.last_sig,
+            state.last_qr_station || state.last_bunk || "BUNK-1"
+          );
+
+          setTimeout(() => {
+            document.getElementById("qrWrap")
+              ?.scrollIntoView({ behavior:"smooth", block:"start" });
+          }, 200);
+        }
+      }catch(e){
+        console.log("Auto QR skipped:", e.message);
+      }
+    }
+
     function bootAfterLogin(){
       document.getElementById("pageLogin").style.display = "none";
       document.getElementById("sidebar").classList.remove("mobileHidden");
@@ -1080,6 +1101,8 @@
       go("dashboard");
       loadStations();
       loadVouchers(false);
+
+      autoOpenLastQR(); // ✅ NEW
     }
 
     /* Splash timing */
@@ -1100,11 +1123,11 @@
       showPage("login");
       document.getElementById("sidebar").classList.add("mobileHidden");
     }
+
+    /* ✅ PWA: register service worker */
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/service-worker.js");
+    }
   </script>
-  <script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/service-worker.js");
-  }
-</script>
 </body>
 </html>
