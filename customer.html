@@ -290,6 +290,11 @@
       input, select, button { font-size:15px; }
       #qrBox{ padding:8px; }
       #qr canvas{ width:180px !important; height:180px !important; }
+
+      /* Analytics grid becomes 1 column */
+      #pageAnalytics > div[style*="grid-template-columns"]{
+        grid-template-columns: 1fr !important;
+      }
     }
 
     /* ===== Splash Screen ===== */
@@ -396,6 +401,7 @@
       <div class="nav">
         <button id="navDash" class="active" onclick="go('dashboard')">🏠 Dashboard</button>
         <button id="navVouchers" onclick="go('vouchers')">🎟️ Vouchers</button>
+        <button id="navAnalytics" onclick="go('analytics')">📊 Analytics</button>
         <button id="navVehicles" onclick="go('vehicles')">🚗 Vehicles</button>
         <button id="navStations" onclick="go('stations')">⛽ Stations</button>
       </div>
@@ -542,6 +548,52 @@
           <div class="list" id="voucherList"></div>
         </div>
 
+        <!-- ANALYTICS -->
+        <div class="card" id="pageAnalytics" style="display:none;">
+          <div class="cardTitle">📊 Your FuelSkip Analytics</div>
+          <div class="muted">How FuelSkip saved your time and effort.</div>
+
+          <div id="analyticsStatus" class="statusLine" style="margin-top:10px;"></div>
+
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px;">
+            <!-- Time Saved -->
+            <div class="card" style="margin:0;">
+              <div class="muted">⏱️ Time Saved</div>
+              <div style="font-weight:1000;font-size:28px;margin-top:6px;" id="anTimeSaved">—</div>
+              <div class="muted" id="anTimeSavedSub">—</div>
+            </div>
+
+            <!-- Fuel Summary -->
+            <div class="card" style="margin:0;">
+              <div class="muted">⛽ Fuel Summary</div>
+              <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anTotalSpend">—</div>
+              <div class="muted" id="anVisitsAvg">—</div>
+            </div>
+
+            <!-- Favorite Station -->
+            <div class="card" style="margin:0;">
+              <div class="muted">📍 Favourite Station</div>
+              <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anFavStation">—</div>
+              <div class="muted" id="anFavStationSub">—</div>
+              <button class="btn btnGray" style="width:100%;margin-top:10px;" onclick="setDefaultStationFromFav()">Set as default</button>
+            </div>
+
+            <!-- Wallet Usage -->
+            <div class="card" style="margin:0;">
+              <div class="muted">💳 Wallet Usage</div>
+              <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anWalletPct">—</div>
+              <div class="muted" id="anWalletSub">—</div>
+              <div class="muted" style="margin-top:10px;">
+                Suggested preload: <b id="anSuggestedPreload">—</b>
+              </div>
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:12px;">
+            Notes: Time saved is an estimate (typical payment time ~45s, FuelSkip scan ~10s).
+          </div>
+        </div>
+
         <!-- VEHICLES -->
         <div class="card" id="pageVehicles" style="display:none;">
           <div class="cardTitle">Vehicles</div>
@@ -664,19 +716,21 @@
     }
 
     function showPage(p){
-      ["pageLogin","pageDashboard","pageVouchers","pageVehicles","pageStations"].forEach(id=>{
+      ["pageLogin","pageDashboard","pageVouchers","pageAnalytics","pageVehicles","pageStations"].forEach(id=>{
         const el = document.getElementById(id);
         if(el) el.style.display = "none";
       });
       if(p==="login") document.getElementById("pageLogin").style.display = "";
       if(p==="dashboard") document.getElementById("pageDashboard").style.display = "";
       if(p==="vouchers") document.getElementById("pageVouchers").style.display = "";
+      if(p==="analytics") document.getElementById("pageAnalytics").style.display = "";
       if(p==="vehicles") document.getElementById("pageVehicles").style.display = "";
       if(p==="stations") document.getElementById("pageStations").style.display = "";
     }
 
     function setNavActive(id){
-      ["navDash","navVouchers","navVehicles","navStations"].forEach(x=>document.getElementById(x).classList.remove("active"));
+      ["navDash","navVouchers","navAnalytics","navVehicles","navStations"]
+        .forEach(x => document.getElementById(x).classList.remove("active"));
       document.getElementById(id).classList.add("active");
     }
 
@@ -685,8 +739,10 @@
       if(window.innerWidth <= 820){
         document.getElementById("sidebar").classList.add("mobileHidden");
       }
+
       if(where==="dashboard"){ setNavActive("navDash"); showPage("dashboard"); }
       if(where==="vouchers"){ setNavActive("navVouchers"); showPage("vouchers"); loadVouchers(); startVouchersAutoRefresh(); }
+      if(where==="analytics"){ setNavActive("navAnalytics"); showPage("analytics"); loadAnalytics(); }
       if(where==="vehicles"){ setNavActive("navVehicles"); showPage("vehicles"); }
       if(where==="stations"){ setNavActive("navStations"); showPage("stations"); loadStations(); }
     }
@@ -897,8 +953,7 @@
 
         if(used){
           alert("This voucher is already USED.");
-          // We still show it (useful for proof), comment return if you don't want:
-          // return;
+          // still show for proof
         }
 
         showVoucherQR(voucherId, cache.sig, cache.station || state.last_bunk || "BUNK-1");
@@ -1148,6 +1203,130 @@
       }catch(e){
         console.log("AutoOpen QR skipped:", e.message);
       }
+    }
+
+    /* =========================
+       CUSTOMER ANALYTICS (client computed)
+       ========================= */
+    function secondsToNice(s){
+      const sec = Math.max(0, Math.round(Number(s||0)));
+      if(sec < 60) return `${sec} sec`;
+      const m = Math.floor(sec/60);
+      const r = sec % 60;
+      if(m < 60) return `${m} min ${r ? r+" sec" : ""}`.trim();
+      const h = Math.floor(m/60);
+      const mm = m % 60;
+      return `${h} hr ${mm ? mm+" min" : ""}`.trim();
+    }
+
+    function isUsedVoucher(v){
+      const st = String(v.status || "").toLowerCase();
+      return !!v.used || st === "used";
+    }
+
+    function isPaidOrUsed(v){
+      const st = String(v.status || "").toLowerCase();
+      return isUsedVoucher(v) || st === "paid";
+    }
+
+    function inr(n){
+      const x = Number(n||0);
+      return "₹" + x.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+    }
+
+    let _lastFavStationId = null;
+
+    async function loadAnalytics(){
+      if(!state.user_id) return;
+
+      const statusEl = document.getElementById("analyticsStatus");
+      statusEl.innerHTML = `<span class="info">⏳</span> Loading analytics…`;
+
+      try{
+        const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
+        const vouchers = await res.json();
+        if(!res.ok) throw new Error(vouchers.detail || "Failed to load vouchers for analytics");
+
+        const list = Array.isArray(vouchers) ? vouchers : [];
+
+        // Only count vouchers that are paid or used as "visits"
+        const paidOrUsed = list.filter(isPaidOrUsed);
+        const used = list.filter(isUsedVoucher);
+
+        // ---- Time Saved (estimate) ----
+        const SAVE_PER_USED_SEC = 35; // (45s typical pay - 10s scan)
+        const timeSavedSec = used.length * SAVE_PER_USED_SEC;
+
+        document.getElementById("anTimeSaved").textContent = secondsToNice(timeSavedSec);
+        document.getElementById("anTimeSavedSub").textContent = `${used.length} vouchers redeemed`;
+
+        // ---- Fuel Summary ----
+        const totalSpend = paidOrUsed.reduce((a,v)=> a + Number(v.amount || 0), 0);
+        const visits = paidOrUsed.length;
+        const avg = visits ? (totalSpend / visits) : 0;
+
+        document.getElementById("anTotalSpend").textContent = `${inr(totalSpend)} fuel purchased`;
+        document.getElementById("anVisitsAvg").textContent = `${visits} visits • Avg ${inr(avg)} per visit`;
+
+        // ---- Favourite Station ----
+        const stationCount = {};
+        used.forEach(v=>{
+          const id = v.bunk_id || "UNKNOWN";
+          stationCount[id] = (stationCount[id] || 0) + 1;
+        });
+
+        let favId = null, favCount = 0;
+        Object.entries(stationCount).forEach(([id,c])=>{
+          if(c > favCount){
+            favCount = c;
+            favId = id;
+          }
+        });
+
+        _lastFavStationId = favId;
+
+        if(favId){
+          document.getElementById("anFavStation").textContent = bunkName(favId);
+          document.getElementById("anFavStationSub").textContent = `${favCount} redeemed visits`;
+        }else{
+          document.getElementById("anFavStation").textContent = "—";
+          document.getElementById("anFavStationSub").textContent = "No redeemed vouchers yet";
+        }
+
+        // ---- Wallet usage ----
+        const withPayMethod = paidOrUsed.filter(v => v.pay_method);
+        let walletPctText = "—";
+        let walletSubText = "Pay method data not available yet";
+
+        if(withPayMethod.length){
+          const walletCount = withPayMethod.filter(v => String(v.pay_method).toLowerCase() === "wallet").length;
+          const pct = Math.round((walletCount / withPayMethod.length) * 100);
+          walletPctText = `${pct}% wallet usage`;
+          walletSubText = `${walletCount} wallet • ${withPayMethod.length - walletCount} other`;
+        }
+
+        document.getElementById("anWalletPct").textContent = walletPctText;
+        document.getElementById("anWalletSub").textContent = walletSubText;
+
+        // Suggested preload: 3× average ticket (simple heuristic)
+        const suggested = Math.max(500, Math.round(avg * 3 / 100) * 100); // round to 100
+        document.getElementById("anSuggestedPreload").textContent = inr(suggested);
+
+        statusEl.innerHTML = `<span class="ok">✅</span> Updated`;
+      }catch(e){
+        statusEl.innerHTML = `<span class="warn">❌</span> ${e.message}`;
+      }
+    }
+
+    function setDefaultStationFromFav(){
+      if(!_lastFavStationId){
+        alert("No favourite station yet. Redeem at least one voucher.");
+        return;
+      }
+      state.last_bunk = _lastFavStationId;
+      saveState();
+      applyDefaults();
+      alert(`Default station set to: ${bunkName(_lastFavStationId)}`);
     }
 
     function bootAfterLogin(){
