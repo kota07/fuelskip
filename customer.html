@@ -12,8 +12,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="FuelSkip">
   <link rel="apple-touch-icon" href="/icon-192.png">
-
-  <!-- ✅ Optional tab icon -->
   <link rel="icon" type="image/png" href="/icon-192.png" />
 
   <!-- QR render -->
@@ -508,6 +506,8 @@
               </div>
             </div>
 
+            <div class="muted" id="defaultVehicleHint" style="margin-top:8px;"></div>
+
             <label>Payment method</label>
             <div class="toggle">
               <button id="btnWallet" class="btn btnPrimary activePay" onclick="setPay('wallet')">Wallet (Fast)</button>
@@ -551,16 +551,28 @@
         <!-- ANALYTICS -->
         <div class="card" id="pageAnalytics" style="display:none;">
           <div class="cardTitle">📊 Your FuelSkip Analytics</div>
-          <div class="muted">How FuelSkip saved your time and effort.</div>
+          <div class="muted">Real metrics from your usage (wallet + Razorpay + voucher outcomes).</div>
 
           <div id="analyticsStatus" class="statusLine" style="margin-top:10px;"></div>
 
           <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px;">
-            <!-- Time Saved -->
+
+            <!-- Payment Time (REAL measured on your device) -->
             <div class="card" style="margin:0;">
-              <div class="muted">⏱️ Time Saved</div>
-              <div style="font-weight:1000;font-size:28px;margin-top:6px;" id="anTimeSaved">—</div>
-              <div class="muted" id="anTimeSavedSub">—</div>
+              <div class="muted">⚡ Payment Time</div>
+              <div style="font-weight:1000;font-size:22px;margin-top:6px;" id="anPayHero">—</div>
+              <div class="muted" id="anPaySub">—</div>
+              <div class="muted" style="margin-top:10px;">
+                Wallet avg: <b id="anWalletAvg">—</b><br/>
+                Razorpay avg: <b id="anRzpAvg">—</b>
+              </div>
+            </div>
+
+            <!-- Voucher Outcomes -->
+            <div class="card" style="margin:0;">
+              <div class="muted">✅ Voucher Outcomes</div>
+              <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anOutcomeHero">—</div>
+              <div class="muted" id="anOutcomeSub">—</div>
             </div>
 
             <!-- Fuel Summary -->
@@ -570,7 +582,7 @@
               <div class="muted" id="anVisitsAvg">—</div>
             </div>
 
-            <!-- Favorite Station -->
+            <!-- Favourite Station -->
             <div class="card" style="margin:0;">
               <div class="muted">📍 Favourite Station</div>
               <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anFavStation">—</div>
@@ -578,26 +590,48 @@
               <button class="btn btnGray" style="width:100%;margin-top:10px;" onclick="setDefaultStationFromFav()">Set as default</button>
             </div>
 
-            <!-- Wallet Usage -->
-            <div class="card" style="margin:0;">
-              <div class="muted">💳 Wallet Usage</div>
-              <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anWalletPct">—</div>
-              <div class="muted" id="anWalletSub">—</div>
-              <div class="muted" style="margin-top:10px;">
-                Suggested preload: <b id="anSuggestedPreload">—</b>
-              </div>
-            </div>
           </div>
 
           <div class="muted" style="margin-top:12px;">
-            Notes: Time saved is an estimate (typical payment time ~45s, FuelSkip scan ~10s).
+            Tip: “Payment Time” is measured on this device (click → voucher ready/confirmed). It helps you compare Wallet vs Razorpay.
           </div>
         </div>
 
         <!-- VEHICLES -->
         <div class="card" id="pageVehicles" style="display:none;">
-          <div class="cardTitle">Vehicles</div>
-          <div class="muted">Pilot: use the fields in “Create Voucher”.</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <div>
+              <div class="cardTitle">🚗 Vehicles</div>
+              <div class="muted">Save your vehicles for faster voucher creation (default autofill).</div>
+            </div>
+            <button class="btn btnGray" onclick="renderVehicles()">Refresh</button>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <div class="muted">Add vehicle</div>
+            <div class="row" style="margin-top:10px;">
+              <div>
+                <label>Vehicle Type</label>
+                <select id="vehAddType">
+                  <option value="Bike">Bike</option>
+                  <option value="Car">Car</option>
+                  <option value="Auto">Auto</option>
+                  <option value="Truck">Truck</option>
+                </select>
+              </div>
+              <div>
+                <label>Vehicle No</label>
+                <input id="vehAddNo" placeholder="AP09AB1234" />
+              </div>
+            </div>
+            <button class="btn btnPrimary" style="width:100%;margin-top:12px;" onclick="addVehicle()">Save Vehicle</button>
+            <div class="statusLine" id="vehStatus"></div>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <div class="muted">My vehicles</div>
+            <div class="list" id="vehList"></div>
+          </div>
         </div>
 
         <!-- STATIONS -->
@@ -626,7 +660,7 @@
       return (BUNK_META[id] && BUNK_META[id].address) ? BUNK_META[id].address : "";
     }
 
-    // ✅ state includes qr_cache so old vouchers can show QR again on same device
+    // ✅ state includes qr_cache and default vehicle
     let state = {
       user_id: null, phone: "", name: "",
       wallet_balance: 0,
@@ -635,6 +669,7 @@
       last_amount: 300,
       last_vehicle_type: "",
       last_vehicle_no: "",
+      default_vehicle_id: "",
       last_voucher_id: "",
       last_sig: "",
       last_qr_station: "BUNK-1",
@@ -642,6 +677,69 @@
     };
 
     let vouchersAutoRefreshTimer = null;
+
+    // ✅ Local-only analytics (measured)
+    // FS_METRICS: { wallet_ms:[], razorpay_ms:[], last:{method,ms,at} }
+    function loadMetrics(){
+      const raw = localStorage.getItem("FS_METRICS");
+      if(!raw) return { wallet_ms:[], razorpay_ms:[], last:null };
+      try{
+        const m = JSON.parse(raw);
+        return {
+          wallet_ms: Array.isArray(m.wallet_ms) ? m.wallet_ms : [],
+          razorpay_ms: Array.isArray(m.razorpay_ms) ? m.razorpay_ms : [],
+          last: m.last || null
+        };
+      }catch{
+        return { wallet_ms:[], razorpay_ms:[], last:null };
+      }
+    }
+    function saveMetrics(m){
+      localStorage.setItem("FS_METRICS", JSON.stringify(m));
+    }
+    function pushMetric(method, ms){
+      const m = loadMetrics();
+      const clean = Math.max(0, Math.round(ms || 0));
+      if(method === "wallet") m.wallet_ms.push(clean);
+      if(method === "razorpay") m.razorpay_ms.push(clean);
+      m.last = { method, ms: clean, at: Date.now() };
+      // keep last 40 samples
+      m.wallet_ms = m.wallet_ms.slice(-40);
+      m.razorpay_ms = m.razorpay_ms.slice(-40);
+      saveMetrics(m);
+    }
+    function avg(arr){
+      if(!arr || !arr.length) return null;
+      const s = arr.reduce((a,b)=>a+b,0);
+      return Math.round(s/arr.length);
+    }
+    function msToNice(ms){
+      if(ms == null) return "—";
+      const s = Math.round(ms/1000);
+      if(s < 60) return `${s}s`;
+      const m = Math.floor(s/60);
+      const r = s % 60;
+      return `${m}m ${r}s`;
+    }
+
+    // ✅ Vehicles store (local)
+    function loadVehicles(){
+      const raw = localStorage.getItem("FUELSKIP_VEHICLES");
+      if(!raw) return [];
+      try{
+        const v = JSON.parse(raw);
+        return Array.isArray(v) ? v : [];
+      }catch{ return []; }
+    }
+    function saveVehicles(list){
+      localStorage.setItem("FUELSKIP_VEHICLES", JSON.stringify(list));
+    }
+    function normalizeVehNo(x){
+      return String(x||"").toUpperCase().replace(/\s+/g,"").trim();
+    }
+    function vehicleLabel(v){
+      return `${v.type} • ${v.no}`;
+    }
 
     function loadState(){
       const raw = localStorage.getItem("FUELSKIP_USER");
@@ -659,6 +757,10 @@
     function fmtINR(x){
       const n = Number(x || 0);
       return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    }
+    function inr0(x){
+      const n = Number(x || 0);
+      return "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
     }
 
     function toggleSidebar(){
@@ -704,6 +806,24 @@
       });
     }
 
+    function applyDefaultVehicleToFormIfEmpty(){
+      const list = loadVehicles();
+      const defId = state.default_vehicle_id;
+      const def = list.find(v => v.id === defId);
+
+      const vt = document.getElementById("vehicleType");
+      const vn = document.getElementById("vehicleNo");
+      const hint = document.getElementById("defaultVehicleHint");
+
+      if(def){
+        hint.innerHTML = `Default vehicle: <b>${vehicleLabel(def)}</b> (auto-filled if empty)`;
+        if(!vt.value) vt.value = def.type;
+        if(!vn.value) vn.value = def.no;
+      }else{
+        hint.textContent = "";
+      }
+    }
+
     function applyDefaults(){
       populateBunkDropdown();
       document.getElementById("bunk").value = state.last_bunk || "BUNK-1";
@@ -713,6 +833,7 @@
       document.getElementById("vehicleNo").value = state.last_vehicle_no || "";
       setPay(state.pay_method || "wallet");
       renderLastInfo();
+      applyDefaultVehicleToFormIfEmpty();
     }
 
     function showPage(p){
@@ -740,10 +861,10 @@
         document.getElementById("sidebar").classList.add("mobileHidden");
       }
 
-      if(where==="dashboard"){ setNavActive("navDash"); showPage("dashboard"); }
+      if(where==="dashboard"){ setNavActive("navDash"); showPage("dashboard"); applyDefaultVehicleToFormIfEmpty(); }
       if(where==="vouchers"){ setNavActive("navVouchers"); showPage("vouchers"); loadVouchers(); startVouchersAutoRefresh(); }
       if(where==="analytics"){ setNavActive("navAnalytics"); showPage("analytics"); loadAnalytics(); }
-      if(where==="vehicles"){ setNavActive("navVehicles"); showPage("vehicles"); }
+      if(where==="vehicles"){ setNavActive("navVehicles"); showPage("vehicles"); renderVehicles(); }
       if(where==="stations"){ setNavActive("navStations"); showPage("stations"); loadStations(); }
     }
 
@@ -884,7 +1005,7 @@
         const data = await res.json();
         if(!res.ok) throw new Error(data.detail || "Failed to load vouchers");
 
-        const list = (data || []).slice(0, 15);
+        const list = (data || []).slice(0, 25);
         if(!list.length){
           box.innerHTML = `<div class="muted">No vouchers yet.</div>`;
           return;
@@ -952,8 +1073,7 @@
         const used = !!data.used || st === "used";
 
         if(used){
-          alert("This voucher is already USED.");
-          // still show for proof
+          alert("This voucher is already USED (showing for proof).");
         }
 
         showVoucherQR(voucherId, cache.sig, cache.station || state.last_bunk || "BUNK-1");
@@ -961,7 +1081,7 @@
 
         setTimeout(() => {
           document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
-        }, 1100);
+        }, 700);
 
         loadVouchers(false);
       }catch(e){
@@ -1029,17 +1149,280 @@
       await createVoucher();
     }
 
+    // ✅ AUTO-OPEN LAST VALID (CACHED) QR ON APP LAUNCH
+    async function autoOpenLastQR(){
+      const cacheObj = state.qr_cache || {};
+      const ids = Object.keys(cacheObj);
+      if(!ids.length) return;
+
+      ids.sort((a,b) => (cacheObj[b]?.ts || 0) - (cacheObj[a]?.ts || 0));
+      const voucherId = ids[0];
+      const cached = cacheObj[voucherId];
+      if(!cached || !cached.sig) return;
+
+      try{
+        const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, { cache:"no-store" });
+        const data = await res.json();
+
+        const st = String(data.status || "").toLowerCase();
+        const used = !!data.used || st === "used";
+
+        if(res.ok && st === "paid" && !used){
+          showVoucherQR(voucherId, cached.sig, cached.station || state.last_bunk || "BUNK-1");
+          setTimeout(() => {
+            document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
+          }, 1200);
+        }
+      }catch(e){
+        console.log("AutoOpen QR skipped:", e.message);
+      }
+    }
+
+    // =========================
+    // ✅ Vehicles page logic
+    // =========================
+    function renderVehicles(){
+      const list = loadVehicles();
+      const box = document.getElementById("vehList");
+      const st = document.getElementById("vehStatus");
+      st.textContent = "";
+
+      if(!list.length){
+        box.innerHTML = `<div class="muted">No vehicles saved yet.</div>`;
+        applyDefaultVehicleToFormIfEmpty();
+        return;
+      }
+
+      box.innerHTML = "";
+      list.forEach(v=>{
+        const isDef = (v.id === state.default_vehicle_id);
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div>
+            <div class="t">${vehicleLabel(v)} ${isDef ? '<span class="pill pillPaid">DEFAULT</span>' : ''}</div>
+            <div class="s">Tap “Use” to fill voucher form</div>
+          </div>
+          <div class="right">
+            <button class="btn btnGray" onclick="useVehicle('${v.id}')">Use</button>
+            <button class="btn btnPrimary" onclick="setDefaultVehicle('${v.id}')">Default</button>
+            <button class="btn btnGray" onclick="deleteVehicle('${v.id}')">Delete</button>
+          </div>
+        `;
+        box.appendChild(el);
+      });
+
+      applyDefaultVehicleToFormIfEmpty();
+    }
+
+    function addVehicle(){
+      const st = document.getElementById("vehStatus");
+      st.textContent = "";
+
+      const type = document.getElementById("vehAddType").value;
+      const no = normalizeVehNo(document.getElementById("vehAddNo").value);
+
+      if(!no || no.length < 6){
+        st.innerHTML = `<span class="warn">❌</span> Enter a valid vehicle number`;
+        return;
+      }
+
+      const list = loadVehicles();
+      const exists = list.find(v => v.no === no);
+      if(exists){
+        st.innerHTML = `<span class="warn">⚠️</span> Vehicle already saved`;
+        return;
+      }
+
+      const id = "veh_" + Math.random().toString(16).slice(2,10);
+      list.unshift({ id, type, no, created_at: Date.now() });
+      saveVehicles(list);
+
+      if(!state.default_vehicle_id){
+        state.default_vehicle_id = id;
+        saveState();
+      }
+
+      document.getElementById("vehAddNo").value = "";
+      st.innerHTML = `<span class="ok">✅</span> Saved`;
+      renderVehicles();
+    }
+
+    function useVehicle(id){
+      const list = loadVehicles();
+      const v = list.find(x=>x.id===id);
+      if(!v) return;
+
+      state.last_vehicle_type = v.type;
+      state.last_vehicle_no = v.no;
+      saveState();
+
+      go("dashboard");
+      applyDefaults();
+
+      setTimeout(()=> {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 150);
+    }
+
+    function setDefaultVehicle(id){
+      const list = loadVehicles();
+      const v = list.find(x=>x.id===id);
+      if(!v) return;
+
+      state.default_vehicle_id = id;
+      saveState();
+      renderVehicles();
+      applyDefaultVehicleToFormIfEmpty();
+      alert(`Default vehicle set: ${vehicleLabel(v)}`);
+    }
+
+    function deleteVehicle(id){
+      const list = loadVehicles().filter(x=>x.id!==id);
+      saveVehicles(list);
+
+      if(state.default_vehicle_id === id){
+        state.default_vehicle_id = list[0]?.id || "";
+        saveState();
+      }
+
+      renderVehicles();
+    }
+
+    // =========================
+    // ✅ Analytics logic
+    // =========================
+    function isUsedVoucher(v){
+      const st = String(v.status || "").toLowerCase();
+      return !!v.used || st === "used";
+    }
+    function isPaidVoucher(v){
+      const st = String(v.status || "").toLowerCase();
+      return st === "paid";
+    }
+    function isFailedVoucher(v){
+      const st = String(v.status || "").toLowerCase();
+      return st === "failed";
+    }
+    function isPendingVoucher(v){
+      const st = String(v.status || "").toLowerCase();
+      return !st || st === "pending" || st === "created";
+    }
+
+    let _lastFavStationId = null;
+
+    async function loadAnalytics(){
+      if(!state.user_id) return;
+
+      const statusEl = document.getElementById("analyticsStatus");
+      statusEl.innerHTML = `<span class="info">⏳</span> Loading analytics…`;
+
+      // 1) local payment metrics (real on this device)
+      const m = loadMetrics();
+      const wAvg = avg(m.wallet_ms);
+      const rAvg = avg(m.razorpay_ms);
+
+      const last = m.last;
+      let hero = "—";
+      let sub = "No payment timing recorded yet";
+      if(last){
+        hero = `${last.method === "wallet" ? "Wallet" : "Razorpay"} last: ${msToNice(last.ms)}`;
+        const d = new Date(last.at);
+        sub = `Recorded at ${d.toLocaleString()}`;
+      }
+
+      document.getElementById("anPayHero").textContent = hero;
+      document.getElementById("anPaySub").textContent = sub;
+      document.getElementById("anWalletAvg").textContent = msToNice(wAvg);
+      document.getElementById("anRzpAvg").textContent = msToNice(rAvg);
+
+      // 2) voucher outcomes + spend + fav station
+      try{
+        const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
+        const vouchers = await res.json();
+        if(!res.ok) throw new Error(vouchers.detail || "Failed to load vouchers");
+
+        const list = Array.isArray(vouchers) ? vouchers : [];
+
+        const used = list.filter(isUsedVoucher);
+        const paid = list.filter(isPaidVoucher);
+        const failed = list.filter(isFailedVoucher);
+        const pending = list.filter(v => !isUsedVoucher(v) && !isPaidVoucher(v) && !isFailedVoucher(v));
+
+        const totalSpend = list.filter(v => isPaidVoucher(v) || isUsedVoucher(v))
+          .reduce((a,v)=> a + Number(v.amount || 0), 0);
+
+        const visits = list.filter(v => isPaidVoucher(v) || isUsedVoucher(v)).length;
+        const avgTicket = visits ? (totalSpend / visits) : 0;
+
+        document.getElementById("anTotalSpend").textContent = `${inr0(totalSpend)} fuel purchased`;
+        document.getElementById("anVisitsAvg").textContent = `${visits} visits • Avg ${inr0(avgTicket)} per visit`;
+
+        // Outcomes hero
+        document.getElementById("anOutcomeHero").textContent = `${used.length} USED • ${paid.length} PAID`;
+        const lastUsed = used[0] || used.sort((a,b)=> (b.used_at||b.updated_at||0) - (a.used_at||a.updated_at||0))[0];
+        const lastUsedTxt = lastUsed ? `Last redeemed: ${bunkName(lastUsed.bunk_id || "-")} (${lastUsed.id})` : "No redeemed vouchers yet";
+        document.getElementById("anOutcomeSub").textContent = `${pending.length} pending • ${failed.length} failed • ${lastUsedTxt}`;
+
+        // Favourite station based on USED
+        const stationCount = {};
+        used.forEach(v=>{
+          const id = v.bunk_id || "UNKNOWN";
+          stationCount[id] = (stationCount[id] || 0) + 1;
+        });
+
+        let favId = null, favCount = 0;
+        Object.entries(stationCount).forEach(([id,c])=>{
+          if(c > favCount){
+            favCount = c;
+            favId = id;
+          }
+        });
+
+        _lastFavStationId = favId;
+
+        if(favId){
+          document.getElementById("anFavStation").textContent = bunkName(favId);
+          document.getElementById("anFavStationSub").textContent = `${favCount} redeemed visits`;
+        }else{
+          document.getElementById("anFavStation").textContent = "—";
+          document.getElementById("anFavStationSub").textContent = "No redeemed vouchers yet";
+        }
+
+        statusEl.innerHTML = `<span class="ok">✅</span> Updated`;
+
+      }catch(e){
+        statusEl.innerHTML = `<span class="warn">❌</span> ${e.message}`;
+      }
+    }
+
+    function setDefaultStationFromFav(){
+      if(!_lastFavStationId){
+        alert("No favourite station yet. Redeem at least one voucher.");
+        return;
+      }
+      state.last_bunk = _lastFavStationId;
+      saveState();
+      applyDefaults();
+      alert(`Default station set to: ${bunkName(_lastFavStationId)}`);
+    }
+
+    // =========================
+    // ✅ Voucher creation (adds payment-time metrics)
+    // =========================
     async function createVoucher(){
       const status = document.getElementById("statusLine");
       const btn = document.getElementById("createBtn");
       status.textContent = "";
       if(!state.user_id){ alert("Login first"); return; }
 
+      const startMs = Date.now(); // ✅ start timing here
+
       const bunk_id = document.getElementById("bunk").value;
       const amountStr = (document.getElementById("amount").value || "").trim();
       const litresStr = (document.getElementById("litres").value || "").trim();
       const vehicle_type = document.getElementById("vehicleType").value || "";
-      const vehicle_no = (document.getElementById("vehicleNo").value || "").trim();
+      const vehicle_no = normalizeVehNo(document.getElementById("vehicleNo").value || "");
 
       const payload = {
         bunk_id,
@@ -1061,6 +1444,7 @@
         return;
       }
 
+      // Save last
       state.last_bunk = bunk_id;
       state.last_vehicle_type = vehicle_type || "";
       state.last_vehicle_no = vehicle_no || "";
@@ -1090,18 +1474,19 @@
           state.last_sig = data.qr_sig;
           state.last_qr_station = bunk_id;
 
-          // ✅ cache QR info so old vouchers can be shown again (on this device)
           if(!state.qr_cache) state.qr_cache = {};
           state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, ts: Date.now() };
 
           saveState();
           setSidebarUser();
 
+          // ✅ record measured time (click -> voucher ready)
+          pushMetric("wallet", Date.now() - startMs);
+
           status.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet). Showing QR…`;
           showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
           loadVouchers(false);
 
-          // ✅ scroll to QR after render
           setTimeout(() => {
             document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
           }, 350);
@@ -1128,11 +1513,14 @@
               state.last_sig = data.qr_sig;
               state.last_qr_station = bunk_id;
 
-              // ✅ cache QR info so old vouchers can be shown again (on this device)
               if(!state.qr_cache) state.qr_cache = {};
               state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, ts: Date.now() };
 
               saveState();
+
+              // ✅ record measured time (click -> confirmed paid)
+              pushMetric("razorpay", Date.now() - startMs);
+
               status.innerHTML = `<span class="ok">✅</span> Voucher confirmed. Showing QR…`;
               showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
               loadVouchers(false);
@@ -1173,162 +1561,6 @@
       return false;
     }
 
-    // ✅ AUTO-OPEN LAST VALID (CACHED) QR ON APP LAUNCH
-    async function autoOpenLastQR(){
-      const cacheObj = state.qr_cache || {};
-      const ids = Object.keys(cacheObj);
-      if(!ids.length) return;
-
-      // newest first
-      ids.sort((a,b) => (cacheObj[b]?.ts || 0) - (cacheObj[a]?.ts || 0));
-      const voucherId = ids[0];
-      const cached = cacheObj[voucherId];
-      if(!cached || !cached.sig) return;
-
-      try{
-        const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, { cache:"no-store" });
-        const data = await res.json();
-
-        const st = String(data.status || "").toLowerCase();
-        const used = !!data.used || st === "used";
-
-        if(res.ok && st === "paid" && !used){
-          showVoucherQR(voucherId, cached.sig, cached.station || state.last_bunk || "BUNK-1");
-
-          // scroll after splash/layout
-          setTimeout(() => {
-            document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
-          }, 1200);
-        }
-      }catch(e){
-        console.log("AutoOpen QR skipped:", e.message);
-      }
-    }
-
-    /* =========================
-       CUSTOMER ANALYTICS (client computed)
-       ========================= */
-    function secondsToNice(s){
-      const sec = Math.max(0, Math.round(Number(s||0)));
-      if(sec < 60) return `${sec} sec`;
-      const m = Math.floor(sec/60);
-      const r = sec % 60;
-      if(m < 60) return `${m} min ${r ? r+" sec" : ""}`.trim();
-      const h = Math.floor(m/60);
-      const mm = m % 60;
-      return `${h} hr ${mm ? mm+" min" : ""}`.trim();
-    }
-
-    function isUsedVoucher(v){
-      const st = String(v.status || "").toLowerCase();
-      return !!v.used || st === "used";
-    }
-
-    function isPaidOrUsed(v){
-      const st = String(v.status || "").toLowerCase();
-      return isUsedVoucher(v) || st === "paid";
-    }
-
-    function inr(n){
-      const x = Number(n||0);
-      return "₹" + x.toLocaleString("en-IN", { maximumFractionDigits: 0 });
-    }
-
-    let _lastFavStationId = null;
-
-    async function loadAnalytics(){
-      if(!state.user_id) return;
-
-      const statusEl = document.getElementById("analyticsStatus");
-      statusEl.innerHTML = `<span class="info">⏳</span> Loading analytics…`;
-
-      try{
-        const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
-        const vouchers = await res.json();
-        if(!res.ok) throw new Error(vouchers.detail || "Failed to load vouchers for analytics");
-
-        const list = Array.isArray(vouchers) ? vouchers : [];
-
-        // Only count vouchers that are paid or used as "visits"
-        const paidOrUsed = list.filter(isPaidOrUsed);
-        const used = list.filter(isUsedVoucher);
-
-        // ---- Time Saved (estimate) ----
-        const SAVE_PER_USED_SEC = 35; // (45s typical pay - 10s scan)
-        const timeSavedSec = used.length * SAVE_PER_USED_SEC;
-
-        document.getElementById("anTimeSaved").textContent = secondsToNice(timeSavedSec);
-        document.getElementById("anTimeSavedSub").textContent = `${used.length} vouchers redeemed`;
-
-        // ---- Fuel Summary ----
-        const totalSpend = paidOrUsed.reduce((a,v)=> a + Number(v.amount || 0), 0);
-        const visits = paidOrUsed.length;
-        const avg = visits ? (totalSpend / visits) : 0;
-
-        document.getElementById("anTotalSpend").textContent = `${inr(totalSpend)} fuel purchased`;
-        document.getElementById("anVisitsAvg").textContent = `${visits} visits • Avg ${inr(avg)} per visit`;
-
-        // ---- Favourite Station ----
-        const stationCount = {};
-        used.forEach(v=>{
-          const id = v.bunk_id || "UNKNOWN";
-          stationCount[id] = (stationCount[id] || 0) + 1;
-        });
-
-        let favId = null, favCount = 0;
-        Object.entries(stationCount).forEach(([id,c])=>{
-          if(c > favCount){
-            favCount = c;
-            favId = id;
-          }
-        });
-
-        _lastFavStationId = favId;
-
-        if(favId){
-          document.getElementById("anFavStation").textContent = bunkName(favId);
-          document.getElementById("anFavStationSub").textContent = `${favCount} redeemed visits`;
-        }else{
-          document.getElementById("anFavStation").textContent = "—";
-          document.getElementById("anFavStationSub").textContent = "No redeemed vouchers yet";
-        }
-
-        // ---- Wallet usage ----
-        const withPayMethod = paidOrUsed.filter(v => v.pay_method);
-        let walletPctText = "—";
-        let walletSubText = "Pay method data not available yet";
-
-        if(withPayMethod.length){
-          const walletCount = withPayMethod.filter(v => String(v.pay_method).toLowerCase() === "wallet").length;
-          const pct = Math.round((walletCount / withPayMethod.length) * 100);
-          walletPctText = `${pct}% wallet usage`;
-          walletSubText = `${walletCount} wallet • ${withPayMethod.length - walletCount} other`;
-        }
-
-        document.getElementById("anWalletPct").textContent = walletPctText;
-        document.getElementById("anWalletSub").textContent = walletSubText;
-
-        // Suggested preload: 3× average ticket (simple heuristic)
-        const suggested = Math.max(500, Math.round(avg * 3 / 100) * 100); // round to 100
-        document.getElementById("anSuggestedPreload").textContent = inr(suggested);
-
-        statusEl.innerHTML = `<span class="ok">✅</span> Updated`;
-      }catch(e){
-        statusEl.innerHTML = `<span class="warn">❌</span> ${e.message}`;
-      }
-    }
-
-    function setDefaultStationFromFav(){
-      if(!_lastFavStationId){
-        alert("No favourite station yet. Redeem at least one voucher.");
-        return;
-      }
-      state.last_bunk = _lastFavStationId;
-      saveState();
-      applyDefaults();
-      alert(`Default station set to: ${bunkName(_lastFavStationId)}`);
-    }
-
     function bootAfterLogin(){
       document.getElementById("pageLogin").style.display = "none";
       document.getElementById("sidebar").classList.remove("mobileHidden");
@@ -1338,7 +1570,7 @@
       loadStations();
       loadVouchers(false);
 
-      autoOpenLastQR(); // ✅ important
+      autoOpenLastQR();
     }
 
     /* Splash timing */
