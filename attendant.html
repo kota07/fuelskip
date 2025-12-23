@@ -104,7 +104,7 @@
     /* IMPORTANT: iPhone needs height, otherwise it looks like camera didn't start */
     #qrReader{
       width:100%;
-      min-height: 340px;
+      height: 360px;
       background:#0b1220;
       border-radius:14px;
       overflow:hidden;
@@ -125,6 +125,7 @@
       padding:10px;
       border-radius:12px;
       display:none;
+      white-space:pre-line;
     }
   </style>
 </head>
@@ -150,9 +151,7 @@
         Origin: <span class="mono" id="originTxt"></span> • Token: <span class="mono" id="tokShort">—</span>
       </div>
 
-      <div class="tinyWarn" id="storageWarn">
-        ⚠️ Your phone is clearing FuelSkip storage (pairing may disappear). Fix: iPhone Settings → Safari → Advanced → Website Data → remove railway.app, then add to Home Screen again and allow camera.
-      </div>
+      <div class="tinyWarn" id="storageWarn"></div>
 
       <div class="row" style="margin-top:12px;">
         <button class="btn-dark" id="scanPairBtn" style="flex:1;">🔗 Scan Owner Pair QR</button>
@@ -201,9 +200,14 @@
 
 <script>
   const API = window.location.origin;
+
   const LS_DEVICE_TOKEN = "FUELSKIP_DEVICE_TOKEN";
-  const LS_PAIR_MARK = "FUELSKIP_PAIR_MARK";
+  const LS_PAIR_MARK    = "FUELSKIP_PAIR_MARK";
+  const COOKIE_NAME     = "fuelskip_dt";
+
   let currentVoucher = null;
+  let html5Qr = null;
+  let isScanning = false;
 
   function qs(name){
     return new URLSearchParams(window.location.search).get(name);
@@ -216,25 +220,64 @@
     if(!t) return "—";
     return t.slice(0, 8) + "…";
   }
+
+  // ---- cookie helpers (backup to avoid iOS clearing localStorage sometimes) ----
+  function setCookie(name, value, days){
+    const maxAge = days * 24 * 60 * 60;
+    document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+  }
+  function getCookie(name){
+    const n = encodeURIComponent(name) + "=";
+    const parts = document.cookie.split(";").map(s=>s.trim());
+    for(const p of parts){
+      if(p.startsWith(n)) return decodeURIComponent(p.slice(n.length));
+    }
+    return "";
+  }
+  function clearCookie(name){
+    document.cookie = `${encodeURIComponent(name)}=; Max-Age=0; Path=/; SameSite=Lax`;
+  }
+
   function getDeviceToken(){
-    return (localStorage.getItem(LS_DEVICE_TOKEN) || "").trim();
+    // 1) localStorage
+    let t = (localStorage.getItem(LS_DEVICE_TOKEN) || "").trim();
+    if(t) return t;
+
+    // 2) cookie backup
+    t = (getCookie(COOKIE_NAME) || "").trim();
+    if(t){
+      // restore back to localStorage
+      localStorage.setItem(LS_DEVICE_TOKEN, t);
+      return t;
+    }
+
+    // 3) sessionStorage (rare)
+    t = (sessionStorage.getItem(LS_DEVICE_TOKEN) || "").trim();
+    if(t) return t;
+
+    return "";
   }
   function setDeviceToken(t){
-    localStorage.setItem(LS_DEVICE_TOKEN, t);
+    const tok = (t || "").trim();
+    if(!tok) return;
+    localStorage.setItem(LS_DEVICE_TOKEN, tok);
     localStorage.setItem(LS_PAIR_MARK, String(Date.now()));
+    sessionStorage.setItem(LS_DEVICE_TOKEN, tok);
+    setCookie(COOKIE_NAME, tok, 180); // 6 months
   }
   function clearDeviceToken(){
     localStorage.removeItem(LS_DEVICE_TOKEN);
     localStorage.removeItem(LS_PAIR_MARK);
+    sessionStorage.removeItem(LS_DEVICE_TOKEN);
+    clearCookie(COOKIE_NAME);
   }
 
   function scrollToStatus(){
     const box = document.getElementById("voucherBox");
     const st  = document.getElementById("statusMsg");
     if (box && box.style.display !== "none") {
-      // ensure voucher card is visible, then scroll
       box.scrollIntoView({ behavior:"smooth", block:"start" });
-      setTimeout(()=>st.scrollIntoView({ behavior:"smooth", block:"start" }), 250);
+      setTimeout(()=>st.scrollIntoView({ behavior:"smooth", block:"start" }), 220);
     } else if (st) {
       st.scrollIntoView({ behavior:"smooth", block:"start" });
     }
@@ -266,6 +309,11 @@
     return null;
   }
 
+  function isInAppBrowser(){
+    const ua = navigator.userAgent || "";
+    return /FBAN|FBAV|Instagram|Line|Twitter|LinkedIn|Snapchat/i.test(ua);
+  }
+
   // --- init pairing from URL dt= (Owner QR opened as link) ---
   (function initPairFromUrl(){
     const dt = qs("dt");
@@ -292,20 +340,29 @@
       resetBtn.style.display = "none";
     }
 
-    // if we had paired earlier but token is missing -> storage is being cleared
-    const hadPairMark = !!localStorage.getItem(LS_PAIR_MARK);
     const warn = document.getElementById("storageWarn");
-    warn.style.display = (!tok && hadPairMark) ? "block" : "none";
+    const hadPairMark = !!localStorage.getItem(LS_PAIR_MARK);
+    const inApp = isInAppBrowser();
+
+    // show helpful warnings
+    let msg = "";
+    if(inApp){
+      msg += "⚠️ You are in an in-app browser. Camera often fails here.\nOpen FuelSkip in Safari/Chrome or add to Home Screen (PWA).\n\n";
+    }
+    if(!tok && hadPairMark){
+      msg += "⚠️ Pairing disappeared (storage cleared).\nFix on iPhone: Settings → Safari → Advanced → Website Data → remove railway.app\nThen open FuelSkip again and Add to Home Screen.\n";
+    }
+
+    warn.textContent = msg.trim();
+    warn.style.display = msg ? "block" : "none";
   }
 
   // --- Scanner modal using html5-qrcode ---
-  let html5Qr = null;
-
   function ensureSecureContextOrWarn(hintEl){
     // Camera requires HTTPS or localhost
     if (!window.isSecureContext) {
       hintEl.textContent =
-        "Camera blocked: page is not in a secure context (HTTPS). Open the https:// URL only.";
+        "Camera blocked: not a secure context. Open the https:// URL only.";
       return false;
     }
     return true;
@@ -325,20 +382,29 @@
 
     modal.style.display = "flex";
 
-    // Clear any previous instance safely
-    if(!html5Qr){
-      html5Qr = new Html5Qrcode("qrReader");
-    }
+    // Make sure container is empty (prevents iOS black screen sometimes)
+    document.getElementById("qrReader").innerHTML = "";
 
     if(!ensureSecureContextOrWarn(hint)) return;
 
-    const config = {
-      fps: 10,
-      qrbox: { width: 240, height: 240 },
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-    };
+    // Create fresh instance each time for iOS stability
+    html5Qr = new Html5Qrcode("qrReader");
 
     try{
+      // Check cameras first (gives clearer error on iPhone)
+      const cams = await Html5Qrcode.getCameras();
+      if(!cams || !cams.length){
+        hint.textContent = "No camera found. Open in Safari/Chrome and allow camera.";
+        return;
+      }
+
+      const config = {
+        fps: 10,
+        qrbox: { width: 240, height: 240 }
+      };
+
+      isScanning = true;
+
       await html5Qr.start(
         { facingMode: "environment" },
         config,
@@ -368,24 +434,32 @@
         (_err) => { /* ignore */ }
       );
     }catch(e){
-      // IMPORTANT: show real error so you can debug on iPhone
       const msg = (e && e.message) ? e.message : String(e);
-
       hint.textContent =
-        "Camera did not start. Fix:\n" +
-        "1) iPhone Settings → Safari → Camera → Allow\n" +
-        "2) Safari → AA → Website Settings → Camera → Allow\n" +
-        "3) If still stuck: Settings → Safari → Advanced → Website Data → remove railway.app\n" +
+        "Camera did not start.\n" +
+        "Fix:\n" +
+        "1) iPhone: Settings → Safari → Camera → Allow\n" +
+        "2) Safari: aA → Website Settings → Camera → Allow\n" +
+        "3) Close other apps using camera (WhatsApp/Instagram)\n" +
+        "4) If in-app browser, open in Safari/Chrome\n" +
         "Error: " + msg;
     }
   }
 
   async function closeScanner(){
     const modal = document.getElementById("scanModal");
-    if(html5Qr){
-      try{ await html5Qr.stop(); }catch(e){}
-      try{ await html5Qr.clear(); }catch(e){}
-    }
+    try{
+      if(html5Qr && isScanning){
+        await html5Qr.stop();
+      }
+    }catch(e){}
+    try{
+      if(html5Qr){
+        await html5Qr.clear();
+      }
+    }catch(e){}
+    html5Qr = null;
+    isScanning = false;
     modal.style.display = "none";
   }
 
@@ -406,6 +480,8 @@
     dataDiv.innerHTML = "";
     statusDiv.innerHTML = "";
     btn.style.display = "none";
+
+    // reset button state for new voucher
     btn.disabled = false;
     btn.textContent = "✅ Dispense Fuel";
     btn.style.opacity = "1";
@@ -492,15 +568,15 @@
         return;
       }
 
-      // success UI
+      // SUCCESS UI (what you asked)
       statusDiv.innerHTML = `<span class="pill ok">✅ DONE – Voucher marked USED</span>`;
       btn.textContent = "✔ Done";
       btn.disabled = true;
       btn.style.opacity = "0.85";
-
-      // refresh voucher status
-      setTimeout(() => { loadVoucher(); }, 400);
       scrollToStatus();
+
+      // refresh voucher after a short moment (to show USED pill)
+      setTimeout(() => { loadVoucher(); }, 500);
     }catch(e){
       btn.disabled = false;
       btn.textContent = "✅ Dispense Fuel";
