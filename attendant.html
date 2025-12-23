@@ -101,12 +101,30 @@
       gap:10px;
     }
     .modalBody{ padding:12px 14px; }
-    #qrReader { width:100%; }
+    /* IMPORTANT: iPhone needs height, otherwise it looks like camera didn't start */
+    #qrReader{
+      width:100%;
+      min-height: 340px;
+      background:#0b1220;
+      border-radius:14px;
+      overflow:hidden;
+    }
     .modalFoot{
       padding:12px 14px;
       display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
       align-items:center;
       border-top:1px solid #e5e7eb;
+    }
+
+    .tinyWarn{
+      margin-top:10px;
+      font-size:12px;
+      color:#92400e;
+      background:#fffbeb;
+      border:1px solid #fde68a;
+      padding:10px;
+      border-radius:12px;
+      display:none;
     }
   </style>
 </head>
@@ -130,6 +148,10 @@
 
       <div class="hint">
         Origin: <span class="mono" id="originTxt"></span> • Token: <span class="mono" id="tokShort">—</span>
+      </div>
+
+      <div class="tinyWarn" id="storageWarn">
+        ⚠️ Your phone is clearing FuelSkip storage (pairing may disappear). Fix: iPhone Settings → Safari → Advanced → Website Data → remove railway.app, then add to Home Screen again and allow camera.
       </div>
 
       <div class="row" style="margin-top:12px;">
@@ -180,9 +202,9 @@
 <script>
   const API = window.location.origin;
   const LS_DEVICE_TOKEN = "FUELSKIP_DEVICE_TOKEN";
+  const LS_PAIR_MARK = "FUELSKIP_PAIR_MARK";
   let currentVoucher = null;
 
-  // --- helpers ---
   function qs(name){
     return new URLSearchParams(window.location.search).get(name);
   }
@@ -199,28 +221,33 @@
   }
   function setDeviceToken(t){
     localStorage.setItem(LS_DEVICE_TOKEN, t);
+    localStorage.setItem(LS_PAIR_MARK, String(Date.now()));
   }
   function clearDeviceToken(){
     localStorage.removeItem(LS_DEVICE_TOKEN);
+    localStorage.removeItem(LS_PAIR_MARK);
   }
 
   function scrollToStatus(){
-    const st = document.getElementById("statusMsg");
-    st.scrollIntoView({ behavior:"smooth", block:"start" });
+    const box = document.getElementById("voucherBox");
+    const st  = document.getElementById("statusMsg");
+    if (box && box.style.display !== "none") {
+      // ensure voucher card is visible, then scroll
+      box.scrollIntoView({ behavior:"smooth", block:"start" });
+      setTimeout(()=>st.scrollIntoView({ behavior:"smooth", block:"start" }), 250);
+    } else if (st) {
+      st.scrollIntoView({ behavior:"smooth", block:"start" });
+    }
   }
 
-  // Parse scanned text for dt= (pair) or voucher= (voucher)
   function extractPairToken(scannedText){
     const s = (scannedText || "").trim();
     if(!s) return null;
-
-    // dt=... might be in a full URL or raw text
     try{
       const u = new URL(s);
       const dt = u.searchParams.get("dt");
       if(dt) return dt;
     }catch(e){}
-
     const m = s.match(/dt=([a-zA-Z0-9_-]+)/);
     return m ? m[1] : null;
   }
@@ -228,16 +255,13 @@
   function extractVoucherId(scannedText){
     const s = (scannedText || "").trim();
     if(!s) return null;
-
     try{
       const u = new URL(s);
       const v = u.searchParams.get("voucher");
       if(v) return v;
     }catch(e){}
-
     const m = s.match(/voucher=([a-zA-Z0-9_-]+)/);
     if(m && m[1]) return m[1];
-
     if(/^[a-z0-9]{6,32}$/i.test(s)) return s;
     return null;
   }
@@ -267,15 +291,27 @@
       setPill(pill, "NOT PAIRED", "bad");
       resetBtn.style.display = "none";
     }
+
+    // if we had paired earlier but token is missing -> storage is being cleared
+    const hadPairMark = !!localStorage.getItem(LS_PAIR_MARK);
+    const warn = document.getElementById("storageWarn");
+    warn.style.display = (!tok && hadPairMark) ? "block" : "none";
   }
 
   // --- Scanner modal using html5-qrcode ---
   let html5Qr = null;
-  let scanMode = "voucher"; // "pair" | "voucher"
+
+  function ensureSecureContextOrWarn(hintEl){
+    // Camera requires HTTPS or localhost
+    if (!window.isSecureContext) {
+      hintEl.textContent =
+        "Camera blocked: page is not in a secure context (HTTPS). Open the https:// URL only.";
+      return false;
+    }
+    return true;
+  }
 
   async function openScanner(mode){
-    scanMode = mode;
-
     const modal = document.getElementById("scanModal");
     const title = document.getElementById("scanTitle");
     const help  = document.getElementById("scanHelp");
@@ -289,18 +325,24 @@
 
     modal.style.display = "flex";
 
+    // Clear any previous instance safely
     if(!html5Qr){
       html5Qr = new Html5Qrcode("qrReader");
     }
 
-    const config = { fps: 10, qrbox: { width: 240, height: 240 } };
+    if(!ensureSecureContextOrWarn(hint)) return;
+
+    const config = {
+      fps: 10,
+      qrbox: { width: 240, height: 240 },
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+    };
 
     try{
       await html5Qr.start(
         { facingMode: "environment" },
         config,
         (decodedText) => {
-          // on success
           if(mode === "pair"){
             const dt = extractPairToken(decodedText);
             if(dt){
@@ -323,12 +365,18 @@
             hint.textContent = "QR detected but voucher= not found.";
           }
         },
-        (err) => {
-          // ignore scan errors (normal)
-        }
+        (_err) => { /* ignore */ }
       );
     }catch(e){
-      hint.textContent = "Camera permission required.";
+      // IMPORTANT: show real error so you can debug on iPhone
+      const msg = (e && e.message) ? e.message : String(e);
+
+      hint.textContent =
+        "Camera did not start. Fix:\n" +
+        "1) iPhone Settings → Safari → Camera → Allow\n" +
+        "2) Safari → AA → Website Settings → Camera → Allow\n" +
+        "3) If still stuck: Settings → Safari → Advanced → Website Data → remove railway.app\n" +
+        "Error: " + msg;
     }
   }
 
@@ -360,6 +408,7 @@
     btn.style.display = "none";
     btn.disabled = false;
     btn.textContent = "✅ Dispense Fuel";
+    btn.style.opacity = "1";
 
     try{
       const res = await fetch(`${API}/voucher/${encodeURIComponent(voucherId)}`, { cache:"no-store" });
@@ -449,6 +498,7 @@
       btn.disabled = true;
       btn.style.opacity = "0.85";
 
+      // refresh voucher status
       setTimeout(() => { loadVoucher(); }, 400);
       scrollToStatus();
     }catch(e){
@@ -478,7 +528,7 @@
     document.getElementById("scanVoucherBtn").addEventListener("click", () => openScanner("voucher"));
     document.getElementById("closeScan").addEventListener("click", closeScanner);
 
-    // if opened from voucher QR link
+    // if opened from voucher QR link (customer opens URL)
     const v = qs("voucher");
     if(v){
       document.getElementById("voucherInput").value = v;
