@@ -7,60 +7,156 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin:0; padding:16px; background:#0f172a; color:#e5e7eb; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin:0; padding:16px;
+      background:#0f172a; color:#e5e7eb;
+    }
     h2 { margin-top:0; text-align:center; }
-    .panel { background:#020617; border-radius:16px; padding:12px 14px; box-shadow:0 10px 25px rgba(15,23,42,0.4); margin-bottom:12px; }
-    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
+
+    .panel {
+      background:#020617;
+      border-radius:16px;
+      padding:12px 14px;
+      box-shadow:0 10px 25px rgba(15,23,42,0.4);
+      margin-bottom:12px;
+      border:1px solid rgba(148,163,184,0.12);
+    }
+    .row {
+      display:flex; flex-wrap:wrap;
+      gap:8px; align-items:center;
+      justify-content:space-between;
+    }
     .field-group { display:flex; align-items:center; gap:6px; font-size:13px; }
-    label { font-weight:700; }
-    input, select { padding:6px 8px; border-radius:8px; border:1px solid #4b5563; background:#020617; color:#e5e7eb; font-size:13px; }
-    button { padding:8px 12px; border-radius:10px; border:none; cursor:pointer; font-weight:700; font-size:13px; background:#22c55e; color:white; }
-    button:active { transform:scale(0.97); }
+    label { font-weight:800; color:#cbd5e1; }
+
+    input, select {
+      padding:6px 8px;
+      border-radius:10px;
+      border:1px solid #334155;
+      background:#020617;
+      color:#e5e7eb;
+      font-size:13px;
+      outline:none;
+    }
+    input:focus, select:focus { border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,0.16); }
+
+    button {
+      padding:8px 12px;
+      border-radius:12px;
+      border:none;
+      cursor:pointer;
+      font-weight:800;
+      font-size:13px;
+      background:#22c55e;
+      color:white;
+    }
+    button:active { transform:scale(0.98); }
     .btn-blue { background:#3b82f6; }
-    .btn-red { background:#ef4444; }
-    .summary { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; font-size:13px; }
-    .chip { padding:6px 10px; border-radius:999px; background:#020617; border:1px solid #1f2937; }
-    table { width:100%; border-collapse:collapse; margin-top:12px; background:#020617; border-radius:16px; overflow:hidden; box-shadow:0 10px 25px rgba(15,23,42,0.4); }
-    th, td { padding:8px 10px; font-size:13px; border-bottom:1px solid #111827; text-align:left; white-space:nowrap; }
+    .btn-red  { background:#ef4444; }
+    .btn-gray { background:#334155; }
+
+    .summary {
+      margin-top:12px;
+      display:flex; flex-wrap:wrap;
+      gap:8px; font-size:13px;
+    }
+    .chip {
+      padding:6px 10px;
+      border-radius:999px;
+      background:#020617;
+      border:1px solid #1f2937;
+      color:#e2e8f0;
+      font-weight:800;
+    }
+
+    .scroll-wrap {
+      margin-top:12px;
+      max-height:55vh;
+      overflow:auto;
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,0.12);
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      background:#020617;
+      overflow:hidden;
+    }
+    th, td {
+      padding:8px 10px;
+      font-size:13px;
+      border-bottom:1px solid #111827;
+      text-align:left;
+      white-space:nowrap;
+      color:#e5e7eb;
+    }
     tbody tr:nth-child(even) { background:#030712; }
     tbody tr:nth-child(odd)  { background:#020617; }
-    th { position:sticky; top:0; z-index:1; background:#020617; }
-    .pill { padding:2px 8px; border-radius:999px; font-size:11px; font-weight:800; text-transform:uppercase; }
-    .paid { background:#dcfce7; color:#166534; }
-    .pending { background:#fee2e2; color:#b91c1c; }
-    .used { background:#e0f2fe; color:#075985; }
-    .scroll-wrap { margin-top:12px; max-height:55vh; overflow:auto; border-radius:16px; }
+    th {
+      position:sticky;
+      top:0;
+      z-index:1;
+      background:#0b1220;
+      color:#cbd5e1;
+      font-weight:900;
+      letter-spacing:0.2px;
+    }
+
+    .pill {
+      display:inline-block;
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      text-transform:uppercase;
+      border:1px solid rgba(255,255,255,0.14);
+    }
+    .paid    { background:#14532d; color:#dcfce7; }
+    .pending { background:#7c2d12; color:#ffedd5; }
+    .used    { background:#1e3a8a; color:#dbeafe; }
+    .failed  { background:#7f1d1d; color:#fee2e2; }
+
+    .mini { margin-top:8px; font-size:12px; color:#94a3b8; line-height:1.4; }
     #qrBox { background:#0b1220; border:1px solid #1f2937; border-radius:16px; padding:12px; margin-top:10px; }
     #qr { display:flex; justify-content:center; padding:12px; background:#fff; border-radius:12px; }
-    code { color:#93c5fd; }
+    code { color:#93c5fd; word-break:break-all; }
+
+    @media (max-width: 720px){
+      body{ padding:12px; }
+      .row{ justify-content:flex-start; }
+      input, select{ width:100%; }
+      .field-group{ width:100%; }
+      button{ width:100%; }
+      th, td{ font-size:12px; }
+    }
   </style>
 </head>
+
 <body>
   <h2>⛽ FuelSkip – Owner Dashboard</h2>
 
   <div class="panel">
     <div class="row">
-      <div class="field-group">
+      <div class="field-group" style="flex:1; min-width:260px;">
         <label>Owner Token:</label>
-        <input id="ownerToken" placeholder="Paste OWNER_TOKEN once" style="min-width:220px;">
+        <input id="ownerToken" placeholder="Paste OWNER_TOKEN once" style="width:100%;">
       </div>
       <button class="btn-blue" onclick="saveOwnerToken()">Save</button>
       <button class="btn-red" onclick="clearOwnerToken()">Clear</button>
     </div>
-    <div style="margin-top:8px;font-size:12px;color:#94a3b8;">
-      This is only stored in your browser localStorage.
+    <div class="mini">
+      Stored only in your browser localStorage.
     </div>
   </div>
 
   <div class="panel">
-    <div style="font-weight:800;margin-bottom:8px;">📱 Pair Attendant Device (no token typing)</div>
+    <div style="font-weight:900;margin-bottom:8px;">📱 Pair Attendant Device (no token typing)</div>
     <div class="row">
       <div class="field-group">
         <label>Bunk:</label>
-        <select id="pairBunk">
-          <option value="BUNK-1">BUNK-1</option>
-          <option value="BUNK-2">BUNK-2</option>
-        </select>
+        <select id="pairBunk"></select>
       </div>
       <div class="field-group">
         <label>Device Name:</label>
@@ -70,13 +166,35 @@
     </div>
 
     <div id="qrBox" style="display:none;">
-      <div style="font-size:13px;color:#cbd5e1;margin:6px 0;">
-        Scan this QR in attendant phone (once). It will auto-pair and remove token prompts.
+      <div class="mini">
+        Scan this QR on attendant phone (once). It will auto-pair and remove token prompts.
       </div>
       <div id="qr"></div>
-      <div style="margin-top:10px;font-size:12px;color:#94a3b8;">
+      <div class="mini">
         Pair link: <code id="pairLink"></code>
       </div>
+    </div>
+  </div>
+
+  <!-- ✅ Devices list -->
+  <div class="panel">
+    <div class="row">
+      <div style="font-weight:900;">📟 Devices</div>
+      <button class="btn-gray" onclick="loadDevices()">Refresh Devices</button>
+    </div>
+    <div class="mini">Shows all registered devices + last seen. Helps debug pairing issues.</div>
+    <div class="scroll-wrap" style="max-height:32vh;">
+      <table id="devTbl">
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>Bunk</th>
+            <th>Created</th>
+            <th>Last Seen (IST)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </div>
 
@@ -84,7 +202,7 @@
     <div class="row">
       <div class="field-group">
         <label for="bunkInput">Bunk:</label>
-        <input id="bunkInput" value="BUNK-1" placeholder="BUNK-1">
+        <select id="bunkInput"></select>
       </div>
       <div class="field-group">
         <label for="statusSelect">Status:</label>
@@ -93,15 +211,17 @@
           <option value="pending">pending</option>
           <option value="paid">paid</option>
           <option value="used">used</option>
+          <option value="failed">failed</option>
         </select>
       </div>
-      <button onclick="loadVouchers()">Refresh</button>
+      <button onclick="loadVouchers()">Refresh Vouchers</button>
     </div>
 
     <div class="summary" id="summaryRow" style="display:none;">
       <div class="chip" id="sumCount">Total: 0</div>
       <div class="chip" id="sumAmount">Amount: ₹0</div>
       <div class="chip" id="sumLitres">Litres: 0 L</div>
+      <div class="chip" id="sumUsed">Used: 0</div>
     </div>
 
     <div class="scroll-wrap">
@@ -111,6 +231,8 @@
             <th>Time (IST)</th>
             <th>Voucher</th>
             <th>Bunk</th>
+            <th>Fuel</th>
+            <th>Pay</th>
             <th>Amount</th>
             <th>Litres</th>
             <th>Status</th>
@@ -119,10 +241,36 @@
         <tbody></tbody>
       </table>
     </div>
+
+    <div class="mini">
+      Note: “USED” is shown if status is used OR used=true (safer).
+    </div>
   </div>
 
 <script>
 const API = window.location.origin;
+
+// ✅ Keep bunk names here (same as customer side)
+const BUNK_META = {
+  "BUNK-1": { name: "BPCL Siripuram" },
+  "BUNK-2": { name: "Gajuwaka Expressway" }
+};
+function bunkName(id){
+  return (BUNK_META[id] && BUNK_META[id].name) ? BUNK_META[id].name : id;
+}
+function niceFuel(ft){
+  const x = String(ft || "PETROL").toUpperCase();
+  if(x === "DIESEL") return "Diesel";
+  if(x === "CNG") return "CNG";
+  if(x === "EV") return "EV";
+  return "Petrol";
+}
+function nicePay(pm){
+  const x = String(pm || "").toLowerCase();
+  if(x === "wallet") return "Wallet";
+  if(x === "razorpay") return "Razorpay";
+  return x ? x : "-";
+}
 
 function ownerToken() {
   return (localStorage.getItem("FUELSKIP_OWNER_TOKEN") || "").trim();
@@ -142,6 +290,30 @@ function fmtIST(ts) {
   if (!ts) return "";
   const d = new Date(ts);
   return d.toLocaleString("en-IN", { timeZone:"Asia/Kolkata", hour12:true });
+}
+
+function pillHtml(status, usedFlag){
+  const st = String(status || "").toLowerCase();
+  const used = !!usedFlag || st === "used";
+  if(used) return `<span class="pill used">used</span>`;
+  if(st === "paid") return `<span class="pill paid">paid</span>`;
+  if(st === "failed") return `<span class="pill failed">failed</span>`;
+  return `<span class="pill pending">${st || "pending"}</span>`;
+}
+
+function populateBunks(){
+  const selects = [document.getElementById("pairBunk"), document.getElementById("bunkInput")];
+  selects.forEach(sel => {
+    if(!sel) return;
+    sel.innerHTML = "";
+    Object.keys(BUNK_META).forEach(id=>{
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = `${bunkName(id)} • (${id})`;
+      sel.appendChild(opt);
+    });
+  });
+  document.getElementById("bunkInput").value = "BUNK-1";
 }
 
 async function createPairQR() {
@@ -171,6 +343,42 @@ async function createPairQR() {
   new QRCode(document.getElementById("qr"), { text: link, width: 200, height: 200 });
 }
 
+async function loadDevices(){
+  const tok = ownerToken();
+  if (!tok) return alert("Save OWNER_TOKEN first");
+
+  const tbody = document.querySelector("#devTbl tbody");
+  tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+
+  const res = await fetch(`${API}/devices`, {
+    headers: { "X-OWNER-TOKEN": tok },
+    cache: "no-store"
+  });
+
+  const data = await res.json();
+  if(!res.ok){
+    tbody.innerHTML = `<tr><td colspan='4'>Error: ${data.detail || "load failed"}</td></tr>`;
+    return;
+  }
+
+  if(!data.length){
+    tbody.innerHTML = "<tr><td colspan='4'>No devices registered</td></tr>";
+    return;
+  }
+
+  tbody.innerHTML = "";
+  data.forEach(d=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${d.name || "Device"}</td>
+      <td>${bunkName(d.bunk_id)} (${d.bunk_id})</td>
+      <td>${fmtIST(d.created_at)}</td>
+      <td>${d.last_seen_at ? fmtIST(d.last_seen_at) : "-"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
 async function loadVouchers() {
   const tok = ownerToken();
   if (!tok) return alert("Save OWNER_TOKEN first");
@@ -185,7 +393,7 @@ async function loadVouchers() {
   const tbody = document.querySelector("#tbl tbody");
   const sumRow = document.getElementById("summaryRow");
 
-  tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+  tbody.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
   sumRow.style.display = "none";
 
   const res = await fetch(`${API}/vouchers?` + params.toString(), {
@@ -195,30 +403,34 @@ async function loadVouchers() {
 
   const data = await res.json();
   if (!res.ok) {
-    tbody.innerHTML = `<tr><td colspan='6'>Error: ${data.detail || "load failed"}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan='8'>Error: ${data.detail || "load failed"}</td></tr>`;
     return;
   }
   if (!data.length) {
-    tbody.innerHTML = "<tr><td colspan='6'>No vouchers found</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='8'>No vouchers found</td></tr>";
     return;
   }
 
-  let totalAmt = 0, totalLit = 0;
+  let totalAmt = 0, totalLit = 0, usedCount = 0;
   tbody.innerHTML = "";
   data.forEach(v => {
     const amt = Number(v.amount || 0);
     const lit = Number(v.litres || 0);
     totalAmt += amt; totalLit += lit;
-    const st = (v.status || "").toLowerCase();
+
+    const usedFlag = !!v.used || String(v.status||"").toLowerCase() === "used";
+    if(usedFlag) usedCount += 1;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${fmtIST(v.created_at)}</td>
       <td>${v.id}</td>
-      <td>${v.bunk_id}</td>
+      <td>${bunkName(v.bunk_id)} (${v.bunk_id})</td>
+      <td>${niceFuel(v.fuel_type)}</td>
+      <td>${nicePay(v.pay_method)}</td>
       <td>₹${amt.toLocaleString("en-IN")}</td>
       <td>${lit.toFixed(2)}</td>
-      <td><span class="pill ${st}">${st}</span></td>
+      <td>${pillHtml(v.status, usedFlag)}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -226,12 +438,15 @@ async function loadVouchers() {
   document.getElementById("sumCount").textContent  = `Total: ${data.length}`;
   document.getElementById("sumAmount").textContent = `Amount: ₹${totalAmt.toLocaleString("en-IN")}`;
   document.getElementById("sumLitres").textContent = `Litres: ${totalLit.toFixed(2)} L`;
+  document.getElementById("sumUsed").textContent   = `Used: ${usedCount}`;
   sumRow.style.display = "flex";
 }
 
-// init token field
+// init
 window.addEventListener("load", () => {
   document.getElementById("ownerToken").value = ownerToken();
+  populateBunks();
+  loadDevices();
 });
 </script>
 </body>

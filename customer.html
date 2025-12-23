@@ -471,6 +471,15 @@
             <label>Station</label>
             <select id="bunk"></select>
 
+            <!-- ✅ NEW: Fuel Type -->
+            <label>Fuel Type</label>
+            <select id="fuelType">
+              <option value="PETROL">Petrol</option>
+              <option value="DIESEL">Diesel</option>
+              <option value="CNG">CNG</option>
+              <option value="EV">EV (future)</option>
+            </select>
+
             <div class="row">
               <div>
                 <label>Amount (₹)</label>
@@ -525,6 +534,7 @@
 
               <div class="muted" style="margin-top:10px;">
                 Station: <b id="qrStationName"></b><br/>
+                Fuel: <b id="qrFuelType">—</b><br/>
                 Voucher: <code id="vId"></code><br/>
                 Signature: <code id="vSig"></code><br/>
                 Link: <code id="vLink"></code>
@@ -557,7 +567,6 @@
 
           <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px;">
 
-            <!-- Payment Time (REAL measured on your device) -->
             <div class="card" style="margin:0;">
               <div class="muted">⚡ Payment Time</div>
               <div style="font-weight:1000;font-size:22px;margin-top:6px;" id="anPayHero">—</div>
@@ -568,21 +577,18 @@
               </div>
             </div>
 
-            <!-- Voucher Outcomes -->
             <div class="card" style="margin:0;">
               <div class="muted">✅ Voucher Outcomes</div>
               <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anOutcomeHero">—</div>
               <div class="muted" id="anOutcomeSub">—</div>
             </div>
 
-            <!-- Fuel Summary -->
             <div class="card" style="margin:0;">
               <div class="muted">⛽ Fuel Summary</div>
               <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anTotalSpend">—</div>
               <div class="muted" id="anVisitsAvg">—</div>
             </div>
 
-            <!-- Favourite Station -->
             <div class="card" style="margin:0;">
               <div class="muted">📍 Favourite Station</div>
               <div style="font-weight:1000;font-size:18px;margin-top:6px;" id="anFavStation">—</div>
@@ -660,7 +666,7 @@
       return (BUNK_META[id] && BUNK_META[id].address) ? BUNK_META[id].address : "";
     }
 
-    // ✅ state includes qr_cache and default vehicle
+    // ✅ state includes qr_cache and default vehicle + fuel type
     let state = {
       user_id: null, phone: "", name: "",
       wallet_balance: 0,
@@ -673,13 +679,13 @@
       last_voucher_id: "",
       last_sig: "",
       last_qr_station: "BUNK-1",
-      qr_cache: {} // voucher_id -> { sig, station, ts }
+      last_fuel_type: "PETROL",
+      qr_cache: {} // voucher_id -> { sig, station, fuel_type, ts }
     };
 
     let vouchersAutoRefreshTimer = null;
 
     // ✅ Local-only analytics (measured)
-    // FS_METRICS: { wallet_ms:[], razorpay_ms:[], last:{method,ms,at} }
     function loadMetrics(){
       const raw = localStorage.getItem("FS_METRICS");
       if(!raw) return { wallet_ms:[], razorpay_ms:[], last:null };
@@ -703,7 +709,6 @@
       if(method === "wallet") m.wallet_ms.push(clean);
       if(method === "razorpay") m.razorpay_ms.push(clean);
       m.last = { method, ms: clean, at: Date.now() };
-      // keep last 40 samples
       m.wallet_ms = m.wallet_ms.slice(-40);
       m.razorpay_ms = m.razorpay_ms.slice(-40);
       saveMetrics(m);
@@ -748,6 +753,7 @@
         const s = JSON.parse(raw);
         if(s && s.user_id) state = {...state, ...s};
         if(!state.qr_cache) state.qr_cache = {};
+        if(!state.last_fuel_type) state.last_fuel_type = "PETROL";
       }catch{
         state.qr_cache = state.qr_cache || {};
       }
@@ -788,8 +794,9 @@
     function renderLastInfo(){
       const el = document.getElementById("lastInfo");
       if(!el) return;
+      const ft = (state.last_fuel_type || "PETROL");
       if(state.last_amount && state.last_bunk){
-        el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> at <span class="info">${bunkName(state.last_bunk)}</span>`;
+        el.innerHTML = `Last: <span class="ok">₹${state.last_amount}</span> • <b>${ft}</b> at <span class="info">${bunkName(state.last_bunk)}</span>`;
       } else {
         el.textContent = "No previous voucher yet.";
       }
@@ -831,6 +838,12 @@
       document.getElementById("litres").value = "";
       document.getElementById("vehicleType").value = state.last_vehicle_type || "";
       document.getElementById("vehicleNo").value = state.last_vehicle_no || "";
+
+      // ✅ fuel type default
+      const ft = state.last_fuel_type || "PETROL";
+      const ftSel = document.getElementById("fuelType");
+      if(ftSel) ftSel.value = ft;
+
       setPay(state.pay_method || "wallet");
       renderLastInfo();
       applyDefaultVehicleToFormIfEmpty();
@@ -894,6 +907,7 @@
         state.name = data.name || name || "";
         state.wallet_balance = Number(data.wallet_balance || 0);
         if(!state.qr_cache) state.qr_cache = {};
+        if(!state.last_fuel_type) state.last_fuel_type = "PETROL";
         saveState();
 
         bootAfterLogin();
@@ -994,6 +1008,14 @@
       return `${bunkName(id)} • (${id})`;
     }
 
+    function niceFuel(ft){
+      const x = String(ft || "PETROL").toUpperCase();
+      if(x === "DIESEL") return "Diesel";
+      if(x === "CNG") return "CNG";
+      if(x === "EV") return "EV";
+      return "Petrol";
+    }
+
     async function loadVouchers(showPageAfter=true){
       if(!state.user_id) return;
       const box = document.getElementById("voucherList");
@@ -1014,15 +1036,16 @@
         box.innerHTML = "";
         list.forEach(v=>{
           const amount = Number(v.amount || 0);
+          const fuel = niceFuel(v.fuel_type);
           const el = document.createElement("div");
           el.className = "item";
           el.innerHTML = `
             <div>
-              <div class="t">₹${amount.toFixed(0)} • ${vStationLabel(v)}</div>
+              <div class="t">₹${amount.toFixed(0)} • ${fuel} • ${vStationLabel(v)}</div>
               <div class="s">${statusPill(v)} &nbsp; ${v.id}</div>
             </div>
             <div class="right">
-              <button class="btn btnGray" onclick="prefillFromVoucher('${v.bunk_id || "BUNK-1"}', ${Math.round(amount)})">Repeat</button>
+              <button class="btn btnGray" onclick="prefillFromVoucher('${v.bunk_id || "BUNK-1"}', ${Math.round(amount)}, '${String(v.fuel_type || "PETROL").toUpperCase()}')">Repeat</button>
               <button class="btn btnPrimary" onclick="tryShowQR('${v.id}')">Show QR</button>
             </div>
           `;
@@ -1046,9 +1069,10 @@
       }
     }
 
-    function prefillFromVoucher(bunk, amount){
+    function prefillFromVoucher(bunk, amount, fuel_type){
       state.last_bunk = bunk || "BUNK-1";
       state.last_amount = Number(amount || 0);
+      state.last_fuel_type = (fuel_type || "PETROL").toUpperCase();
       saveState();
       go("dashboard");
       applyDefaults();
@@ -1076,7 +1100,7 @@
           alert("This voucher is already USED (showing for proof).");
         }
 
-        showVoucherQR(voucherId, cache.sig, cache.station || state.last_bunk || "BUNK-1");
+        showVoucherQR(voucherId, cache.sig, cache.station || state.last_bunk || "BUNK-1", cache.fuel_type || "PETROL");
         go("dashboard");
 
         setTimeout(() => {
@@ -1127,12 +1151,14 @@
       navigator.clipboard.writeText(link).then(()=>alert("Link copied"));
     }
 
-    function showVoucherQR(voucherId, sig, stationId){
+    function showVoucherQR(voucherId, sig, stationId, fuelType){
       const link = `${window.location.origin}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`;
       document.getElementById("vId").textContent = voucherId;
       document.getElementById("vSig").textContent = sig;
       document.getElementById("vLink").textContent = link;
       document.getElementById("qrStationName").textContent = bunkName(stationId || "BUNK-1");
+      document.getElementById("qrFuelType").textContent = niceFuel(fuelType || "PETROL");
+
       const qrEl = document.getElementById("qr");
       qrEl.innerHTML = "";
       new QRCode(qrEl, { text: link, width: 220, height: 220 });
@@ -1168,7 +1194,7 @@
         const used = !!data.used || st === "used";
 
         if(res.ok && st === "paid" && !used){
-          showVoucherQR(voucherId, cached.sig, cached.station || state.last_bunk || "BUNK-1");
+          showVoucherQR(voucherId, cached.sig, cached.station || state.last_bunk || "BUNK-1", cached.fuel_type || "PETROL");
           setTimeout(() => {
             document.getElementById("qrWrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
           }, 1200);
@@ -1290,7 +1316,7 @@
     }
 
     // =========================
-    // ✅ Analytics logic
+    // ✅ Analytics logic (unchanged)
     // =========================
     function isUsedVoucher(v){
       const st = String(v.status || "").toLowerCase();
@@ -1304,10 +1330,6 @@
       const st = String(v.status || "").toLowerCase();
       return st === "failed";
     }
-    function isPendingVoucher(v){
-      const st = String(v.status || "").toLowerCase();
-      return !st || st === "pending" || st === "created";
-    }
 
     let _lastFavStationId = null;
 
@@ -1317,7 +1339,6 @@
       const statusEl = document.getElementById("analyticsStatus");
       statusEl.innerHTML = `<span class="info">⏳</span> Loading analytics…`;
 
-      // 1) local payment metrics (real on this device)
       const m = loadMetrics();
       const wAvg = avg(m.wallet_ms);
       const rAvg = avg(m.razorpay_ms);
@@ -1336,7 +1357,6 @@
       document.getElementById("anWalletAvg").textContent = msToNice(wAvg);
       document.getElementById("anRzpAvg").textContent = msToNice(rAvg);
 
-      // 2) voucher outcomes + spend + fav station
       try{
         const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(state.user_id)}`, { cache:"no-store" });
         const vouchers = await res.json();
@@ -1358,13 +1378,11 @@
         document.getElementById("anTotalSpend").textContent = `${inr0(totalSpend)} fuel purchased`;
         document.getElementById("anVisitsAvg").textContent = `${visits} visits • Avg ${inr0(avgTicket)} per visit`;
 
-        // Outcomes hero
         document.getElementById("anOutcomeHero").textContent = `${used.length} USED • ${paid.length} PAID`;
-        const lastUsed = used[0] || used.sort((a,b)=> (b.used_at||b.updated_at||0) - (a.used_at||a.updated_at||0))[0];
+        const lastUsed = used[0];
         const lastUsedTxt = lastUsed ? `Last redeemed: ${bunkName(lastUsed.bunk_id || "-")} (${lastUsed.id})` : "No redeemed vouchers yet";
         document.getElementById("anOutcomeSub").textContent = `${pending.length} pending • ${failed.length} failed • ${lastUsedTxt}`;
 
-        // Favourite station based on USED
         const stationCount = {};
         used.forEach(v=>{
           const id = v.bunk_id || "UNKNOWN";
@@ -1408,7 +1426,7 @@
     }
 
     // =========================
-    // ✅ Voucher creation (adds payment-time metrics)
+    // ✅ Voucher creation (NOW includes fuel_type)
     // =========================
     async function createVoucher(){
       const status = document.getElementById("statusLine");
@@ -1416,9 +1434,11 @@
       status.textContent = "";
       if(!state.user_id){ alert("Login first"); return; }
 
-      const startMs = Date.now(); // ✅ start timing here
+      const startMs = Date.now();
 
       const bunk_id = document.getElementById("bunk").value;
+      const fuel_type = (document.getElementById("fuelType").value || "PETROL").toUpperCase();
+
       const amountStr = (document.getElementById("amount").value || "").trim();
       const litresStr = (document.getElementById("litres").value || "").trim();
       const vehicle_type = document.getElementById("vehicleType").value || "";
@@ -1430,6 +1450,7 @@
         vehicle_type: vehicle_type || null,
         vehicle_no: vehicle_no || null,
         pay_method: state.pay_method || "wallet",
+        fuel_type
       };
       if(amountStr) payload.amount = Number(amountStr);
       if(litresStr) payload.litres = Number(litresStr);
@@ -1448,6 +1469,7 @@
       state.last_bunk = bunk_id;
       state.last_vehicle_type = vehicle_type || "";
       state.last_vehicle_no = vehicle_no || "";
+      state.last_fuel_type = fuel_type;
       if(payload.amount) state.last_amount = Number(payload.amount);
       saveState();
       renderLastInfo();
@@ -1464,7 +1486,7 @@
         const data = await res.json();
         if(!res.ok) throw new Error(data.detail || "Create failed");
 
-        // WALLET path (instant)
+        // WALLET path
         if((data.pay_method || "").toLowerCase() === "wallet" || (payload.pay_method || "").toLowerCase() === "wallet"){
           if(typeof data.wallet_balance !== "undefined"){
             state.wallet_balance = Number(data.wallet_balance || state.wallet_balance);
@@ -1475,16 +1497,15 @@
           state.last_qr_station = bunk_id;
 
           if(!state.qr_cache) state.qr_cache = {};
-          state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, ts: Date.now() };
+          state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, fuel_type, ts: Date.now() };
 
           saveState();
           setSidebarUser();
 
-          // ✅ record measured time (click -> voucher ready)
           pushMetric("wallet", Date.now() - startMs);
 
           status.innerHTML = `<span class="ok">✅</span> Voucher ready (wallet). Showing QR…`;
-          showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
+          showVoucherQR(data.voucher_id, data.qr_sig, bunk_id, fuel_type);
           loadVouchers(false);
 
           setTimeout(() => {
@@ -1514,15 +1535,14 @@
               state.last_qr_station = bunk_id;
 
               if(!state.qr_cache) state.qr_cache = {};
-              state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, ts: Date.now() };
+              state.qr_cache[data.voucher_id] = { sig: data.qr_sig, station: bunk_id, fuel_type, ts: Date.now() };
 
               saveState();
 
-              // ✅ record measured time (click -> confirmed paid)
               pushMetric("razorpay", Date.now() - startMs);
 
               status.innerHTML = `<span class="ok">✅</span> Voucher confirmed. Showing QR…`;
-              showVoucherQR(data.voucher_id, data.qr_sig, bunk_id);
+              showVoucherQR(data.voucher_id, data.qr_sig, bunk_id, fuel_type);
               loadVouchers(false);
 
               setTimeout(() => {

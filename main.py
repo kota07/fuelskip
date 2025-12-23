@@ -72,6 +72,9 @@ class VoucherDB(Base):
     # ✅ How voucher was paid
     pay_method = Column(String, nullable=True)  # "razorpay" or "wallet"
 
+    # ✅ NEW: Fuel type
+    fuel_type = Column(String, nullable=True)  # PETROL/DIESEL/CNG/EV
+
 
 class WebhookEventDB(Base):
     __tablename__ = "webhook_events"
@@ -146,6 +149,7 @@ def _qr_secret() -> bytes:
 
 
 def sign_voucher_qr(voucher: VoucherDB) -> str:
+    # NOTE: keep signature stable (backward compatible). Fuel type is stored server-side anyway.
     created = voucher.created_at.replace(tzinfo=None).isoformat(timespec="seconds")
     msg = f"{voucher.id}|{voucher.bunk_id}|{voucher.amount:.2f}|{created}".encode("utf-8")
     return hmac.new(_qr_secret(), msg, hashlib.sha256).hexdigest()
@@ -219,6 +223,9 @@ def on_startup():
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN razorpay_payment_id VARCHAR"))
             if "pay_method" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN pay_method VARCHAR"))
+            # ✅ NEW
+            if "fuel_type" not in vcols:
+                conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN fuel_type VARCHAR"))
 # -----------------------------------
 
 
@@ -272,6 +279,12 @@ def log_error(db: Session, where: str, message: str):
         pass
 
 
+def _normalize_fuel_type(ft: str | None) -> str:
+    ft2 = (ft or "PETROL").strip().upper()
+    allowed = {"PETROL", "DIESEL", "CNG", "EV"}
+    return ft2 if ft2 in allowed else "PETROL"
+
+
 # -------- Pydantic models --------
 class CreateVoucher(BaseModel):
     bunk_id: str
@@ -281,8 +294,11 @@ class CreateVoucher(BaseModel):
     vehicle_type: str | None = None
     vehicle_no: str | None = None
 
-    # ✅ New: pay method
+    # ✅ pay method
     pay_method: str | None = "razorpay"  # "razorpay" or "wallet"
+
+    # ✅ NEW: Fuel type
+    fuel_type: str | None = "PETROL"
 
 
 class LoginRequest(BaseModel):
@@ -431,6 +447,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     expires = now + datetime.timedelta(minutes=30)
 
     pay_method = (req.pay_method or "razorpay").lower().strip()
+    fuel_type = _normalize_fuel_type(req.fuel_type)
 
     # ✅ Wallet path: instant paid voucher
     if pay_method == "wallet":
@@ -463,6 +480,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
             vehicle_type=req.vehicle_type,
             vehicle_no=req.vehicle_no,
             pay_method="wallet",
+            fuel_type=fuel_type,
         )
         db.add(v)
         db.commit()
@@ -477,6 +495,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
             "expires_at": expires,
             "status": "paid",
             "pay_method": "wallet",
+            "fuel_type": fuel_type,
             "qr_sig": qr_sig,
             "wallet_balance": float(u.wallet_balance or 0.0),
         }
@@ -511,6 +530,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         vehicle_type=req.vehicle_type,
         vehicle_no=req.vehicle_no,
         pay_method="razorpay",
+        fuel_type=fuel_type,
     )
     db.add(v)
     db.commit()
@@ -529,6 +549,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         "qr_sig": qr_sig,
         "status": "pending",
         "pay_method": "razorpay",
+        "fuel_type": fuel_type,
     }
 
 
@@ -542,8 +563,14 @@ def get_voucher(voucher_id: str, db: Session = Depends(get_db)):
     if v.user_id:
         user = db.query(UserDB).filter(UserDB.id == v.user_id).first()
 
+    d = dict(v.__dict__)
+    d.pop("_sa_instance_state", None)
+
+    # ensure consistent fuel
+    d["fuel_type"] = _normalize_fuel_type(d.get("fuel_type"))
+
     return {
-        **v.__dict__,
+        **d,
         "user_phone": user.phone if user else None,
         "user_name": user.name if user else None,
     }
@@ -628,13 +655,29 @@ def validate_voucher(
         raise HTTPException(status_code=400, detail="Payment not completed yet")
 
     if v.used or v.status == "used":
-        return {"approved": True, "already_used": True, "voucher_id": voucher_id, "bunk_id": v.bunk_id, "amount": v.amount, "litres": v.litres}
+        return {
+            "approved": True,
+            "already_used": True,
+            "voucher_id": voucher_id,
+            "bunk_id": v.bunk_id,
+            "amount": v.amount,
+            "litres": v.litres,
+            "fuel_type": _normalize_fuel_type(v.fuel_type),
+        }
 
     v.used = True
     v.status = "used"
     db.commit()
 
-    return {"approved": True, "already_used": False, "voucher_id": voucher_id, "bunk_id": v.bunk_id, "amount": v.amount, "litres": v.litres}
+    return {
+        "approved": True,
+        "already_used": False,
+        "voucher_id": voucher_id,
+        "bunk_id": v.bunk_id,
+        "amount": v.amount,
+        "litres": v.litres,
+        "fuel_type": _normalize_fuel_type(v.fuel_type),
+    }
 
 
 # ---------------- Razorpay webhook ----------------
@@ -720,10 +763,22 @@ def list_vouchers(
     if status:
         q = q.filter(VoucherDB.status == status)
     results = q.order_by(VoucherDB.created_at.desc()).all()
-    return [v.__dict__ for v in results]
+    out = []
+    for v in results:
+        d = dict(v.__dict__)
+        d.pop("_sa_instance_state", None)
+        d["fuel_type"] = _normalize_fuel_type(d.get("fuel_type"))
+        out.append(d)
+    return out
 
 
 @app.get("/my-vouchers")
 def my_vouchers(user_id: int, db: Session = Depends(get_db)):
     q = db.query(VoucherDB).filter(VoucherDB.user_id == user_id).order_by(VoucherDB.created_at.desc())
-    return [v.__dict__ for v in q.all()]
+    out = []
+    for v in q.all():
+        d = dict(v.__dict__)
+        d.pop("_sa_instance_state", None)
+        d["fuel_type"] = _normalize_fuel_type(d.get("fuel_type"))
+        out.append(d)
+    return out

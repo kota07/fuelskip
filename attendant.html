@@ -62,10 +62,11 @@
     .paid { background: #16a34a; }
     .used { background: #6b7280; }
     .pend { background: #f97316; }
+    .fail { background: #ef4444; }
 
     #voucherData p { margin: 4px 0; font-size: 14px; color: #374151; }
     #voucherData strong { color: #111827; }
-    #statusMsg { margin-top: 10px; font-size: 14px; font-weight: 700; }
+    #statusMsg { margin-top: 10px; font-size: 14px; font-weight: 800; }
 
     .mini { margin-top: 8px; font-size: 12px; color: #6b7280; }
     .debug { margin-top: 8px; font-size: 12px; color: #64748b; word-break: break-all; }
@@ -81,7 +82,7 @@
       margin-top: 8px;
       font-size: 12px;
       color: #374151;
-      font-weight: 600;
+      font-weight: 700;
     }
   </style>
 </head>
@@ -101,7 +102,7 @@
     </div>
 
     <div class="mini">
-      Pair once using Owner QR. After that, use “Scan Voucher QR” inside this page (don’t open new tabs).
+      Pair once using Owner QR. After that, scan voucher QR inside this page (don’t open new tabs).
     </div>
 
     <div class="debug" id="debugLine"></div>
@@ -122,12 +123,12 @@
     </div>
 
     <div class="input-row">
-      <input id="voucherInput" placeholder="Or paste voucher ID">
+      <input id="voucherInput" placeholder="Paste voucher ID OR full FuelSkip QR link">
       <button class="btn-blue" onclick="loadVoucher()">Check</button>
     </div>
 
     <div class="mini">
-      Customer QR will contain a link like: <br>
+      Customer QR contains a link like: <br>
       <span style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace;">
         /attendant.html?voucher=...&sig=...
       </span>
@@ -197,33 +198,67 @@ function resetPairing() {
   setPairState();
 }
 
-/* ---------------- URL params (for pairing only) ---------------- */
+/* ---------------- URL params (pairing + voucher auto-load) ---------------- */
 function getParams() {
   const p = new URLSearchParams(window.location.search);
-  return { dt: p.get("dt") || "" };
+  return {
+    dt: p.get("dt") || "",
+    voucher: p.get("voucher") || "",
+    sig: p.get("sig") || ""
+  };
 }
-
-window.addEventListener("load", () => {
-  const p = getParams();
-  if (p.dt) {
-    saveDeviceToken(p.dt);
-    history.replaceState({}, "", window.location.pathname);
-    alert("✅ Device paired successfully!");
-  }
-  setPairState();
-});
 
 /* ---------------- Voucher UI helpers ---------------- */
 function statusChip(status, used) {
-  if (used) return '<span class="status-chip used">USED</span>';
-  if (status === "paid") return '<span class="status-chip paid">PAID</span>';
+  const st = String(status || "").toLowerCase();
+  if (used || st === "used") return '<span class="status-chip used">USED</span>';
+  if (st === "paid") return '<span class="status-chip paid">PAID</span>';
+  if (st === "failed") return '<span class="status-chip fail">FAILED</span>';
   return '<span class="status-chip pend">PENDING</span>';
+}
+function niceFuel(ft){
+  const x = String(ft || "PETROL").toUpperCase();
+  if(x === "DIESEL") return "Diesel";
+  if(x === "CNG") return "CNG";
+  if(x === "EV") return "EV";
+  return "Petrol";
+}
+
+/* ---------------- Parse voucher/sig from text ---------------- */
+function parseVoucherFromText(text) {
+  // 1) Try URL
+  try {
+    const u = new URL(text);
+    return {
+      voucher: u.searchParams.get("voucher") || "",
+      sig: u.searchParams.get("sig") || ""
+    };
+  } catch {}
+
+  // 2) Try query-only like /attendant.html?voucher=...&sig=...
+  try {
+    const u2 = new URL(window.location.origin + (text.startsWith("/") ? text : ("/" + text)));
+    return {
+      voucher: u2.searchParams.get("voucher") || "",
+      sig: u2.searchParams.get("sig") || ""
+    };
+  } catch {}
+
+  // 3) Otherwise treat as ID
+  return { voucher: (text || "").trim(), sig: "" };
 }
 
 /* ---------------- Load voucher ---------------- */
 async function loadVoucher() {
-  const id = document.getElementById("voucherInput").value.trim();
-  if (!id) return alert("Enter voucher ID");
+  const raw = document.getElementById("voucherInput").value.trim();
+  if (!raw) return alert("Enter voucher ID or paste the full FuelSkip QR link");
+
+  // If user pasted full link, extract voucher/sig
+  const parsed = parseVoucherFromText(raw);
+  const id = parsed.voucher;
+  if (parsed.sig) currentSig = parsed.sig;
+
+  if (!id) return alert("Voucher ID missing");
 
   const box = document.getElementById("voucherInfo");
   const data = document.getElementById("voucherData");
@@ -235,14 +270,16 @@ async function loadVoucher() {
   msg.textContent = "";
 
   try {
-    const res = await fetch(`${API}/voucher/${encodeURIComponent(id)}`);
-    if (!res.ok) throw new Error("Voucher not found");
+    const res = await fetch(`${API}/voucher/${encodeURIComponent(id)}`, { cache: "no-store" });
     const v = await res.json();
+    if (!res.ok) throw new Error(v.detail || "Voucher not found");
+
     currentVoucherId = id;
 
     data.innerHTML = `
       <p><strong>ID:</strong> ${v.id}</p>
       <p><strong>Customer:</strong> ${v.user_name || "Walk-in"} (${v.user_phone || "-"})</p>
+      <p><strong>Fuel Type:</strong> ${niceFuel(v.fuel_type)}</p>
       <p><strong>Amount:</strong> ₹${v.amount}</p>
       <p><strong>Litres:</strong> ${v.litres} L</p>
       <p><strong>Vehicle:</strong> ${v.vehicle_type || "-"} • ${v.vehicle_no || "-"}</p>
@@ -255,13 +292,17 @@ async function loadVoucher() {
 
     box.style.display = "block";
 
-    if (v.status === "paid" && !v.used) {
-      if (!currentSig) { msg.innerHTML = "❌ Missing signature. Scan voucher QR."; return; }
+    const st = String(v.status || "").toLowerCase();
+    const used = !!v.used || st === "used";
+
+    if (st === "paid" && !used) {
+      if (!currentSig) { msg.innerHTML = "❌ Missing signature. Scan voucher QR or paste QR link."; return; }
       if (!getDeviceToken()) { msg.innerHTML = "❌ Device not paired. Scan Owner QR."; return; }
       msg.innerHTML = "✅ Ready to dispense.";
       btn.style.display = "block";
       btn.disabled = false;
-    } else if (v.used) {
+      btn.textContent = "✅ Dispense Fuel";
+    } else if (used) {
       msg.innerHTML = "⚠️ Voucher already used.";
     } else {
       msg.innerHTML = "⏳ Payment pending or failed.";
@@ -288,13 +329,20 @@ async function validateAndDispense() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || "Validation failed");
 
+    const fuel = niceFuel(data.fuel_type);
+
     if (data.already_used) {
-      msg.innerHTML = "⚠️ Already used.";
+      msg.innerHTML = `⚠️ Already used. (${fuel}, ${data.litres} L)`;
       btn.textContent = "✔️ Used";
     } else {
-      msg.innerHTML = "✅ Fuel Dispensed";
+      msg.innerHTML = `✅ Dispensed: <b>${fuel}</b> • <b>${data.litres} L</b>`;
       btn.textContent = "✔️ Dispensed";
     }
+
+    // refresh voucher view (shows USED)
+    document.getElementById("voucherInput").value = currentVoucherId;
+    await loadVoucher();
+
   } catch (e) {
     msg.innerHTML = `❌ ${e.message}`;
     btn.disabled = false;
@@ -309,22 +357,7 @@ let scanLoopId = null;
 function parseVoucherFromQR(text) {
   // Expect full URL like:
   // https://.../attendant.html?voucher=...&sig=...
-  try {
-    const u = new URL(text);
-    const v = u.searchParams.get("voucher") || "";
-    const s = u.searchParams.get("sig") || "";
-    return { voucher: v, sig: s };
-  } catch {
-    // Sometimes QR might be only the query string
-    try {
-      const u = new URL(window.location.origin + text);
-      const v = u.searchParams.get("voucher") || "";
-      const s = u.searchParams.get("sig") || "";
-      return { voucher: v, sig: s };
-    } catch {
-      return { voucher: "", sig: "" };
-    }
-  }
+  return parseVoucherFromText(text);
 }
 
 async function startScan() {
@@ -386,6 +419,33 @@ function stopScan() {
     scanStream = null;
   }
 }
+
+/* ---------------- Boot ---------------- */
+window.addEventListener("load", () => {
+  const p = getParams();
+
+  // Pairing via owner QR
+  if (p.dt) {
+    saveDeviceToken(p.dt);
+  }
+  setPairState();
+
+  // Auto-load voucher if opened via QR link
+  if (p.voucher) {
+    currentSig = p.sig || "";
+    document.getElementById("voucherInput").value = p.voucher;
+
+    // remove query params (prevents repeat on refresh)
+    history.replaceState({}, "", window.location.pathname);
+
+    // load
+    loadVoucher();
+  } else if (p.dt) {
+    // remove dt query param too
+    history.replaceState({}, "", window.location.pathname);
+    alert("✅ Device paired successfully!");
+  }
+});
 </script>
 </body>
 </html>
