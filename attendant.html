@@ -139,7 +139,10 @@
   <div class="box" id="voucherInfo" style="display:none;">
     <h3 style="margin:0 0 8px 0;">Voucher Details</h3>
     <div id="voucherData"></div>
+
+    <!-- ✅ We will auto-scroll to this after dispense -->
     <div id="statusMsg"></div>
+
     <button id="dispenseBtn" class="btn-green" onclick="validateAndDispense()" style="display:none;">
       ✅ Dispense Fuel
     </button>
@@ -224,16 +227,21 @@ function niceFuel(ft){
   return "Petrol";
 }
 
+/* ✅ Smooth scroll helper */
+function scrollToStatus() {
+  const el = document.getElementById("statusMsg");
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
 /* ---------------- Parse voucher/sig from text ---------------- */
 function parseVoucherFromText(text) {
   const raw = (text || "").trim();
   if (!raw) return { voucher: "", sig: "" };
 
-  // If QR is just a bare voucher id (hex-ish), accept it
   const hexish = /^[a-f0-9]{8,64}$/i;
   if (hexish.test(raw)) return { voucher: raw, sig: "" };
 
-  // Try full URL
   try {
     const u = new URL(raw);
     return {
@@ -242,7 +250,6 @@ function parseVoucherFromText(text) {
     };
   } catch {}
 
-  // Try relative URL
   try {
     const u2 = new URL(window.location.origin + (raw.startsWith("/") ? raw : ("/" + raw)));
     return {
@@ -251,7 +258,6 @@ function parseVoucherFromText(text) {
     };
   } catch {}
 
-  // Manual extraction as fallback
   const mV = raw.match(/voucher=([a-zA-Z0-9_-]+)/);
   const mS = raw.match(/sig=([a-zA-Z0-9_-]+)/);
   if (mV) return { voucher: mV[1], sig: mS ? mS[1] : "" };
@@ -268,7 +274,6 @@ async function loadVoucher() {
   const parsed = parseVoucherFromText(raw);
   const id = parsed.voucher;
 
-  // only update sig if found (don’t erase existing)
   if (parsed.sig) currentSig = parsed.sig;
 
   if (!id) return alert("Voucher ID missing");
@@ -309,16 +314,20 @@ async function loadVoucher() {
     const used = !!v.used || st === "used";
 
     if (st === "paid" && !used) {
-      if (!getDeviceToken()) { msg.innerHTML = "❌ Device not paired. Scan Owner QR."; return; }
-      if (!currentSig) { msg.innerHTML = "❌ Signature missing. Scan QR again (must contain &sig=...)."; return; }
+      if (!getDeviceToken()) { msg.innerHTML = "❌ Device not paired. Scan Owner QR."; scrollToStatus(); return; }
+      if (!currentSig) { msg.innerHTML = "❌ Signature missing. Scan QR again (must contain &sig=...)."; scrollToStatus(); return; }
+
       msg.innerHTML = "✅ Ready to dispense.";
       btn.style.display = "block";
       btn.disabled = false;
       btn.textContent = "✅ Dispense Fuel";
+      scrollToStatus();
     } else if (used) {
       msg.innerHTML = "⚠️ Voucher already used.";
+      scrollToStatus();
     } else {
       msg.innerHTML = "⏳ Payment pending or failed.";
+      scrollToStatus();
     }
   } catch (e) {
     alert(e.message);
@@ -332,6 +341,7 @@ async function validateAndDispense() {
 
   btn.disabled = true;
   btn.textContent = "⏳ Validating...";
+  scrollToStatus();
 
   try {
     const res = await fetch(
@@ -346,17 +356,27 @@ async function validateAndDispense() {
 
     if (data.already_used) {
       msg.innerHTML = `⚠️ Already used. (${fuel}, ${data.litres} L)`;
-      btn.textContent = "✔️ Used";
-    } else {
-      msg.innerHTML = `✅ Dispensed: <b>${fuel}</b> • <b>${data.litres} L</b>`;
-      btn.textContent = "✔️ Dispensed";
+      btn.textContent = "✔ Done";
+      btn.disabled = true;
+      scrollToStatus();
+      await loadVoucher();
+      return;
     }
 
-    document.getElementById("voucherInput").value = currentVoucherId;
+    // ✅ Success
+    msg.innerHTML = `✅ Dispensed: <b>${fuel}</b> • <b>${data.litres} L</b>`;
+    scrollToStatus();
+
+    // ✅ Update UI: show Done + keep disabled
+    btn.textContent = "✔ Done";
+    btn.disabled = true;
+
+    // Refresh voucher UI to show USED status
     await loadVoucher();
 
   } catch (e) {
     msg.innerHTML = `❌ ${e.message}`;
+    scrollToStatus();
     btn.disabled = false;
     btn.textContent = "✅ Dispense Fuel";
   }
@@ -398,8 +418,6 @@ async function startScan() {
       const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
       if (code && code.data) {
         const parsed = parseVoucherFromQR(code.data);
-
-        // ✅ Accept voucher-only OR full link (sig optional)
         if (parsed.voucher) {
           if (parsed.sig) currentSig = parsed.sig;
           document.getElementById("voucherInput").value = parsed.voucher;
@@ -432,20 +450,15 @@ function stopScan() {
 window.addEventListener("load", () => {
   const p = getParams();
 
-  // Pairing via owner QR
   if (p.dt) {
     saveDeviceToken(p.dt);
   }
   setPairState();
 
-  // Auto-load voucher if opened via QR link
   if (p.voucher) {
     if (p.sig) currentSig = p.sig;
     document.getElementById("voucherInput").value = p.voucher;
-
-    // remove query params (prevents repeat on refresh)
     history.replaceState({}, "", window.location.pathname);
-
     loadVoucher();
   } else if (p.dt) {
     history.replaceState({}, "", window.location.pathname);
