@@ -42,20 +42,22 @@ class UserDB(Base):
     name = Column(String, nullable=True)
     created_at = Column(DateTime)
 
-    # Wallet balance (INR)
+    # ✅ Wallet balance (INR)
     wallet_balance = Column(Float, default=0.0)
 
-    # ✅ Persisted defaults / last-used (so data survives logout & device change)
-    default_vehicle_id = Column(String, nullable=True)
+    # ✅ Persist defaults server-side
     last_bunk = Column(String, nullable=True)
     last_amount = Column(Float, nullable=True)
+    last_fuel_type = Column(String, nullable=True)   # PETROL/DIESEL/CNG/EV
     last_vehicle_type = Column(String, nullable=True)
     last_vehicle_no = Column(String, nullable=True)
-    last_fuel_type = Column(String, nullable=True)  # PETROL/DIESEL/CNG/EV
+
+    # ✅ Default vehicle saved server-side
+    default_vehicle_id = Column(String, nullable=True)
 
 
-class CustomerVehicleDB(Base):
-    __tablename__ = "customer_vehicles"
+class VehicleDB(Base):
+    __tablename__ = "vehicles"
     id = Column(String, primary_key=True, index=True)  # veh_xxx
     user_id = Column(Integer, index=True)
     vehicle_type = Column(String)
@@ -86,10 +88,10 @@ class VoucherDB(Base):
     vehicle_type = Column(String, nullable=True)
     vehicle_no = Column(String, nullable=True)
 
-    # How voucher was paid
+    # ✅ How voucher was paid
     pay_method = Column(String, nullable=True)  # "razorpay" or "wallet"
 
-    # Fuel type
+    # ✅ Fuel type
     fuel_type = Column(String, nullable=True)  # PETROL/DIESEL/CNG/EV
 
 
@@ -166,7 +168,7 @@ def _qr_secret() -> bytes:
 
 
 def sign_voucher_qr(voucher: VoucherDB) -> str:
-    # Signature stable and based on voucher fields
+    # Keep signature stable/backward compatible
     created = voucher.created_at.replace(tzinfo=None).isoformat(timespec="seconds")
     msg = f"{voucher.id}|{voucher.bunk_id}|{voucher.amount:.2f}|{created}".encode("utf-8")
     return hmac.new(_qr_secret(), msg, hashlib.sha256).hexdigest()
@@ -225,22 +227,24 @@ def on_startup():
     # SQLite schema patch for older dev DB
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         with engine.begin() as conn:
+            # users wallet/defaults
             cols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(users)")).fetchall()]
             if "wallet_balance" not in cols:
                 conn.execute(sql_text("ALTER TABLE users ADD COLUMN wallet_balance FLOAT DEFAULT 0"))
-            if "default_vehicle_id" not in cols:
-                conn.execute(sql_text("ALTER TABLE users ADD COLUMN default_vehicle_id VARCHAR"))
             if "last_bunk" not in cols:
                 conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_bunk VARCHAR"))
             if "last_amount" not in cols:
                 conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_amount FLOAT"))
+            if "last_fuel_type" not in cols:
+                conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_fuel_type VARCHAR"))
             if "last_vehicle_type" not in cols:
                 conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_vehicle_type VARCHAR"))
             if "last_vehicle_no" not in cols:
                 conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_vehicle_no VARCHAR"))
-            if "last_fuel_type" not in cols:
-                conn.execute(sql_text("ALTER TABLE users ADD COLUMN last_fuel_type VARCHAR"))
+            if "default_vehicle_id" not in cols:
+                conn.execute(sql_text("ALTER TABLE users ADD COLUMN default_vehicle_id VARCHAR"))
 
+            # vouchers extra cols
             vcols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(vouchers)")).fetchall()]
             if "vehicle_type" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_type VARCHAR"))
@@ -252,7 +256,6 @@ def on_startup():
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN pay_method VARCHAR"))
             if "fuel_type" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN fuel_type VARCHAR"))
-# -----------------------------------
 
 
 # ----- Razorpay setup -----
@@ -311,11 +314,10 @@ def _normalize_fuel_type(ft: str | None) -> str:
     return ft2 if ft2 in allowed else "PETROL"
 
 
-def _norm_vehicle_no(x: str | None) -> str | None:
-    if not x:
+def _norm_vehicle_no(v: str | None) -> str | None:
+    if not v:
         return None
-    y = "".join(str(x).upper().split())
-    return y or None
+    return "".join(str(v).upper().split())
 
 
 # -------- Pydantic models --------
@@ -326,6 +328,7 @@ class CreateVoucher(BaseModel):
     user_id: int | None = None
     vehicle_type: str | None = None
     vehicle_no: str | None = None
+
     pay_method: str | None = "razorpay"  # "razorpay" or "wallet"
     fuel_type: str | None = "PETROL"
 
@@ -341,13 +344,13 @@ class LoginResponse(BaseModel):
     name: str | None = None
     wallet_balance: float
 
-    # ✅ persisted defaults
-    default_vehicle_id: str | None = None
+    # ✅ defaults returned on login
     last_bunk: str | None = None
     last_amount: float | None = None
+    last_fuel_type: str | None = None
     last_vehicle_type: str | None = None
     last_vehicle_no: str | None = None
-    last_fuel_type: str | None = None
+    default_vehicle_id: str | None = None
 
 
 class RegisterDeviceRequest(BaseModel):
@@ -360,21 +363,25 @@ class WalletTopupCreate(BaseModel):
     amount: float
 
 
-class UpdateUserDefaults(BaseModel):
+class UserUpdate(BaseModel):
     user_id: int
-    name: str | None = None
-    default_vehicle_id: str | None = None
     last_bunk: str | None = None
     last_amount: float | None = None
+    last_fuel_type: str | None = None
     last_vehicle_type: str | None = None
     last_vehicle_no: str | None = None
-    last_fuel_type: str | None = None
+    default_vehicle_id: str | None = None
 
 
-class AddVehicleReq(BaseModel):
+class VehicleAdd(BaseModel):
     user_id: int
     vehicle_type: str
     vehicle_no: str
+
+
+class VehicleSetDefault(BaseModel):
+    user_id: int
+    vehicle_id: str
 # --------------------------------
 
 
@@ -385,27 +392,22 @@ def health():
 
 @app.post("/login", response_model=LoginResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
-    phone = (req.phone or "").strip()
-    if not phone:
-        raise HTTPException(status_code=400, detail="Phone required")
-
-    user = db.query(UserDB).filter(UserDB.phone == phone).first()
+    user = db.query(UserDB).filter(UserDB.phone == req.phone).first()
     if not user:
         user = UserDB(
-            phone=phone,
+            phone=req.phone,
             name=req.name,
             created_at=datetime.datetime.utcnow(),
             wallet_balance=0.0,
             last_bunk="BUNK-1",
-            last_amount=300.0,
             last_fuel_type="PETROL",
         )
         db.add(user)
         db.commit()
         db.refresh(user)
     else:
-        # Update name if provided and currently empty
-        if req.name and (not user.name):
+        # update name if provided
+        if req.name and (not user.name or user.name.strip() == ""):
             user.name = req.name
             db.commit()
 
@@ -414,41 +416,33 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         phone=user.phone,
         name=user.name,
         wallet_balance=float(user.wallet_balance or 0.0),
-        default_vehicle_id=user.default_vehicle_id,
         last_bunk=user.last_bunk,
         last_amount=user.last_amount,
+        last_fuel_type=_normalize_fuel_type(user.last_fuel_type),
         last_vehicle_type=user.last_vehicle_type,
         last_vehicle_no=user.last_vehicle_no,
-        last_fuel_type=_normalize_fuel_type(user.last_fuel_type),
+        default_vehicle_id=user.default_vehicle_id,
     )
 
 
 @app.post("/user/update")
-def user_update(req: UpdateUserDefaults, db: Session = Depends(get_db)):
+def user_update(req: UserUpdate, db: Session = Depends(get_db)):
     u = db.query(UserDB).filter(UserDB.id == req.user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
 
-    if req.name is not None:
-        u.name = req.name.strip() or u.name
-
-    if req.default_vehicle_id is not None:
-        u.default_vehicle_id = req.default_vehicle_id or None
-
     if req.last_bunk is not None:
         u.last_bunk = req.last_bunk
-
     if req.last_amount is not None:
         u.last_amount = float(req.last_amount)
-
-    if req.last_vehicle_type is not None:
-        u.last_vehicle_type = req.last_vehicle_type or None
-
-    if req.last_vehicle_no is not None:
-        u.last_vehicle_no = _norm_vehicle_no(req.last_vehicle_no)
-
     if req.last_fuel_type is not None:
         u.last_fuel_type = _normalize_fuel_type(req.last_fuel_type)
+    if req.last_vehicle_type is not None:
+        u.last_vehicle_type = req.last_vehicle_type
+    if req.last_vehicle_no is not None:
+        u.last_vehicle_no = _norm_vehicle_no(req.last_vehicle_no)
+    if req.default_vehicle_id is not None:
+        u.default_vehicle_id = req.default_vehicle_id
 
     db.commit()
     return {"ok": True}
@@ -459,21 +453,22 @@ def user_vehicles(user_id: int, db: Session = Depends(get_db)):
     u = db.query(UserDB).filter(UserDB.id == user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
-    rows = db.query(CustomerVehicleDB).filter(CustomerVehicleDB.user_id == user_id).order_by(CustomerVehicleDB.created_at.desc()).all()
+
+    vs = db.query(VehicleDB).filter(VehicleDB.user_id == user_id).order_by(VehicleDB.created_at.desc()).all()
     out = []
-    for r in rows:
+    for v in vs:
         out.append({
-            "id": r.id,
-            "type": r.vehicle_type,
-            "no": r.vehicle_no,
-            "created_at": r.created_at,
-            "is_default": (u.default_vehicle_id == r.id),
+            "id": v.id,
+            "vehicle_type": v.vehicle_type,
+            "vehicle_no": v.vehicle_no,
+            "created_at": v.created_at,
+            "is_default": (u.default_vehicle_id == v.id),
         })
-    return {"default_vehicle_id": u.default_vehicle_id, "vehicles": out}
+    return out
 
 
 @app.post("/user/vehicles/add")
-def user_vehicles_add(req: AddVehicleReq, db: Session = Depends(get_db)):
+def user_vehicle_add(req: VehicleAdd, db: Session = Depends(get_db)):
     u = db.query(UserDB).filter(UserDB.id == req.user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
@@ -482,71 +477,72 @@ def user_vehicles_add(req: AddVehicleReq, db: Session = Depends(get_db)):
     if not vno or len(vno) < 6:
         raise HTTPException(status_code=400, detail="Invalid vehicle number")
 
-    vtype = (req.vehicle_type or "").strip()
-    if not vtype:
-        raise HTTPException(status_code=400, detail="Vehicle type required")
-
-    # avoid duplicates per user
-    exists = db.query(CustomerVehicleDB).filter(
-        CustomerVehicleDB.user_id == req.user_id,
-        CustomerVehicleDB.vehicle_no == vno
-    ).first()
-    if exists:
-        return {"ok": True, "vehicle_id": exists.id, "default_vehicle_id": u.default_vehicle_id}
+    # prevent duplicates for the same user
+    dup = db.query(VehicleDB).filter(VehicleDB.user_id == req.user_id, VehicleDB.vehicle_no == vno).first()
+    if dup:
+        return {"ok": True, "vehicle_id": dup.id, "duplicate": True}
 
     vid = "veh_" + uuid.uuid4().hex[:10]
-    db.add(CustomerVehicleDB(
+    v = VehicleDB(
         id=vid,
         user_id=req.user_id,
-        vehicle_type=vtype,
+        vehicle_type=req.vehicle_type,
         vehicle_no=vno,
         created_at=datetime.datetime.utcnow(),
-    ))
+    )
+    db.add(v)
 
-    # set default if none
+    # set first vehicle as default automatically
     if not u.default_vehicle_id:
         u.default_vehicle_id = vid
+        # also set last vehicle fields
+        u.last_vehicle_type = req.vehicle_type
+        u.last_vehicle_no = vno
 
     db.commit()
-    return {"ok": True, "vehicle_id": vid, "default_vehicle_id": u.default_vehicle_id}
+    return {"ok": True, "vehicle_id": vid}
 
 
-@app.post("/user/vehicles/default")
-def user_vehicles_default(user_id: int, vehicle_id: str, db: Session = Depends(get_db)):
-    u = db.query(UserDB).filter(UserDB.id == user_id).first()
+@app.post("/user/vehicles/set-default")
+def user_vehicle_set_default(req: VehicleSetDefault, db: Session = Depends(get_db)):
+    u = db.query(UserDB).filter(UserDB.id == req.user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
-    v = db.query(CustomerVehicleDB).filter(CustomerVehicleDB.id == vehicle_id, CustomerVehicleDB.user_id == user_id).first()
+
+    v = db.query(VehicleDB).filter(VehicleDB.id == req.vehicle_id, VehicleDB.user_id == req.user_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Vehicle not found")
-    u.default_vehicle_id = vehicle_id
-    # also update last vehicle fields for convenience
+
+    u.default_vehicle_id = v.id
     u.last_vehicle_type = v.vehicle_type
     u.last_vehicle_no = v.vehicle_no
     db.commit()
     return {"ok": True}
 
 
-@app.delete("/user/vehicles/delete")
-def user_vehicles_delete(user_id: int, vehicle_id: str, db: Session = Depends(get_db)):
+@app.delete("/user/vehicles/{vehicle_id}")
+def user_vehicle_delete(vehicle_id: str, user_id: int, db: Session = Depends(get_db)):
     u = db.query(UserDB).filter(UserDB.id == user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
-    v = db.query(CustomerVehicleDB).filter(CustomerVehicleDB.id == vehicle_id, CustomerVehicleDB.user_id == user_id).first()
+
+    v = db.query(VehicleDB).filter(VehicleDB.id == vehicle_id, VehicleDB.user_id == user_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Vehicle not found")
 
     db.delete(v)
-
-    # if deleted default, pick latest remaining
-    if u.default_vehicle_id == vehicle_id:
-        u.default_vehicle_id = None
-        remaining = db.query(CustomerVehicleDB).filter(CustomerVehicleDB.user_id == user_id).order_by(CustomerVehicleDB.created_at.desc()).first()
-        if remaining:
-            u.default_vehicle_id = remaining.id
-
     db.commit()
-    return {"ok": True, "default_vehicle_id": u.default_vehicle_id}
+
+    # if deleted default, pick next newest as default
+    if u.default_vehicle_id == vehicle_id:
+        nextv = db.query(VehicleDB).filter(VehicleDB.user_id == user_id).order_by(VehicleDB.created_at.desc()).first()
+        u.default_vehicle_id = nextv.id if nextv else None
+        if nextv:
+            u.last_vehicle_type = nextv.vehicle_type
+            u.last_vehicle_no = nextv.vehicle_no
+        db.commit()
+
+    return {"ok": True}
 
 
 @app.get("/wallet/balance")
@@ -657,15 +653,15 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     pay_method = (req.pay_method or "razorpay").lower().strip()
     fuel_type = _normalize_fuel_type(req.fuel_type)
 
-    # Persist last-used defaults on user (so new login loads it)
+    # ✅ Persist last selections to user
     if req.user_id:
-        u = db.query(UserDB).filter(UserDB.id == req.user_id).first()
-        if u:
-            u.last_bunk = req.bunk_id
-            u.last_amount = float(amount)
-            u.last_vehicle_type = req.vehicle_type or u.last_vehicle_type
-            u.last_vehicle_no = _norm_vehicle_no(req.vehicle_no) or u.last_vehicle_no
-            u.last_fuel_type = fuel_type
+        u0 = db.query(UserDB).filter(UserDB.id == req.user_id).first()
+        if u0:
+            u0.last_bunk = req.bunk_id
+            u0.last_amount = float(amount)
+            u0.last_fuel_type = fuel_type
+            u0.last_vehicle_type = req.vehicle_type
+            u0.last_vehicle_no = _norm_vehicle_no(req.vehicle_no)
 
     # ✅ Wallet path
     if pay_method == "wallet":
@@ -770,6 +766,14 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     }
 
 
+@app.get("/voucher-status/{voucher_id}")
+def voucher_status(voucher_id: str, db: Session = Depends(get_db)):
+    v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
+    if not v:
+        raise HTTPException(status_code=404, detail="Voucher not found")
+    return {"status": v.status, "used": bool(v.used), "fuel_type": _normalize_fuel_type(v.fuel_type)}
+
+
 @app.get("/voucher/{voucher_id}")
 def get_voucher(voucher_id: str, db: Session = Depends(get_db)):
     v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
@@ -784,29 +788,11 @@ def get_voucher(voucher_id: str, db: Session = Depends(get_db)):
     d.pop("_sa_instance_state", None)
     d["fuel_type"] = _normalize_fuel_type(d.get("fuel_type"))
 
-    return {**d, "user_phone": user.phone if user else None, "user_name": user.name if user else None}
-
-
-@app.get("/voucher-status/{voucher_id}")
-def voucher_status(voucher_id: str, db: Session = Depends(get_db)):
-    v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
-    if not v:
-        raise HTTPException(status_code=404, detail="Voucher not found")
-    st = (v.status or "").lower()
-    used = bool(v.used) or st == "used"
-    return {"status": v.status, "used": used, "fuel_type": _normalize_fuel_type(v.fuel_type), "bunk_id": v.bunk_id}
-
-
-# ✅ NEW: allow customer to fetch QR signature for ANY of their vouchers (so old vouchers can show QR on new device)
-@app.get("/voucher-qr/{voucher_id}")
-def voucher_qr(voucher_id: str, user_id: int, db: Session = Depends(get_db)):
-    v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
-    if not v:
-        raise HTTPException(status_code=404, detail="Voucher not found")
-    if not v.user_id or v.user_id != user_id:
-        raise HTTPException(status_code=403, detail="Not allowed")
-    sig = sign_voucher_qr(v)
-    return {"voucher_id": v.id, "sig": sig, "bunk_id": v.bunk_id, "fuel_type": _normalize_fuel_type(v.fuel_type), "status": v.status, "used": bool(v.used)}
+    return {
+        **d,
+        "user_phone": user.phone if user else None,
+        "user_name": user.name if user else None,
+    }
 
 
 # ------------------ DEVICE PAIRING (OWNER) ------------------
@@ -924,6 +910,7 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
     event = payload.get("event")
     event_id = payload.get("event_id") or payload.get("id")
 
+    # idempotency
     if event_id:
         already = db.query(WebhookEventDB).filter(WebhookEventDB.event_id == event_id).first()
         if already:
@@ -938,6 +925,7 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 
     if event in ("payment.captured", "payment.failed"):
         if order_id:
+            # 1) wallet topup
             topup = db.query(WalletTopupDB).filter(WalletTopupDB.razorpay_order_id == order_id).first()
             if topup:
                 if payment_id:
@@ -955,6 +943,7 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
                 db.commit()
                 return {"ok": True, "type": "wallet_topup"}
 
+            # 2) voucher order
             v = db.query(VoucherDB).filter(VoucherDB.razorpay_order_id == order_id).first()
             if v:
                 if payment_id:
