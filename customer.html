@@ -801,6 +801,18 @@
 <script>
   const API = window.location.origin;
 
+  // ---------------- Compact QR helpers ----------------
+  // QR payload is SMALL: "voucherId|sig"
+  // If sig missing, payload becomes "voucherId|"
+  function makeCompactPayload(voucherId, sig){
+    return `${voucherId}|${sig || ""}`;
+  }
+  function makeFullAttendantLink(voucherId, sig){
+    return sig
+      ? `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`
+      : `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}`;
+  }
+
   // ---------------- Session ----------------
   function getSession(){
     try { return JSON.parse(localStorage.getItem("FUELSKIP_SESSION") || "null"); }
@@ -840,7 +852,6 @@
       pill.textContent = "Not logged in";
       sub.textContent = "Login to save & reuse details.";
       setNavEnabled(false);
-      // keep Welcome active by default
       return;
     }
     pill.textContent = `Logged: ${s.phone}`;
@@ -853,7 +864,6 @@
     window.__myVouchers = [];
     toast("Logged out");
     showSection("welcome");
-    // clear UI panels
     document.getElementById("voucherList").innerHTML = `<div class="muted">Login to view vouchers.</div>`;
     document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
   }
@@ -876,7 +886,6 @@
 
     setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "" });
 
-    // apply defaults from server (if provided)
     if(data.last_fuel_type) document.getElementById("fuelType").value = data.last_fuel_type;
     if(data.last_amount) document.getElementById("amountInput").value = data.last_amount;
 
@@ -914,7 +923,6 @@
     const navBtn = document.getElementById(navId);
     if(navBtn) navBtn.classList.add("active");
 
-    // quick refresh on open
     if(key === "wallet") loadWallet();
     if(key === "vouchers") loadMyVouchers(false);
     if(key === "vehicles") loadVehicles();
@@ -1238,9 +1246,11 @@
       const sig = v.qr_sig || "";
       const id = v.id;
 
-      const qrLink = sig
-        ? `${API}/attendant.html?voucher=${encodeURIComponent(id)}&sig=${encodeURIComponent(sig)}`
-        : `${API}/attendant.html?voucher=${encodeURIComponent(id)}`;
+      // Full URL (for copy/share)
+      const qrLink = makeFullAttendantLink(id, sig);
+
+      // Compact payload (for QR scan)
+      const compact = makeCompactPayload(id, sig);
 
       const metaParts = [
         `Bunk: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id})`,
@@ -1267,6 +1277,10 @@
             <button class="smallBtn" onclick="copyText('${qrLink.replace(/'/g,"")}')">Copy QR Link</button>
             <button class="smallBtn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
           </div>
+
+          <div class="muted" style="font-size:12px;margin-top:6px;">
+            QR payload: <b>${compact}</b>
+          </div>
         </div>
 
         <div class="qrBox">
@@ -1278,7 +1292,8 @@
 
       const qrEl = item.querySelector(`#qr_${CSS.escape(id)}`);
       qrEl.innerHTML = "";
-      new QRCode(qrEl, { text: qrLink, width: 170, height: 170 });
+      // IMPORTANT: QR now uses compact payload
+      new QRCode(qrEl, { text: compact, width: 170, height: 170 });
     });
 
     if(rebuildLatest){
@@ -1323,9 +1338,8 @@
       }catch(e){}
     }
 
-    const qrLink = sig
-      ? `${API}/attendant.html?voucher=${encodeURIComponent(id)}&sig=${encodeURIComponent(sig)}`
-      : `${API}/attendant.html?voucher=${encodeURIComponent(id)}`;
+    const qrLink = makeFullAttendantLink(id, sig);
+    const compact = makeCompactPayload(id, sig);
 
     wrap.innerHTML = `
       <div class="voucherItem" style="grid-template-columns: 1fr;">
@@ -1348,6 +1362,10 @@
             <button class="btn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
           </div>
 
+          <div class="muted" style="font-size:12px;margin-top:8px;">
+            QR payload: <b>${compact}</b>
+          </div>
+
           <div style="margin-top:12px;" class="qrBox">
             <div class="muted" style="font-size:12px;font-weight:900;margin-bottom:6px;">Show this to attendant</div>
             <div class="qrCanvas" id="latestQR"></div>
@@ -1358,7 +1376,8 @@
 
     const qrEl = document.getElementById("latestQR");
     qrEl.innerHTML = "";
-    new QRCode(qrEl, { text: qrLink, width: 190, height: 190 });
+    // IMPORTANT: Latest QR now uses compact payload
+    new QRCode(qrEl, { text: compact, width: 190, height: 190 });
   }
 
   function copyText(txt){
@@ -1529,7 +1548,6 @@
   }
 
   window.addEventListener("load", async ()=>{
-    // Splash visible first, then hide
     setTimeout(()=> document.getElementById("splash").classList.add("hidden"), 650);
 
     updateSessionUI();
@@ -1545,7 +1563,6 @@
       showSection("welcome");
     }
 
-    // save defaults when changed (only if logged in)
     document.getElementById("fuelType").addEventListener("change", async (e)=>{
       await saveUserDefaults({ last_fuel_type: e.target.value });
       loadWallet();
