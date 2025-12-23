@@ -203,8 +203,8 @@ function getParams() {
   const p = new URLSearchParams(window.location.search);
   return {
     dt: p.get("dt") || "",
-    voucher: p.get("voucher") || "",
-    sig: p.get("sig") || ""
+    voucher: p.get("voucher") || p.get("v") || p.get("id") || "",
+    sig: p.get("sig") || p.get("s") || ""
   };
 }
 
@@ -226,36 +226,49 @@ function niceFuel(ft){
 
 /* ---------------- Parse voucher/sig from text ---------------- */
 function parseVoucherFromText(text) {
-  // 1) Try URL
+  const raw = (text || "").trim();
+  if (!raw) return { voucher: "", sig: "" };
+
+  // If QR is just a bare voucher id (hex-ish), accept it
+  const hexish = /^[a-f0-9]{8,64}$/i;
+  if (hexish.test(raw)) return { voucher: raw, sig: "" };
+
+  // Try full URL
   try {
-    const u = new URL(text);
+    const u = new URL(raw);
     return {
-      voucher: u.searchParams.get("voucher") || "",
-      sig: u.searchParams.get("sig") || ""
+      voucher: u.searchParams.get("voucher") || u.searchParams.get("v") || u.searchParams.get("id") || "",
+      sig: u.searchParams.get("sig") || u.searchParams.get("s") || ""
     };
   } catch {}
 
-  // 2) Try query-only like /attendant.html?voucher=...&sig=...
+  // Try relative URL
   try {
-    const u2 = new URL(window.location.origin + (text.startsWith("/") ? text : ("/" + text)));
+    const u2 = new URL(window.location.origin + (raw.startsWith("/") ? raw : ("/" + raw)));
     return {
-      voucher: u2.searchParams.get("voucher") || "",
-      sig: u2.searchParams.get("sig") || ""
+      voucher: u2.searchParams.get("voucher") || u2.searchParams.get("v") || u2.searchParams.get("id") || "",
+      sig: u2.searchParams.get("sig") || u2.searchParams.get("s") || ""
     };
   } catch {}
 
-  // 3) Otherwise treat as ID
-  return { voucher: (text || "").trim(), sig: "" };
+  // Manual extraction as fallback
+  const mV = raw.match(/voucher=([a-zA-Z0-9_-]+)/);
+  const mS = raw.match(/sig=([a-zA-Z0-9_-]+)/);
+  if (mV) return { voucher: mV[1], sig: mS ? mS[1] : "" };
+
+  return { voucher: "", sig: "" };
 }
+function parseVoucherFromQR(text){ return parseVoucherFromText(text); }
 
 /* ---------------- Load voucher ---------------- */
 async function loadVoucher() {
   const raw = document.getElementById("voucherInput").value.trim();
   if (!raw) return alert("Enter voucher ID or paste the full FuelSkip QR link");
 
-  // If user pasted full link, extract voucher/sig
   const parsed = parseVoucherFromText(raw);
   const id = parsed.voucher;
+
+  // only update sig if found (don’t erase existing)
   if (parsed.sig) currentSig = parsed.sig;
 
   if (!id) return alert("Voucher ID missing");
@@ -296,8 +309,8 @@ async function loadVoucher() {
     const used = !!v.used || st === "used";
 
     if (st === "paid" && !used) {
-      if (!currentSig) { msg.innerHTML = "❌ Missing signature. Scan voucher QR or paste QR link."; return; }
       if (!getDeviceToken()) { msg.innerHTML = "❌ Device not paired. Scan Owner QR."; return; }
+      if (!currentSig) { msg.innerHTML = "❌ Signature missing. Scan QR again (must contain &sig=...)."; return; }
       msg.innerHTML = "✅ Ready to dispense.";
       btn.style.display = "block";
       btn.disabled = false;
@@ -339,7 +352,6 @@ async function validateAndDispense() {
       btn.textContent = "✔️ Dispensed";
     }
 
-    // refresh voucher view (shows USED)
     document.getElementById("voucherInput").value = currentVoucherId;
     await loadVoucher();
 
@@ -353,12 +365,6 @@ async function validateAndDispense() {
 /* ---------------- In-page QR scanner ---------------- */
 let scanStream = null;
 let scanLoopId = null;
-
-function parseVoucherFromQR(text) {
-  // Expect full URL like:
-  // https://.../attendant.html?voucher=...&sig=...
-  return parseVoucherFromText(text);
-}
 
 async function startScan() {
   if (!getDeviceToken()) {
@@ -392,8 +398,10 @@ async function startScan() {
       const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
       if (code && code.data) {
         const parsed = parseVoucherFromQR(code.data);
-        if (parsed.voucher && parsed.sig) {
-          currentSig = parsed.sig;
+
+        // ✅ Accept voucher-only OR full link (sig optional)
+        if (parsed.voucher) {
+          if (parsed.sig) currentSig = parsed.sig;
           document.getElementById("voucherInput").value = parsed.voucher;
           stopScan();
           loadVoucher();
@@ -432,16 +440,14 @@ window.addEventListener("load", () => {
 
   // Auto-load voucher if opened via QR link
   if (p.voucher) {
-    currentSig = p.sig || "";
+    if (p.sig) currentSig = p.sig;
     document.getElementById("voucherInput").value = p.voucher;
 
     // remove query params (prevents repeat on refresh)
     history.replaceState({}, "", window.location.pathname);
 
-    // load
     loadVoucher();
   } else if (p.dt) {
-    // remove dt query param too
     history.replaceState({}, "", window.location.pathname);
     alert("✅ Device paired successfully!");
   }
