@@ -813,6 +813,25 @@
       : `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}`;
   }
 
+  async function ensureVoucherSig(v){
+    if (v && v.qr_sig) return v.qr_sig;
+    try{
+      const s = getSession();
+      if (!s || !s.token || !v || !v.id) return "";
+      const res = await fetch(`${API}/voucher/${encodeURIComponent(v.id)}`, {
+        headers: { "X-USER-TOKEN": s.token },
+        cache: "no-store"
+      });
+      const data = await res.json();
+      if (res.ok && data && data.qr_sig){
+        v.qr_sig = data.qr_sig;
+        return v.qr_sig;
+      }
+    }catch(e){}
+    return (v && v.qr_sig) ? v.qr_sig : "";
+  }
+
+
   // ---------------- Session ----------------
   function getSession(){
     try { return JSON.parse(localStorage.getItem("FUELSKIP_SESSION") || "null"); }
@@ -1239,7 +1258,12 @@
       return [];
     }
 
-    list.innerHTML = "";
+    
+    // Ensure each voucher has signature for compact QR (voucher|sig)
+    try{
+      await Promise.all((data||[]).filter(v => v && v.id && !v.qr_sig).map(v => ensureVoucherSig(v)));
+    }catch(e){}
+list.innerHTML = "";
     data.forEach(v=>{
       const status = v.status || "pending";
       const used = !!v.used || status==="used";
