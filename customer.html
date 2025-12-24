@@ -1277,10 +1277,6 @@
             <button class="smallBtn" onclick="copyText('${qrLink.replace(/'/g,"")}')">Copy QR Link</button>
             <button class="smallBtn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
           </div>
-
-          <div class="muted" style="font-size:12px;margin-top:6px;">
-            QR payload: <b>${compact}</b>
-          </div>
         </div>
 
         <div class="qrBox">
@@ -1292,7 +1288,6 @@
 
       const qrEl = item.querySelector(`#qr_${CSS.escape(id)}`);
       qrEl.innerHTML = "";
-      // IMPORTANT: QR now uses compact payload
       new QRCode(qrEl, { text: compact, width: 170, height: 170 });
     });
 
@@ -1362,10 +1357,6 @@
             <button class="btn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
           </div>
 
-          <div class="muted" style="font-size:12px;margin-top:8px;">
-            QR payload: <b>${compact}</b>
-          </div>
-
           <div style="margin-top:12px;" class="qrBox">
             <div class="muted" style="font-size:12px;font-weight:900;margin-bottom:6px;">Show this to attendant</div>
             <div class="qrCanvas" id="latestQR"></div>
@@ -1376,7 +1367,6 @@
 
     const qrEl = document.getElementById("latestQR");
     qrEl.innerHTML = "";
-    // IMPORTANT: Latest QR now uses compact payload
     new QRCode(qrEl, { text: compact, width: 190, height: 190 });
   }
 
