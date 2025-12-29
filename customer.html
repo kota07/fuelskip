@@ -404,25 +404,6 @@
     .tile .k{ font-size:12px; color:var(--muted); font-weight:900; }
     .tile .v{ font-size:18px; font-weight:1000; margin-top:4px; }
 
-    .table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:10px;
-      border-radius:16px;
-      overflow:hidden;
-      border:1px solid var(--border);
-      background:#fff;
-    }
-    .table th, .table td{
-      padding:10px;
-      font-size:13px;
-      border-bottom:1px solid var(--border);
-      text-align:left;
-      vertical-align:top;
-      font-weight:800;
-    }
-    .table th{ background:#f8fafc; color:#334155; font-weight:1000; }
-
     .hint{
       padding:10px 12px;
       border-radius:16px;
@@ -512,9 +493,6 @@
       <button id="navHome" onclick="showSection('home')" disabled>
         <span>🏠 Home</span><small>Voucher</small>
       </button>
-      <button id="navWallet" onclick="showSection('wallet')" disabled>
-        <span>💳 Wallet</span><small>Topup</small>
-      </button>
       <button id="navVouchers" onclick="showSection('vouchers')" disabled>
         <span>🎟️ Vouchers</span><small>History</small>
       </button>
@@ -550,7 +528,7 @@
     </div>
 
     <div class="hint">
-      Tip: After creating voucher, show QR instantly to attendant for scanning.
+      Tip: Create voucher before you reach bunk. Show QR to attendant for scanning.
     </div>
   </aside>
 
@@ -591,7 +569,7 @@
     <section id="secHome" class="section">
       <div class="card">
         <h2>Create Voucher</h2>
-        <div class="muted">Choose bunk + fuel type + amount/litres. Pay by wallet or Razorpay.</div>
+        <div class="muted">Choose bunk + fuel type + amount/litres. Pay securely via Razorpay.</div>
 
         <div class="grid2" style="margin-top:12px;">
           <div>
@@ -626,10 +604,7 @@
 
           <div>
             <label>Payment Method</label>
-            <select id="payMethod">
-              <option value="wallet">Wallet (fast)</option>
-              <option value="razorpay">Razorpay</option>
-            </select>
+            <input value="Razorpay" disabled />
           </div>
         </div>
 
@@ -648,45 +623,6 @@
 
         <div id="latestWrap" style="margin-top:12px;">
           <div class="muted">No voucher yet.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- WALLET -->
-    <section id="secWallet" class="section">
-      <div class="card">
-        <h2>Wallet</h2>
-        <div class="muted">Wallet reduces time at bunk (no payment screen during rush).</div>
-
-        <div class="tiles">
-          <div class="tile">
-            <div class="k">Wallet Balance</div>
-            <div class="v" id="walletBal">₹0</div>
-          </div>
-          <div class="tile">
-            <div class="k">Default Fuel</div>
-            <div class="v" id="walletFuel">—</div>
-          </div>
-          <div class="tile">
-            <div class="k">Default Bunk</div>
-            <div class="v" id="walletBunk">—</div>
-          </div>
-          <div class="tile">
-            <div class="k">Default Vehicle</div>
-            <div class="v" id="walletVeh">—</div>
-          </div>
-        </div>
-
-        <div class="grid2" style="margin-top:12px;">
-          <div>
-            <label>Topup Amount (₹)</label>
-            <input id="topupAmt" type="number" inputmode="decimal" placeholder="e.g. 1000" />
-            <div class="muted" style="margin-top:6px;">Minimum ₹50. Uses Razorpay.</div>
-          </div>
-          <div style="display:flex; align-items:flex-end; gap:10px;">
-            <button class="btn btnPrimary" style="flex:1;" onclick="topupWallet()">Topup via Razorpay</button>
-            <button class="btn" style="flex:1;" onclick="loadWallet()">Refresh</button>
-          </div>
         </div>
       </div>
     </section>
@@ -776,19 +712,13 @@
           </div>
         </div>
 
-        <div class="grid2" style="margin-top:12px;">
-          <div class="tile">
-            <div class="k">Fuel Split</div>
-            <div class="v" style="font-size:14px; font-weight:1000;" id="anFuelSplit">—</div>
-          </div>
-          <div class="tile">
-            <div class="k">Payment Split</div>
-            <div class="v" style="font-size:14px; font-weight:1000;" id="anPaySplit">—</div>
-          </div>
+        <div class="tile" style="margin-top:12px;">
+          <div class="k">Fuel Split</div>
+          <div class="v" style="font-size:14px; font-weight:1000;" id="anFuelSplit">—</div>
         </div>
 
         <div class="hint" style="margin-top:12px;">
-          Next idea: quick 1-tap topup packs (₹500 / ₹1000) before leaving home.
+          Pilot tip: Generate voucher before joining the queue to save time at peak hours.
         </div>
       </div>
     </section>
@@ -803,7 +733,6 @@
 
   // ---------------- Compact QR helpers ----------------
   // QR payload is SMALL: "voucherId|sig"
-  // If sig missing, payload becomes "voucherId|"
   function makeCompactPayload(voucherId, sig){
     return `${voucherId}|${sig || ""}`;
   }
@@ -831,7 +760,6 @@
     return (v && v.qr_sig) ? v.qr_sig : "";
   }
 
-
   // ---------------- Session ----------------
   function getSession(){
     try { return JSON.parse(localStorage.getItem("FUELSKIP_SESSION") || "null"); }
@@ -855,7 +783,7 @@
   }
 
   function setNavEnabled(isEnabled){
-    ["navHome","navWallet","navVouchers","navVehicles","navAnalytics"].forEach(id=>{
+    ["navHome","navVouchers","navVehicles","navAnalytics"].forEach(id=>{
       const b = document.getElementById(id);
       if(b) b.disabled = !isEnabled;
     });
@@ -915,7 +843,6 @@
     }
 
     await loadVehicles();
-    await loadWallet();
     await loadMyVouchers(true);
 
     toast("Login OK");
@@ -928,7 +855,6 @@
     const map = {
       welcome: "secWelcome",
       home: "secHome",
-      wallet: "secWallet",
       vouchers: "secVouchers",
       vehicles: "secVehicles",
       analytics: "secAnalytics"
@@ -942,7 +868,6 @@
     const navBtn = document.getElementById(navId);
     if(navBtn) navBtn.classList.add("active");
 
-    if(key === "wallet") loadWallet();
     if(key === "vouchers") loadMyVouchers(false);
     if(key === "vehicles") loadVehicles();
     if(key === "analytics") buildAnalytics();
@@ -1044,8 +969,6 @@
         pick.value = v.id;
       }
     });
-
-    updateWalletTilesFromVehicles(data);
   }
 
   async function addVehicle(){
@@ -1093,7 +1016,6 @@
     }
     toast("Default set");
     await loadVehicles();
-    await loadWallet();
   }
 
   async function deleteVehicle(vehicle_id){
@@ -1111,77 +1033,6 @@
     }
     toast("Deleted");
     await loadVehicles();
-    await loadWallet();
-  }
-
-  function updateWalletTilesFromVehicles(vehicleList){
-    const pick = document.getElementById("vehiclePick");
-    let def = vehicleList.find(v=>v.is_default);
-    if(def){
-      if([...pick.options].some(o=>o.value===def.id)) pick.value = def.id;
-      document.getElementById("walletVeh").textContent = def.vehicle_no;
-    } else {
-      document.getElementById("walletVeh").textContent = "—";
-    }
-  }
-
-  // ---------------- Wallet ----------------
-  async function loadWallet(){
-    const s = getSession();
-    if(!s){
-      document.getElementById("walletBal").textContent = "₹0";
-      document.getElementById("walletFuel").textContent = "—";
-      document.getElementById("walletBunk").textContent = "—";
-      document.getElementById("walletVeh").textContent = "—";
-      return;
-    }
-
-    const res = await fetch(`${API}/wallet/balance?user_id=${encodeURIComponent(s.user_id)}`, { cache:"no-store" });
-    const data = await res.json();
-    if(!res.ok){
-      document.getElementById("walletBal").textContent = "₹—";
-      return;
-    }
-    document.getElementById("walletBal").textContent = `₹${Number(data.wallet_balance||0).toLocaleString("en-IN")}`;
-
-    document.getElementById("walletFuel").textContent = document.getElementById("fuelType").value || "—";
-    const bunkOpt = document.getElementById("bunkSelect").selectedOptions[0];
-    document.getElementById("walletBunk").textContent = bunkOpt ? bunkOpt.textContent.split(" (")[0] : "—";
-  }
-
-  async function topupWallet(){
-    const s = getSession();
-    if(!s){ alert("Login first"); return; }
-    const amount = Number(document.getElementById("topupAmt").value || 0);
-    if(amount < 50){ alert("Minimum topup ₹50"); return; }
-
-    const res = await fetch(`${API}/wallet/topup/create-order`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ user_id: s.user_id, amount })
-    });
-    const data = await res.json();
-    if(!res.ok){
-      alert(data.detail || "Topup order failed");
-      return;
-    }
-
-    const options = {
-      key: data.razorpay_key_id,
-      amount: Math.round(Number(data.amount) * 100),
-      currency: "INR",
-      name: "FuelSkip Wallet Topup",
-      description: "Add money to FuelSkip wallet",
-      order_id: data.razorpay_order_id,
-      handler: function (){
-        toast("Payment done. Updating wallet...");
-        setTimeout(loadWallet, 1500);
-      },
-      theme: { color: "#4f46e5" }
-    };
-
-    const rzp = new Razorpay(options);
-    rzp.open();
   }
 
   // ---------------- Defaults save ----------------
@@ -1213,9 +1064,7 @@
     return `<span class="badge" style="background:#ecfeff;color:#155e75;border-color:#a5f3fc;">${map[x]||x}</span>`;
   }
 
-  function payChip(pm){
-    const x = (pm||"razorpay").toLowerCase();
-    if(x==="wallet") return `<span class="badge" style="background:#ecfdf5;color:#166534;border-color:#bbf7d0;">WALLET</span>`;
+  function payChip(){
     return `<span class="badge" style="background:#eef2ff;color:#3730a3;border-color:#c7d2fe;">RAZORPAY</span>`;
   }
 
@@ -1258,22 +1107,18 @@
       return [];
     }
 
-    
-    // Ensure each voucher has signature for compact QR (voucher|sig)
     try{
       await Promise.all((data||[]).filter(v => v && v.id && !v.qr_sig).map(v => ensureVoucherSig(v)));
     }catch(e){}
-list.innerHTML = "";
+
+    list.innerHTML = "";
     data.forEach(v=>{
       const status = v.status || "pending";
       const used = !!v.used || status==="used";
       const sig = v.qr_sig || "";
       const id = v.id;
 
-      // Full URL (for copy/share)
       const qrLink = makeFullAttendantLink(id, sig);
-
-      // Compact payload (for QR scan)
       const compact = makeCompactPayload(id, sig);
 
       const metaParts = [
@@ -1293,7 +1138,7 @@ list.innerHTML = "";
             <span style="font-weight:1000;">Voucher: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
-            ${payChip(v.pay_method)}
+            ${payChip()}
           </div>
           <div class="voucherMeta">${metaParts.join(" • ")}</div>
 
@@ -1367,7 +1212,7 @@ list.innerHTML = "";
             <span style="font-weight:1000;">Voucher: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
-            ${payChip(v.pay_method)}
+            ${payChip()}
           </div>
           <div class="voucherMeta">
             Bunk: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id}) •
@@ -1403,14 +1248,13 @@ list.innerHTML = "";
     card.scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
-  // ---------------- Create voucher ----------------
+  // ---------------- Create voucher (Razorpay ONLY) ----------------
   async function createVoucher(){
     const s = getSession();
     if(!s){ alert("Login first"); return; }
 
     const bunk_id = document.getElementById("bunkSelect").value;
     const fuel_type = document.getElementById("fuelType").value;
-    const pay_method = document.getElementById("payMethod").value;
 
     const amount = Number(document.getElementById("amountInput").value || 0);
     const litres = Number(document.getElementById("litresInput").value || 0);
@@ -1444,7 +1288,7 @@ list.innerHTML = "";
 
     document.getElementById("homeStatus").textContent = "Creating voucher...";
 
-    const payload = { bunk_id, user_id: s.user_id, pay_method, fuel_type, vehicle_type, vehicle_no };
+    const payload = { bunk_id, user_id: s.user_id, pay_method: "razorpay", fuel_type, vehicle_type, vehicle_no };
     if(amount>0) payload.amount = amount;
     if(litres>0 && amount<=0) payload.litres = litres;
 
@@ -1457,14 +1301,6 @@ list.innerHTML = "";
     if(!res.ok){
       document.getElementById("homeStatus").textContent = "";
       alert(data.detail || "Create failed");
-      return;
-    }
-
-    if(data.pay_method === "wallet"){
-      document.getElementById("homeStatus").textContent = "Paid by wallet ✅ Voucher ready.";
-      toast("Voucher ready (wallet)");
-      await loadWallet();
-      await loadMyVouchers(true);
       return;
     }
 
@@ -1482,7 +1318,6 @@ list.innerHTML = "";
           document.getElementById("homeStatus").textContent = "Payment done. Updating status...";
           setTimeout(async ()=>{
             await loadMyVouchers(true);
-            await loadWallet();
             document.getElementById("homeStatus").textContent = "Voucher updated ✅";
           }, 1600);
         },
@@ -1504,7 +1339,6 @@ list.innerHTML = "";
       document.getElementById("anBunk").textContent = "—";
       document.getElementById("anVeh").textContent = "—";
       document.getElementById("anFuelSplit").textContent = "—";
-      document.getElementById("anPaySplit").textContent = "—";
       return;
     }
 
@@ -1512,7 +1346,6 @@ list.innerHTML = "";
     const bunkCount = {};
     const vehCount = {};
     const fuelCount = {};
-    const payCount = {};
 
     data.forEach(v=>{
       const st = (v.status||"").toLowerCase();
@@ -1529,9 +1362,6 @@ list.innerHTML = "";
 
       const ft = (v.fuel_type||"PETROL").toUpperCase();
       fuelCount[ft] = (fuelCount[ft]||0)+1;
-
-      const pm = (v.pay_method||"razorpay").toLowerCase();
-      payCount[pm] = (payCount[pm]||0)+1;
     });
 
     const mostBunk = Object.entries(bunkCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—";
@@ -1544,9 +1374,6 @@ list.innerHTML = "";
 
     const fs = Object.entries(fuelCount).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join(" • ");
     document.getElementById("anFuelSplit").textContent = fs || "—";
-
-    const ps = Object.entries(payCount).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k.toUpperCase()}: ${v}`).join(" • ");
-    document.getElementById("anPaySplit").textContent = ps || "—";
   }
 
   // ---------------- App Init ----------------
@@ -1555,7 +1382,6 @@ list.innerHTML = "";
     const s = getSession();
     if(s){
       await loadVehicles();
-      await loadWallet();
       await loadMyVouchers(false);
     }
     toast("Refreshed");
@@ -1570,7 +1396,6 @@ list.innerHTML = "";
     const s = getSession();
     if(s){
       await loadVehicles();
-      await loadWallet();
       await loadMyVouchers(true);
       showSection("home");
     } else {
@@ -1579,12 +1404,10 @@ list.innerHTML = "";
 
     document.getElementById("fuelType").addEventListener("change", async (e)=>{
       await saveUserDefaults({ last_fuel_type: e.target.value });
-      loadWallet();
     });
 
     document.getElementById("bunkSelect").addEventListener("change", async (e)=>{
       await saveUserDefaults({ last_bunk: e.target.value });
-      loadWallet();
     });
   });
 </script>
