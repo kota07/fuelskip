@@ -1,640 +1,810 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>FuelSkip – Attendant</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{
-      --bg:#0b1220;
-      --card:#ffffff;
-      --muted:#6b7280;
-      --ok:#16a34a;
-      --warn:#f59e0b;
-      --bad:#dc2626;
-      --btn:#111827;
-      --btn2:#2563eb;
-      --chip:#e5e7eb;
-      --shadow: 0 20px 40px rgba(2,6,23,.25);
-      --radius:18px;
+    :root {
+      --bg: #0b1220;
+      --card: #ffffff;
+      --muted: #6b7280;
+      --ok: #16a34a;
+      --warn: #f59e0b;
+      --bad: #dc2626;
+      --btn: #111827;
+      --btn2: #2563eb;
+      --chip: #e5e7eb;
+      --shadow: 0 20px 40px rgba(2, 6, 23, .25);
+      --radius: 18px;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      background: radial-gradient(1200px 600px at 20% 10%, rgba(59,130,246,.22), transparent 60%),
-                  radial-gradient(1200px 600px at 90% 30%, rgba(16,185,129,.18), transparent 55%),
-                  linear-gradient(180deg, #0b1220, #070b14);
-      color:#e5e7eb;
-      padding:18px;
+
+    * {
+      box-sizing: border-box
     }
-    .wrap{max-width:560px;margin:0 auto}
-    h1{
-      margin:8px 0 16px;
-      text-align:center;
-      font-size:34px;
-      letter-spacing:.2px;
-      font-weight:900;
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(59, 130, 246, .22), transparent 60%),
+        radial-gradient(1200px 600px at 90% 30%, rgba(16, 185, 129, .18), transparent 55%),
+        linear-gradient(180deg, #0b1220, #070b14);
+      color: #e5e7eb;
+      padding: 18px;
     }
-    h1 span{opacity:.9}
-    .card{
-      background:rgba(255,255,255,.92);
-      color:#0f172a;
-      border-radius:var(--radius);
-      padding:16px;
-      box-shadow:var(--shadow);
-      margin:14px 0;
-      border:1px solid rgba(15,23,42,.08);
+
+    .wrap {
+      max-width: 560px;
+      margin: 0 auto
+    }
+
+    h1 {
+      margin: 8px 0 16px;
+      text-align: center;
+      font-size: 34px;
+      letter-spacing: .2px;
+      font-weight: 900;
+    }
+
+    h1 span {
+      opacity: .9
+    }
+
+    .card {
+      background: rgba(255, 255, 255, .92);
+      color: #0f172a;
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin: 14px 0;
+      border: 1px solid rgba(15, 23, 42, .08);
       backdrop-filter: blur(10px);
     }
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .between{justify-content:space-between}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:6px 10px;border-radius:999px;
-      background:#eef2ff;color:#1e3a8a;
-      font-weight:800;font-size:12px;
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap
     }
-    .pill.ok{background:#dcfce7;color:#14532d}
-    .pill.bad{background:#fee2e2;color:#7f1d1d}
-    .muted{color:var(--muted);font-size:13px;line-height:1.35}
-    .btn{
-      width:100%;
-      border:none;
-      border-radius:14px;
-      padding:14px 14px;
-      font-weight:900;
-      font-size:18px;
-      cursor:pointer;
-      background:var(--btn);
-      color:white;
+
+    .between {
+      justify-content: space-between
     }
-    .btn.small{width:auto;font-size:14px;padding:10px 14px;border-radius:12px}
-    .btn.blue{background:var(--btn2)}
-    .btn.red{background:var(--bad)}
-    .btn.green{background:#10b981}
-    .btn:active{transform:scale(.99)}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .input{
-      width:100%;
-      padding:12px 12px;
-      border-radius:12px;
-      border:1px solid rgba(15,23,42,.15);
-      font-size:16px;
-      outline:none;
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #1e3a8a;
+      font-weight: 800;
+      font-size: 12px;
     }
-    .input:focus{border-color:rgba(37,99,235,.55);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
-    .grid{display:grid;gap:10px;grid-template-columns:1fr}
-    @media(min-width:520px){
-      .grid.two{grid-template-columns:1fr 1fr}
+
+    .pill.ok {
+      background: #dcfce7;
+      color: #14532d
     }
-    .hr{height:1px;background:rgba(15,23,42,.08);margin:12px 0}
-    .k{font-weight:900}
-    .statusLine{
-      margin-top:10px;
-      font-weight:900;
-      font-size:20px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
+
+    .pill.bad {
+      background: #fee2e2;
+      color: #7f1d1d
     }
-    .statusChip{
-      padding:6px 12px;border-radius:999px;font-size:14px;font-weight:900;background:var(--chip);
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35
     }
-    .statusChip.paid{background:#dcfce7;color:#14532d}
-    .statusChip.used{background:#e0f2fe;color:#075985}
-    .statusChip.pending{background:#fee2e2;color:#7f1d1d}
-    .statusChip.failed{background:#fef2f2;color:#b91c1c}
-    .statusChip.unknown{background:#f3f4f6;color:#374151}
-    .msgOk{color:#166534;font-weight:800}
-    .msgBad{color:#b91c1c;font-weight:800}
-    .msgWarn{color:#92400e;font-weight:800}
+
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 14px;
+      font-weight: 900;
+      font-size: 18px;
+      cursor: pointer;
+      background: var(--btn);
+      color: white;
+    }
+
+    .btn.small {
+      width: auto;
+      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 12px
+    }
+
+    .btn.blue {
+      background: var(--btn2)
+    }
+
+    .btn.red {
+      background: var(--bad)
+    }
+
+    .btn.green {
+      background: #10b981
+    }
+
+    .btn:active {
+      transform: scale(.99)
+    }
+
+    .btn:disabled {
+      opacity: .6;
+      cursor: not-allowed
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(15, 23, 42, .15);
+      font-size: 16px;
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: rgba(37, 99, 235, .55);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .12)
+    }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr
+    }
+
+    @media(min-width:520px) {
+      .grid.two {
+        grid-template-columns: 1fr 1fr
+      }
+    }
+
+    .hr {
+      height: 1px;
+      background: rgba(15, 23, 42, .08);
+      margin: 12px 0
+    }
+
+    .k {
+      font-weight: 900
+    }
+
+    .statusLine {
+      margin-top: 10px;
+      font-weight: 900;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .statusChip {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      background: var(--chip);
+    }
+
+    .statusChip.paid {
+      background: #dcfce7;
+      color: #14532d
+    }
+
+    .statusChip.used {
+      background: #e0f2fe;
+      color: #075985
+    }
+
+    .statusChip.pending {
+      background: #fee2e2;
+      color: #7f1d1d
+    }
+
+    .statusChip.failed {
+      background: #fef2f2;
+      color: #b91c1c
+    }
+
+    .statusChip.unknown {
+      background: #f3f4f6;
+      color: #374151
+    }
+
+    .msgOk {
+      color: #166534;
+      font-weight: 800
+    }
+
+    .msgBad {
+      color: #b91c1c;
+      font-weight: 800
+    }
+
+    .msgWarn {
+      color: #92400e;
+      font-weight: 800
+    }
 
     /* Modal scanner */
-    .modal{
-      position:fixed;inset:0;background:rgba(2,6,23,.65);
-      display:none;align-items:flex-end;justify-content:center;
-      padding:14px;
-      z-index:9999;
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, .65);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 14px;
+      z-index: 9999;
     }
-    .sheet{
-      width:min(620px,100%);
-      background:#fff;
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:0 30px 70px rgba(2,6,23,.45);
-      border:1px solid rgba(15,23,42,.1);
+
+    .sheet {
+      width: min(620px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 30px 70px rgba(2, 6, 23, .45);
+      border: 1px solid rgba(15, 23, 42, .1);
     }
-    .sheetTop{
-      background:#0b1220;color:#fff;
-      padding:14px 14px;
-      display:flex;align-items:center;justify-content:space-between;
-      gap:10px;
+
+    .sheetTop {
+      background: #0b1220;
+      color: #fff;
+      padding: 14px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
     }
-    .sheetTop .title{font-weight:900;font-size:22px}
-    .sheetBody{padding:14px}
-    .videoBox{
-      width:100%;
-      background:#0b1220;
-      border-radius:14px;
-      overflow:hidden;
-      border:1px solid rgba(15,23,42,.12);
+
+    .sheetTop .title {
+      font-weight: 900;
+      font-size: 22px
+    }
+
+    .sheetBody {
+      padding: 14px
+    }
+
+    .videoBox {
+      width: 100%;
+      background: #0b1220;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(15, 23, 42, .12);
       aspect-ratio: 1 / 1;
-      display:flex;align-items:center;justify-content:center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    video{width:100%;height:100%;object-fit:cover}
-    canvas{display:none}
-    .tip{margin-top:10px;color:#6b7280;font-size:13px}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover
+    }
+
+    canvas {
+      display: none
+    }
+
+    .tip {
+      margin-top: 10px;
+      color: #6b7280;
+      font-size: 13px
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
+    }
   </style>
 
   <!-- jsQR -->
   <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
+
 <body>
-<div class="wrap">
-  <h1>⛽ <span>FuelSkip – Attendant</span></h1>
+  <div class="wrap">
+    <h1>⛽ <span>FuelSkip – Attendant</span></h1>
 
-  <!-- Pair / device card -->
-  <div class="card">
-    <div class="row between">
-      <div class="statusLine" style="margin:0">
-        <span class="k">Device:</span>
-        <span id="pairPill" class="pill bad">NOT PAIRED</span>
+    <!-- Pair / device card -->
+    <div class="card">
+      <div class="row between">
+        <div class="statusLine" style="margin:0">
+          <span class="k">Device:</span>
+          <span id="pairPill" class="pill bad">NOT PAIRED</span>
+        </div>
+        <button class="btn small red" onclick="resetPair()">Reset</button>
       </div>
-      <button class="btn small red" onclick="resetPair()">Reset</button>
-    </div>
 
-    <div class="hr"></div>
+      <div class="hr"></div>
 
-    <div class="muted">
-      Pair once using the Owner QR (<span class="mono">dt=...</span>). After pairing, scan voucher QR here.
-      <b>Payment is Razorpay-based</b> (no wallet mode).
-    </div>
-
-    <div style="margin-top:12px" class="grid two">
-      <button class="btn" onclick="openScanner('owner')">🔗 Scan Owner Pair QR</button>
-      <button class="btn" onclick="openScanner('voucher')">📷 Scan Voucher QR</button>
-    </div>
-
-    <div style="margin-top:10px" class="muted">
-      Origin: <span id="originTxt" class="mono">—</span> • Token: <span id="tokTxt" class="mono">—</span>
-    </div>
-  </div>
-
-  <!-- Voucher check -->
-  <div class="card">
-    <div class="row between" style="gap:12px">
-      <input id="voucherInput" class="input" placeholder="Paste voucher ID or voucher|sig (or scan QR)" />
-      <button class="btn blue" style="width:auto;min-width:110px" onclick="checkVoucher()">Check</button>
-    </div>
-
-    <div class="tip">
-      Supported:
-      <div class="mono">voucher|sig</div>
-      <div class="mono">/attendant.html?voucher=...&sig=...</div>
-      <div class="mono">https://.../attendant.html?voucher=...&sig=...</div>
-    </div>
-  </div>
-
-  <!-- Voucher details -->
-  <div class="card" id="detailsCard" style="display:none">
-    <div style="font-weight:900;font-size:28px;margin-bottom:8px">Voucher Details</div>
-
-    <div id="detailsBody" style="font-size:18px;line-height:1.5"></div>
-
-    <div class="statusLine" id="statusLine" style="margin-top:14px"></div>
-
-    <div id="actionArea" style="margin-top:14px">
-      <button id="dispenseBtn" class="btn green" onclick="dispenseFuel()">✅ Dispense Fuel</button>
-      <div id="dispenseMsg" style="margin-top:10px;font-size:18px"></div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Scanner Modal -->
-<div class="modal" id="scanModal" aria-hidden="true">
-  <div class="sheet">
-    <div class="sheetTop">
-      <div class="title" id="scanTitle">Scan QR</div>
-      <button class="btn small red" onclick="closeScanner()">Close</button>
-    </div>
-    <div class="sheetBody">
-      <div class="muted" id="scanHelp">Point camera at QR.</div>
-      <div class="videoBox" style="margin-top:12px">
-        <video id="video" playsinline muted></video>
-        <canvas id="canvas"></canvas>
+      <div class="muted">
+        Pair once using the Owner QR (<span class="mono">dt=...</span>). After pairing, scan voucher QR here.
+        <b>Payment is Razorpay-based</b> (no wallet mode).
       </div>
-      <div class="tip">Tip: Use the Home Screen app (PWA) for stable pairing.</div>
-      <div class="tip muted" id="scanError" style="display:none"></div>
+
+      <div style="margin-top:12px" class="grid two">
+        <button class="btn" onclick="openScanner('owner')">🔗 Scan Owner Pair QR</button>
+        <button class="btn" onclick="openScanner('voucher')">📷 Scan Voucher QR</button>
+      </div>
+
+      <div style="margin-top:10px" class="muted">
+        Origin: <span id="originTxt" class="mono">—</span> • Token: <span id="tokTxt" class="mono">—</span>
+      </div>
+    </div>
+
+    <!-- Voucher check -->
+    <div class="card">
+      <div class="row between" style="gap:12px">
+        <input id="voucherInput" class="input" placeholder="Paste voucher ID or voucher|sig (or scan QR)" />
+        <button class="btn blue" style="width:auto;min-width:110px" onclick="checkVoucher()">Check</button>
+      </div>
+
+      <div class="tip">
+        Supported:
+        <div class="mono">voucher|sig</div>
+        <div class="mono">/attendant.html?voucher=...&sig=...</div>
+        <div class="mono">https://.../attendant.html?voucher=...&sig=...</div>
+      </div>
+    </div>
+
+    <!-- Voucher details -->
+    <div class="card" id="detailsCard" style="display:none">
+      <div style="font-weight:900;font-size:28px;margin-bottom:8px">Voucher Details</div>
+
+      <div id="detailsBody" style="font-size:18px;line-height:1.5"></div>
+
+      <div class="statusLine" id="statusLine" style="margin-top:14px"></div>
+
+      <div id="actionArea" style="margin-top:14px">
+        <button id="dispenseBtn" class="btn green" onclick="dispenseFuel()">✅ Dispense Fuel</button>
+        <div id="dispenseMsg" style="margin-top:10px;font-size:18px"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Scanner Modal -->
+  <div class="modal" id="scanModal" aria-hidden="true">
+    <div class="sheet">
+      <div class="sheetTop">
+        <div class="title" id="scanTitle">Scan QR</div>
+        <button class="btn small red" onclick="closeScanner()">Close</button>
+      </div>
+      <div class="sheetBody">
+        <div class="muted" id="scanHelp">Point camera at QR.</div>
+        <div class="videoBox" style="margin-top:12px">
+          <video id="video" playsinline muted></video>
+          <canvas id="canvas"></canvas>
+        </div>
+        <div class="tip">Tip: Use the Home Screen app (PWA) for stable pairing.</div>
+        <div class="tip muted" id="scanError" style="display:none"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  const API = window.location.origin;
+  <script>
+    const API = window.location.origin;
 
-  // ====== Pairing storage ======
-  const LS_TOKEN  = "FUELSKIP_DEVICE_TOKEN";
-  const LS_ORIGIN = "FUELSKIP_PAIRED_ORIGIN";
+    // ====== Pairing storage ======
+    const LS_TOKEN = "FUELSKIP_DEVICE_TOKEN";
+    const LS_ORIGIN = "FUELSKIP_PAIRED_ORIGIN";
 
-  function getDeviceToken(){
-    return (localStorage.getItem(LS_TOKEN) || "").trim();
-  }
-  function setDeviceToken(tok){
-    localStorage.setItem(LS_TOKEN, tok);
-    localStorage.setItem(LS_ORIGIN, window.location.origin);
-    renderPair();
-  }
-  function resetPair(){
-    localStorage.removeItem(LS_TOKEN);
-    localStorage.removeItem(LS_ORIGIN);
-    alert("Pairing reset.");
-    renderPair();
-  }
-  function renderPair(){
-    const tok = getDeviceToken();
-    const pill = document.getElementById("pairPill");
-    const origin = (localStorage.getItem(LS_ORIGIN) || "—").trim();
-    document.getElementById("originTxt").textContent = origin || "—";
-    document.getElementById("tokTxt").textContent = tok ? (tok.slice(0,8) + "...") : "—";
-    if(tok){
-      pill.textContent = "PAIRED";
-      pill.className = "pill ok";
-    }else{
-      pill.textContent = "NOT PAIRED";
-      pill.className = "pill bad";
+    function getDeviceToken() {
+      return (localStorage.getItem(LS_TOKEN) || "").trim();
     }
-  }
-
-  // ====== Robust parsing ======
-  function sanitizeHexId(str){
-    if(!str) return null;
-    let s = String(str).trim();
-    s = s.replace(/^QR payload:\s*/i, "").trim();
-    s = s.replace(/^[\[\(\{<"']+|[\]\)\}>\"']+$/g, "").trim();
-    const m = s.match(/[0-9a-fA-F]{6,128}/);
-    return m ? m[0].toLowerCase() : null;
-  }
-
-  function parseQRPayload(text){
-    const raw = (text || "").trim();
-    if(!raw) return null;
-
-    // Try as URL
-    try{
-      const u = new URL(raw, window.location.origin);
-      const dt = u.searchParams.get("dt");
-      const voucher = u.searchParams.get("voucher");
-      const sig = u.searchParams.get("sig");
-      if(dt) return { kind:"owner", dt: sanitizeHexId(dt) || dt };
-      if(voucher && sig){
-        return { kind:"voucher", voucher: sanitizeHexId(voucher) || voucher, sig: sanitizeHexId(sig) || sig };
+    function setDeviceToken(tok) {
+      localStorage.setItem(LS_TOKEN, tok);
+      localStorage.setItem(LS_ORIGIN, window.location.origin);
+      renderPair();
+    }
+    function resetPair() {
+      localStorage.removeItem(LS_TOKEN);
+      localStorage.removeItem(LS_ORIGIN);
+      alert("Pairing reset.");
+      renderPair();
+    }
+    function renderPair() {
+      const tok = getDeviceToken();
+      const pill = document.getElementById("pairPill");
+      const origin = (localStorage.getItem(LS_ORIGIN) || "—").trim();
+      document.getElementById("originTxt").textContent = origin || "—";
+      document.getElementById("tokTxt").textContent = tok ? (tok.slice(0, 8) + "...") : "—";
+      if (tok) {
+        pill.textContent = "PAIRED";
+        pill.className = "pill ok";
+      } else {
+        pill.textContent = "NOT PAIRED";
+        pill.className = "pill bad";
       }
-    }catch(e){}
-
-    // Compact: voucher|sig
-    if(raw.includes("|")){
-      const [a,b] = raw.split("|",2);
-      const voucher = sanitizeHexId(a) || a.trim();
-      const sig = sanitizeHexId(b) || (b||"").trim();
-      if(voucher && sig) return { kind:"voucher", voucher, sig };
-      if(voucher) return { kind:"voucherId", voucher };
     }
 
-    // Raw voucher id
-    const vid = sanitizeHexId(raw);
-    if(vid) return { kind:"voucherId", voucher: vid };
-
-    return null;
-  }
-
-  // ====== Scanner (jsQR) ======
-  let scanMode = "voucher";
-  let stream = null;
-  let raf = null;
-
-  const modal = document.getElementById("scanModal");
-  const video = document.getElementById("video");
-  const canvas = document.getElementById("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently:true });
-
-  function openScanner(mode){
-    scanMode = mode;
-    document.getElementById("scanError").style.display = "none";
-
-    document.getElementById("scanTitle").textContent = (mode === "owner") ? "Scan Owner Pair QR" : "Scan Voucher QR";
-    document.getElementById("scanHelp").textContent =
-      (mode === "owner")
-        ? "Point camera at Owner Pair QR (contains dt=...)."
-        : "Point camera at Voucher QR (contains voucher|sig or voucher=...&sig=...).";
-
-    modal.style.display = "flex";
-    modal.setAttribute("aria-hidden","false");
-
-    startCamera();
-  }
-
-  function closeScanner(){
-    stopCamera();
-    modal.style.display = "none";
-    modal.setAttribute("aria-hidden","true");
-  }
-
-  async function startCamera(){
-    stopCamera();
-    try{
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height:{ ideal: 720 }
-        },
-        audio:false
-      });
-
-      video.srcObject = stream;
-      await video.play();
-      scanLoop();
-    }catch(err){
-      document.getElementById("scanError").style.display = "block";
-      document.getElementById("scanError").textContent =
-        "Camera not available. Allow camera permission and reload. (iPhone: Settings → Safari → Camera → Allow)";
-      console.error(err);
-    }
-  }
-
-  function stopCamera(){
-    if(raf) cancelAnimationFrame(raf);
-    raf = null;
-    if(video){
-      video.pause();
-      video.srcObject = null;
-    }
-    if(stream){
-      stream.getTracks().forEach(t=>t.stop());
-      stream = null;
-    }
-  }
-
-  function scanLoop(){
-    if(!video || video.readyState !== video.HAVE_ENOUGH_DATA){
-      raf = requestAnimationFrame(scanLoop);
-      return;
+    // ====== Robust parsing ======
+    function sanitizeHexId(str) {
+      if (!str) return null;
+      let s = String(str).trim();
+      s = s.replace(/^QR payload:\s*/i, "").trim();
+      s = s.replace(/^[\[\(\{<"']+|[\]\)\}>\"']+$/g, "").trim();
+      const m = s.match(/[0-9a-fA-F]{6,128}/);
+      return m ? m[0].toLowerCase() : null;
     }
 
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if(!w || !h){
-      raf = requestAnimationFrame(scanLoop);
-      return;
+    function parseQRPayload(text) {
+      const raw = (text || "").trim();
+      if (!raw) return null;
+
+      // Try as URL
+      try {
+        const u = new URL(raw, window.location.origin);
+        const dt = u.searchParams.get("dt");
+        const voucher = u.searchParams.get("voucher");
+        const sig = u.searchParams.get("sig");
+        if (dt) return { kind: "owner", dt: sanitizeHexId(dt) || dt };
+        if (voucher && sig) {
+          return { kind: "voucher", voucher: sanitizeHexId(voucher) || voucher, sig: sanitizeHexId(sig) || sig };
+        }
+      } catch (e) { }
+
+      // Compact: voucher|sig
+      if (raw.includes("|")) {
+        const [a, b] = raw.split("|", 2);
+        const voucher = sanitizeHexId(a) || a.trim();
+        const sig = sanitizeHexId(b) || (b || "").trim();
+        if (voucher && sig) return { kind: "voucher", voucher, sig };
+        if (voucher) return { kind: "voucherId", voucher };
+      }
+
+      // Raw voucher id
+      const vid = sanitizeHexId(raw);
+      if (vid) return { kind: "voucherId", voucher: vid };
+
+      return null;
     }
 
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(video, 0, 0, w, h);
+    // ====== Scanner (jsQR) ======
+    let scanMode = "voucher";
+    let stream = null;
+    let raf = null;
 
-    const imageData = ctx.getImageData(0, 0, w, h);
-    const code = jsQR(imageData.data, w, h, { inversionAttempts: "attemptBoth" });
+    const modal = document.getElementById("scanModal");
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
-    if(code && code.data){
-      const parsed = parseQRPayload(code.data);
+    function openScanner(mode) {
+      scanMode = mode;
+      document.getElementById("scanError").style.display = "none";
 
-      if(scanMode === "owner" && parsed && parsed.kind === "owner"){
-        setDeviceToken(parsed.dt);
-        closeScanner();
-        alert("Device paired ✅");
+      document.getElementById("scanTitle").textContent = (mode === "owner") ? "Scan Owner Pair QR" : "Scan Voucher QR";
+      document.getElementById("scanHelp").textContent =
+        (mode === "owner")
+          ? "Point camera at Owner Pair QR (contains dt=...)."
+          : "Point camera at Voucher QR (contains voucher|sig or voucher=...&sig=...).";
+
+      modal.style.display = "flex";
+      modal.setAttribute("aria-hidden", "false");
+
+      startCamera();
+    }
+
+    function closeScanner() {
+      stopCamera();
+      modal.style.display = "none";
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    async function startCamera() {
+      stopCamera();
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        await video.play();
+        scanLoop();
+      } catch (err) {
+        document.getElementById("scanError").style.display = "block";
+        document.getElementById("scanError").textContent =
+          "Camera not available. Allow camera permission and reload. (iPhone: Settings → Safari → Camera → Allow)";
+        console.error(err);
+      }
+    }
+
+    function stopCamera() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      if (video) {
+        video.pause();
+        video.srcObject = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+    }
+
+    function scanLoop() {
+      if (!video || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        raf = requestAnimationFrame(scanLoop);
         return;
       }
 
-      if(scanMode === "voucher" && parsed){
-        if(parsed.kind === "voucher"){
-          document.getElementById("voucherInput").value = `${parsed.voucher}|${parsed.sig}`;
+      const w = video.videoWidth;
+      const h = video.videoHeight;
+      if (!w || !h) {
+        raf = requestAnimationFrame(scanLoop);
+        return;
+      }
+
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(video, 0, 0, w, h);
+
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const code = jsQR(imageData.data, w, h, { inversionAttempts: "attemptBoth" });
+
+      if (code && code.data) {
+        const parsed = parseQRPayload(code.data);
+
+        if (scanMode === "owner" && parsed && parsed.kind === "owner") {
+          setDeviceToken(parsed.dt);
           closeScanner();
-          checkVoucher();
+          alert("Device paired ✅");
           return;
         }
-        if(parsed.kind === "voucherId"){
-          document.getElementById("voucherInput").value = parsed.voucher;
-          closeScanner();
-          checkVoucher();
-          return;
+
+        if (scanMode === "voucher" && parsed) {
+          if (parsed.kind === "voucher") {
+            document.getElementById("voucherInput").value = `${parsed.voucher}|${parsed.sig}`;
+            closeScanner();
+            checkVoucher();
+            return;
+          }
+          if (parsed.kind === "voucherId") {
+            document.getElementById("voucherInput").value = parsed.voucher;
+            closeScanner();
+            checkVoucher();
+            return;
+          }
         }
       }
+
+      raf = requestAnimationFrame(scanLoop);
     }
 
-    raf = requestAnimationFrame(scanLoop);
-  }
+    // ====== Voucher API calls ======
+    let currentVoucher = null;
 
-  // ====== Voucher API calls ======
-  let currentVoucher = null;
+    function safeText(x) { return (x == null ? "" : String(x)); }
 
-  function safeText(x){ return (x==null?"":String(x)); }
-
-  function statusClass(s){
-    s = (s||"").toLowerCase();
-    if(s==="paid") return "paid";
-    if(s==="used") return "used";
-    if(s==="pending") return "pending";
-    if(s==="failed") return "failed";
-    return "unknown";
-  }
-
-  async function checkVoucher(){
-    const tok = getDeviceToken();
-    if(!tok){
-      alert("Not paired. Scan Owner Pair QR first.");
-      return;
+    function statusClass(s) {
+      s = (s || "").toLowerCase();
+      if (s === "paid") return "paid";
+      if (s === "used") return "used";
+      if (s === "pending") return "pending";
+      if (s === "failed") return "failed";
+      return "unknown";
     }
 
-    const raw = document.getElementById("voucherInput").value.trim();
-    if(!raw){
-      alert("Paste voucher ID or scan QR.");
-      return;
+    async function checkVoucher() {
+      const tok = getDeviceToken();
+      if (!tok) {
+        alert("Not paired. Scan Owner Pair QR first.");
+        return;
+      }
+
+      const raw = document.getElementById("voucherInput").value.trim();
+      if (!raw) {
+        alert("Paste voucher ID or scan QR.");
+        return;
+      }
+
+      const parsed = parseQRPayload(raw);
+      let voucherId = null;
+      let sig = null;
+
+      if (parsed && parsed.kind === "voucher") {
+        voucherId = parsed.voucher;
+        sig = parsed.sig;
+      } else if (parsed && parsed.kind === "voucherId") {
+        voucherId = parsed.voucher;
+      } else {
+        // fallback split
+        voucherId = sanitizeHexId(raw.split("|")[0]) || raw.split("|")[0].trim();
+        sig = sanitizeHexId(raw.split("|")[1]) || raw.split("|")[1]?.trim() || null;
+      }
+
+      if (!voucherId) return alert("Voucher ID missing");
+
+      const params = new URLSearchParams();
+      params.set("voucher", voucherId);
+      if (sig) params.set("sig", sig);
+
+      const res = await fetch(`${API}/attendant/voucher?` + params.toString(), {
+        headers: { "X-DEVICE-TOKEN": tok },
+        cache: "no-store"
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        showDetailsError(voucherId, sig, data.detail || "Not Found");
+        return;
+      }
+
+      currentVoucher = { id: voucherId, sig: sig || data.sig || null };
+      showDetails(data);
+
+      document.getElementById("detailsCard").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    const parsed = parseQRPayload(raw);
-    let voucherId = null;
-    let sig = null;
-
-    if(parsed && parsed.kind === "voucher"){
-      voucherId = parsed.voucher;
-      sig = parsed.sig;
-    }else if(parsed && parsed.kind === "voucherId"){
-      voucherId = parsed.voucher;
-    }else{
-      // fallback split
-      voucherId = sanitizeHexId(raw.split("|")[0]) || raw.split("|")[0].trim();
-      sig = sanitizeHexId(raw.split("|")[1]) || raw.split("|")[1]?.trim() || null;
-    }
-
-    if(!voucherId) return alert("Voucher ID missing");
-
-    const params = new URLSearchParams();
-    params.set("voucher", voucherId);
-    if(sig) params.set("sig", sig);
-
-    const res = await fetch(`${API}/attendant/voucher?` + params.toString(), {
-      headers: { "X-DEVICE-TOKEN": tok },
-      cache: "no-store"
-    });
-
-    const data = await res.json();
-    if(!res.ok){
-      showDetailsError(voucherId, sig, data.detail || "Not Found");
-      return;
-    }
-
-    currentVoucher = { id: voucherId, sig: sig || data.sig || null };
-    showDetails(data);
-
-    document.getElementById("detailsCard").scrollIntoView({ behavior:"smooth", block:"start" });
-  }
-
-  function showDetailsError(voucherId, sig, msg){
-    currentVoucher = { id: voucherId, sig: sig || null };
-    document.getElementById("detailsCard").style.display = "block";
-    document.getElementById("detailsBody").innerHTML = `
+    function showDetailsError(voucherId, sig, msg) {
+      currentVoucher = { id: voucherId, sig: sig || null };
+      document.getElementById("detailsCard").style.display = "block";
+      document.getElementById("detailsBody").innerHTML = `
       <div><span class="k">ID:</span> ${safeText(voucherId)}</div>
       <div class="muted" style="margin-top:6px">Could not load details.</div>
     `;
-    document.getElementById("statusLine").innerHTML = `
+      document.getElementById("statusLine").innerHTML = `
       <span class="k">Status:</span>
       <span class="statusChip unknown">UNKNOWN</span>
       <span class="msgBad">❌ ${safeText(msg)}</span>
     `;
-    const btn = document.getElementById("dispenseBtn");
-    btn.disabled = false;
-    btn.textContent = "✅ Dispense Fuel";
-    document.getElementById("dispenseMsg").innerHTML = `<span class="msgBad">❌ Dispense failed: ${safeText(msg)}</span>`;
-    // auto-scroll so attendant sees message
-    document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
-  }
+      const btn = document.getElementById("dispenseBtn");
+      btn.disabled = false;
+      btn.textContent = "✅ Dispense Fuel";
+      document.getElementById("dispenseMsg").innerHTML = `<span class="msgBad">❌ Dispense failed: ${safeText(msg)}</span>`;
+      // auto-scroll so attendant sees message
+      document.getElementById("statusLine").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
 
-  function showDetails(v){
-    document.getElementById("detailsCard").style.display = "block";
+    function showDetails(v) {
+      document.getElementById("detailsCard").style.display = "block";
 
-    const st = (v.status || "").toUpperCase();
-    const stCls = statusClass(v.status);
+      const st = (v.status || "").toUpperCase();
+      const stCls = statusClass(v.status);
 
-    document.getElementById("detailsBody").innerHTML = `
+      document.getElementById("detailsBody").innerHTML = `
       <div><span class="k">ID:</span> ${safeText(v.id)}</div>
       <div><span class="k">Customer:</span> ${safeText(v.customer_name || "Walk-in")} (${safeText(v.customer_phone || "-")})</div>
       <div><span class="k">Fuel Type:</span> ${safeText(v.fuel_type || "-")}</div>
-      <div><span class="k">Amount:</span> ₹${Number(v.amount||0).toLocaleString("en-IN")}</div>
-      <div><span class="k">Litres:</span> ${Number(v.litres||0).toFixed(2)} L</div>
+      <div><span class="k">Amount:</span> ₹${Number(v.amount || 0).toLocaleString("en-IN")}</div>
+      <div><span class="k">Litres:</span> ${Number(v.litres || 0).toFixed(2)} L</div>
       <div><span class="k">Vehicle:</span> ${safeText(v.vehicle_type || "-")} • ${safeText(v.vehicle_no || "-")}</div>
     `;
 
-    document.getElementById("statusLine").innerHTML = `
+      document.getElementById("statusLine").innerHTML = `
       <span class="k">Status:</span>
       <span class="statusChip ${stCls}">${st || "UNKNOWN"}</span>
       <span class="msgOk">✅ QR OK</span>
       ${stCls === "used"
-        ? `<span class="msgWarn">⚠️ Voucher already used.</span>`
-        : (stCls === "paid"
+          ? `<span class="msgWarn">⚠️ Voucher already used.</span>`
+          : (stCls === "paid"
             ? `<span class="msgOk">✅ Ready to dispense.</span>`
             : `<span class="msgWarn">⚠️ Not paid yet.</span>`
           )
-      }
+        }
     `;
 
-    const btn = document.getElementById("dispenseBtn");
-    const msg = document.getElementById("dispenseMsg");
+      const btn = document.getElementById("dispenseBtn");
+      const msg = document.getElementById("dispenseMsg");
 
-    if(stCls === "used"){
+      if (stCls === "used") {
+        btn.disabled = true;
+        btn.textContent = "✔ Done";
+        msg.innerHTML = `<span class="msgWarn">⚠️ Already used. No further action.</span>`;
+      } else if (stCls !== "paid") {
+        btn.disabled = true;
+        btn.textContent = "✅ Dispense Fuel";
+        msg.innerHTML = `<span class="msgWarn">⚠️ Cannot dispense until payment is PAID.</span>`;
+      } else {
+        btn.disabled = false;
+        btn.textContent = "✅ Dispense Fuel";
+        msg.innerHTML = "";
+      }
+
+      // ensure attendant sees status immediately
+      document.getElementById("statusLine").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    async function dispenseFuel() {
+      const tok = getDeviceToken();
+      if (!tok) {
+        alert("Not paired. Scan Owner Pair QR first.");
+        return;
+      }
+      if (!currentVoucher || !currentVoucher.id) {
+        alert("Check voucher first.");
+        return;
+      }
+
+      const btn = document.getElementById("dispenseBtn");
+      const msg = document.getElementById("dispenseMsg");
+
       btn.disabled = true;
-      btn.textContent = "✔ Done";
-      msg.innerHTML = `<span class="msgWarn">⚠️ Already used. No further action.</span>`;
-    }else if(stCls !== "paid"){
-      btn.disabled = true;
-      btn.textContent = "✅ Dispense Fuel";
-      msg.innerHTML = `<span class="msgWarn">⚠️ Cannot dispense until payment is PAID.</span>`;
-    }else{
-      btn.disabled = false;
-      btn.textContent = "✅ Dispense Fuel";
+      btn.textContent = "Dispensing…";
       msg.innerHTML = "";
+
+      const body = { voucher: currentVoucher.id, sig: currentVoucher.sig || null };
+
+      const res = await fetch(`${API}/attendant/dispense`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-DEVICE-TOKEN": tok
+        },
+        body: JSON.stringify(body)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = "✅ Dispense Fuel";
+        msg.innerHTML = `<span class="msgBad">❌ Dispense failed: ${safeText(data.detail || "Failed")}</span>`;
+        document.getElementById("statusLine").scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+
+      btn.textContent = "✔ Done";
+      btn.disabled = true;
+      msg.innerHTML = `<span class="msgOk">✅ Dispensed. Status updated to USED.</span>`;
+
+      // refresh details so status becomes USED
+      await checkVoucher();
+      document.getElementById("statusLine").scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Auto-reset UI for next customer
+      setTimeout(() => {
+        document.getElementById("detailsCard").style.display = "none";
+        document.getElementById("voucherInput").value = "";
+        currentVoucher = null;
+        document.getElementById("dispenseBtn").disabled = false;
+        document.getElementById("dispenseBtn").textContent = "✅ Dispense Fuel";
+        document.getElementById("dispenseMsg").innerHTML = "";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 2500);
     }
 
-    // ensure attendant sees status immediately
-    document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
-  }
+    // ====== Boot ======
+    window.addEventListener("load", () => {
+      renderPair();
 
-  async function dispenseFuel(){
-    const tok = getDeviceToken();
-    if(!tok){
-      alert("Not paired. Scan Owner Pair QR first.");
-      return;
-    }
-    if(!currentVoucher || !currentVoucher.id){
-      alert("Check voucher first.");
-      return;
-    }
+      // If opened with attendant.html?dt=... (pair)
+      const url = new URL(window.location.href);
+      const dt = url.searchParams.get("dt");
+      if (dt) {
+        setDeviceToken(sanitizeHexId(dt) || dt);
+        url.searchParams.delete("dt");
+        history.replaceState({}, "", url.toString());
+      }
 
-    const btn = document.getElementById("dispenseBtn");
-    const msg = document.getElementById("dispenseMsg");
-
-    btn.disabled = true;
-    btn.textContent = "Dispensing…";
-    msg.innerHTML = "";
-
-    const body = { voucher: currentVoucher.id, sig: currentVoucher.sig || null };
-
-    const res = await fetch(`${API}/attendant/dispense`, {
-      method: "POST",
-      headers: {
-        "Content-Type":"application/json",
-        "X-DEVICE-TOKEN": tok
-      },
-      body: JSON.stringify(body)
+      // If opened with voucher link
+      const v = url.searchParams.get("voucher");
+      const sig = url.searchParams.get("sig");
+      if (v) {
+        const vid = sanitizeHexId(v) || v;
+        const sg = sig ? (sanitizeHexId(sig) || sig) : "";
+        document.getElementById("voucherInput").value = sg ? `${vid}|${sg}` : vid;
+        if (getDeviceToken()) checkVoucher();
+      }
     });
-
-    const data = await res.json();
-
-    if(!res.ok){
-      btn.disabled = false;
-      btn.textContent = "✅ Dispense Fuel";
-      msg.innerHTML = `<span class="msgBad">❌ Dispense failed: ${safeText(data.detail || "Failed")}</span>`;
-      document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
-      return;
-    }
-
-    btn.textContent = "✔ Done";
-    btn.disabled = true;
-    msg.innerHTML = `<span class="msgOk">✅ Dispensed. Status updated to USED.</span>`;
-
-    // refresh details so status becomes USED
-    await checkVoucher();
-
-    // final scroll
-    document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
-  }
-
-  // ====== Boot ======
-  window.addEventListener("load", () => {
-    renderPair();
-
-    // If opened with attendant.html?dt=... (pair)
-    const url = new URL(window.location.href);
-    const dt = url.searchParams.get("dt");
-    if(dt){
-      setDeviceToken(sanitizeHexId(dt) || dt);
-      url.searchParams.delete("dt");
-      history.replaceState({}, "", url.toString());
-    }
-
-    // If opened with voucher link
-    const v = url.searchParams.get("voucher");
-    const sig = url.searchParams.get("sig");
-    if(v){
-      const vid = sanitizeHexId(v) || v;
-      const sg  = sig ? (sanitizeHexId(sig) || sig) : "";
-      document.getElementById("voucherInput").value = sg ? `${vid}|${sg}` : vid;
-      if(getDeviceToken()) checkVoucher();
-    }
-  });
-</script>
+  </script>
 </body>
+
 </html>
