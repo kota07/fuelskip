@@ -133,7 +133,7 @@
     }
 
     /* Mobile: sidebar becomes bottom bar */
-    @media (max-width: 860px) {
+    @media (max-width: 1024px) {
       .app {
         flex-direction: column;
         padding-bottom: 80px;
@@ -737,7 +737,8 @@
       <!-- LOGIN (replaces Welcome) -->
       <section id="secWelcome" class="section active">
         <div class="welcomeWrap">
-          <div class="welcomeCard">
+          <!-- LOGIN VIEW -->
+          <div class="welcomeCard" id="viewLogin">
             <div class="welcomeTop">
               <div class="logoMarkBig">⛽</div>
               <div>
@@ -771,6 +772,28 @@
               <a href="#" onclick="showSection('home'); return false;"
                 style="color:var(--brand); text-decoration:none; font-weight:800;">Continue as Guest (View Only)</a>
             </div>
+          </div>
+
+          <!-- PROFILE VIEW (Originally hidden) -->
+          <div class="welcomeCard" id="viewProfile" style="display:none; text-align:center;">
+            <div class="logoMarkBig" style="margin:0 auto 14px auto; width:80px; height:80px; font-size:32px;">👤</div>
+            <h2 style="margin:0;" id="profName">User</h2>
+            <div class="muted" id="profPhone" style="margin-bottom:20px;">+91 ...</div>
+
+            <div class="grid2" style="text-align:left; margin-bottom:20px;">
+              <div class="tile">
+                <div class="k">Vehicles</div>
+                <div class="v" id="profVehCount">0</div>
+              </div>
+              <div class="tile">
+                <div class="k">Vouchers</div>
+                <div class="v" id="profVouchCount">0</div>
+              </div>
+            </div>
+
+            <button class="btn btnPrimary" style="width:100%; margin-bottom:10px;" onclick="showSection('home')">Go to
+              Home</button>
+            <button class="btn btnDanger" style="width:100%;" onclick="logout()">Logout</button>
           </div>
         </div>
       </section>
@@ -1005,15 +1028,41 @@
       const pill = document.getElementById("pillUser");
       const sub = document.getElementById("pillSub");
 
+      // Buttons visual state
+      const navWelcome = document.getElementById("navWelcome");
+      const navWelcomeSpan = navWelcome.querySelector("span");
+
+      // Toggling views inside secWelcome
+      const viewLogin = document.getElementById("viewLogin");
+      const viewProfile = document.getElementById("viewProfile");
+
       if (!s) {
+        // Logged OUT
         pill.textContent = "Not logged in";
         sub.textContent = "Login to save & reuse details.";
         setNavEnabled(false);
+
+        if (navWelcomeSpan) navWelcomeSpan.textContent = "✨ Welcome";
+
+        if (viewLogin) viewLogin.style.display = "block";
+        if (viewProfile) viewProfile.style.display = "none";
+
         return;
       }
+
+      // Logged IN
       pill.textContent = `Logged: ${s.phone}`;
       sub.textContent = s.name ? `Hi ${s.name}` : `User ID: ${s.user_id}`;
       setNavEnabled(true);
+
+      if (navWelcomeSpan) navWelcomeSpan.textContent = "👤 Profile";
+
+      if (viewLogin) viewLogin.style.display = "none";
+      if (viewProfile) viewProfile.style.display = "block";
+
+      // Fill profile details
+      if (document.getElementById("profName")) document.getElementById("profName").textContent = s.name || "User";
+      if (document.getElementById("profPhone")) document.getElementById("profPhone").textContent = `+91 ${s.phone}`;
     }
 
     function logout() {
@@ -1175,6 +1224,8 @@
         return;
       }
 
+      if (data && data.length) document.getElementById("profVehCount").textContent = data.length;
+
       if (!data.length) {
         tableBody.innerHTML = `<tr><td colspan="4" class="muted">No vehicles saved yet.</td></tr>`;
         return;
@@ -1283,6 +1334,54 @@
       } catch (e) { }
     }
 
+    // ---------------- Fuel Rates (AP Approx) ----------------
+    const FUEL_RATES = {
+      PETROL: 109.50,
+      DIESEL: 97.20,
+      CNG: 90.00,
+      EV: 15.00
+    };
+
+    function setupFuelCalc() {
+      const amtIn = document.getElementById("amountInput");
+      const litIn = document.getElementById("litresInput");
+      const ftSel = document.getElementById("fuelType");
+
+      function getRate() {
+        const ft = ftSel.value;
+        return FUEL_RATES[ft] || 100;
+      }
+
+      amtIn.addEventListener("input", () => {
+        const amt = parseFloat(amtIn.value);
+        if (!isNaN(amt) && amt > 0) {
+          const rate = getRate();
+          litIn.value = (amt / rate).toFixed(2);
+        } else {
+          litIn.value = "";
+        }
+      });
+
+      litIn.addEventListener("input", () => {
+        const lit = parseFloat(litIn.value);
+        if (!isNaN(lit) && lit > 0) {
+          const rate = getRate();
+          amtIn.value = Math.round(lit * rate);
+        } else {
+          amtIn.value = "";
+        }
+      });
+
+      // Recalc on fuel change if amount present
+      ftSel.addEventListener("change", () => {
+        const amt = parseFloat(amtIn.value);
+        if (!isNaN(amt) && amt > 0) {
+          const rate = getRate();
+          litIn.value = (amt / rate).toFixed(2);
+        }
+      });
+    }
+
     // ---------------- Vouchers ----------------
     function statusBadge(status, used) {
       const st = (status || "").toLowerCase();
@@ -1336,6 +1435,8 @@
         list.innerHTML = `<div class="muted">Error: ${data.detail || "load failed"}</div>`;
         return [];
       }
+
+      if (data) document.getElementById("profVouchCount").textContent = data.length;
 
       if (!data.length) {
         list.innerHTML = `<div class="muted">No vouchers yet.</div>`;
@@ -1641,6 +1742,7 @@
     }
 
     window.addEventListener("load", async () => {
+      setupFuelCalc(); // INIT CALC
       setTimeout(() => document.getElementById("splash").classList.add("hidden"), 650);
 
       updateSessionUI();
