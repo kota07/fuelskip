@@ -818,12 +818,14 @@
   async function openLogin(){
     const phone = prompt("Enter Phone Number (pilot login):");
     if(!phone) return;
+    const pin = prompt("Create/Enter 4-digit PIN (to secure your account):");
+    if(!pin) return alert("PIN is required");
     const name = prompt("Name (optional):") || "";
 
     const res = await fetch(`${API}/login`, {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ phone, name })
+      body: JSON.stringify({ phone, name, pin })
     });
     const data = await res.json();
     if(!res.ok){
