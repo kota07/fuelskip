@@ -48,7 +48,7 @@ def add_vehicle(v: VehicleIn, user=Depends(require_user)):
     con = db()
     try:
         con.execute(
-            "INSERT OR IGNORE INTO vehicles(user_phone,vehicle_type,vehicle_no,is_default,created_at) VALUES (?,?,?,?,?)",
+            "INSERT INTO vehicles(user_phone,vehicle_type,vehicle_no,is_default,created_at) VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING",
             (user["phone"], vt, vn, 0, now_iso()),
         )
         con.commit()

@@ -71,10 +71,10 @@ def login(req: LoginReq):
         # New user
         new_hash = hash_pin(pin)
         cur = con.execute(
-            "INSERT INTO users(phone,name,token,created_at,last_login_at,pin_hash) VALUES (?,?,?,?,?,?)",
+            "INSERT INTO users(phone,name,token,created_at,last_login_at,pin_hash) VALUES (?,?,?,?,?,?) RETURNING id",
             (phone, name, token, t, t, new_hash),
         )
-        user_id = cur.lastrowid
+        user_id = cur.fetchone()['id']
         
     con.commit()
     con.close()
