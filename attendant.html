@@ -105,6 +105,7 @@
     .statusChip.paid{background:#dcfce7;color:#14532d}
     .statusChip.used{background:#e0f2fe;color:#075985}
     .statusChip.pending{background:#fee2e2;color:#7f1d1d}
+    .statusChip.failed{background:#fef2f2;color:#b91c1c}
     .statusChip.unknown{background:#f3f4f6;color:#374151}
     .msgOk{color:#166534;font-weight:800}
     .msgBad{color:#b91c1c;font-weight:800}
@@ -148,7 +149,7 @@
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
   </style>
 
-  <!-- jsQR (reliable on iOS/Safari/PWA) -->
+  <!-- jsQR -->
   <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
@@ -168,8 +169,8 @@
     <div class="hr"></div>
 
     <div class="muted">
-      Pair once using Owner QR (<span class="mono">dt=...</span>). After pairing, scan voucher QR inside this page.
-      (Don’t open new tabs.)
+      Pair once using the Owner QR (<span class="mono">dt=...</span>). After pairing, scan voucher QR here.
+      <b>Payment is Razorpay-based</b> (no wallet mode).
     </div>
 
     <div style="margin-top:12px" class="grid two">
@@ -190,7 +191,7 @@
     </div>
 
     <div class="tip">
-      Supported QR formats:
+      Supported:
       <div class="mono">voucher|sig</div>
       <div class="mono">/attendant.html?voucher=...&sig=...</div>
       <div class="mono">https://.../attendant.html?voucher=...&sig=...</div>
@@ -226,9 +227,7 @@
         <video id="video" playsinline muted></video>
         <canvas id="canvas"></canvas>
       </div>
-      <div class="tip">
-        Tip: Use the Home Screen app (PWA) for stable pairing.
-      </div>
+      <div class="tip">Tip: Use the Home Screen app (PWA) for stable pairing.</div>
       <div class="tip muted" id="scanError" style="display:none"></div>
     </div>
   </div>
@@ -238,7 +237,7 @@
   const API = window.location.origin;
 
   // ====== Pairing storage ======
-  const LS_TOKEN = "FUELSKIP_DEVICE_TOKEN";
+  const LS_TOKEN  = "FUELSKIP_DEVICE_TOKEN";
   const LS_ORIGIN = "FUELSKIP_PAIRED_ORIGIN";
 
   function getDeviceToken(){
@@ -270,42 +269,50 @@
     }
   }
 
-  // ====== QR Parsing ======
-  function parseQRPayload(text){
-    const s = (text || "").trim();
-    if(!s) return null;
+  // ====== Robust parsing ======
+  function sanitizeHexId(str){
+    if(!str) return null;
+    let s = String(str).trim();
+    s = s.replace(/^QR payload:\s*/i, "").trim();
+    s = s.replace(/^[\[\(\{<"']+|[\]\)\}>\"']+$/g, "").trim();
+    const m = s.match(/[0-9a-fA-F]{6,128}/);
+    return m ? m[0].toLowerCase() : null;
+  }
 
-    // Owner pair: ...?dt=XXXX or just dt=XXXX
+  function parseQRPayload(text){
+    const raw = (text || "").trim();
+    if(!raw) return null;
+
+    // Try as URL
     try{
-      const u = new URL(s, window.location.origin);
+      const u = new URL(raw, window.location.origin);
       const dt = u.searchParams.get("dt");
       const voucher = u.searchParams.get("voucher");
       const sig = u.searchParams.get("sig");
-      if(dt) return { kind:"owner", dt };
-      if(voucher && sig) return { kind:"voucher", voucher, sig };
-    }catch(e){
-      // not URL
-    }
-
-    // Compact voucher|sig
-    if(s.includes("|")){
-      const parts = s.split("|").map(x=>x.trim()).filter(Boolean);
-      if(parts.length >= 2){
-        return { kind:"voucher", voucher: parts[0], sig: parts[1] };
+      if(dt) return { kind:"owner", dt: sanitizeHexId(dt) || dt };
+      if(voucher && sig){
+        return { kind:"voucher", voucher: sanitizeHexId(voucher) || voucher, sig: sanitizeHexId(sig) || sig };
       }
-      // could be just voucher id
-      return { kind:"voucherId", voucher: parts[0] };
+    }catch(e){}
+
+    // Compact: voucher|sig
+    if(raw.includes("|")){
+      const [a,b] = raw.split("|",2);
+      const voucher = sanitizeHexId(a) || a.trim();
+      const sig = sanitizeHexId(b) || (b||"").trim();
+      if(voucher && sig) return { kind:"voucher", voucher, sig };
+      if(voucher) return { kind:"voucherId", voucher };
     }
 
-    // Maybe raw voucher id
-    if(/^[a-f0-9]{10,40}$/i.test(s)){
-      return { kind:"voucherId", voucher:s };
-    }
+    // Raw voucher id
+    const vid = sanitizeHexId(raw);
+    if(vid) return { kind:"voucherId", voucher: vid };
+
     return null;
   }
 
   // ====== Scanner (jsQR) ======
-  let scanMode = "voucher"; // "owner" or "voucher"
+  let scanMode = "voucher";
   let stream = null;
   let raf = null;
 
@@ -339,7 +346,6 @@
   async function startCamera(){
     stopCamera();
     try{
-      // iOS Safari/PWA likes explicit constraints
       stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: "environment" },
@@ -351,12 +357,11 @@
 
       video.srcObject = stream;
       await video.play();
-
       scanLoop();
     }catch(err){
       document.getElementById("scanError").style.display = "block";
       document.getElementById("scanError").textContent =
-        "Camera not available. Please allow camera permission in Safari settings (Settings → Safari → Camera → Allow), then reload.";
+        "Camera not available. Allow camera permission and reload. (iPhone: Settings → Safari → Camera → Allow)";
       console.error(err);
     }
   }
@@ -397,7 +402,6 @@
     if(code && code.data){
       const parsed = parseQRPayload(code.data);
 
-      // owner mode expects dt
       if(scanMode === "owner" && parsed && parsed.kind === "owner"){
         setDeviceToken(parsed.dt);
         closeScanner();
@@ -405,7 +409,6 @@
         return;
       }
 
-      // voucher mode expects voucher+sig OR voucher id
       if(scanMode === "voucher" && parsed){
         if(parsed.kind === "voucher"){
           document.getElementById("voucherInput").value = `${parsed.voucher}|${parsed.sig}`;
@@ -426,9 +429,18 @@
   }
 
   // ====== Voucher API calls ======
-  let currentVoucher = null; // {id, sig?}
+  let currentVoucher = null;
 
   function safeText(x){ return (x==null?"":String(x)); }
+
+  function statusClass(s){
+    s = (s||"").toLowerCase();
+    if(s==="paid") return "paid";
+    if(s==="used") return "used";
+    if(s==="pending") return "pending";
+    if(s==="failed") return "failed";
+    return "unknown";
+  }
 
   async function checkVoucher(){
     const tok = getDeviceToken();
@@ -453,14 +465,13 @@
     }else if(parsed && parsed.kind === "voucherId"){
       voucherId = parsed.voucher;
     }else{
-      // fallback: maybe user pasted just voucher id
-      voucherId = raw.split("|")[0].trim();
-      sig = raw.split("|")[1]?.trim() || null;
+      // fallback split
+      voucherId = sanitizeHexId(raw.split("|")[0]) || raw.split("|")[0].trim();
+      sig = sanitizeHexId(raw.split("|")[1]) || raw.split("|")[1]?.trim() || null;
     }
 
     if(!voucherId) return alert("Voucher ID missing");
 
-    // call backend: GET /attendant/voucher?voucher=...&sig=...
     const params = new URLSearchParams();
     params.set("voucher", voucherId);
     if(sig) params.set("sig", sig);
@@ -477,10 +488,8 @@
     }
 
     currentVoucher = { id: voucherId, sig: sig || data.sig || null };
-
     showDetails(data);
 
-    // scroll to details
     document.getElementById("detailsCard").scrollIntoView({ behavior:"smooth", block:"start" });
   }
 
@@ -500,14 +509,8 @@
     btn.disabled = false;
     btn.textContent = "✅ Dispense Fuel";
     document.getElementById("dispenseMsg").innerHTML = `<span class="msgBad">❌ Dispense failed: ${safeText(msg)}</span>`;
-  }
-
-  function statusClass(s){
-    s = (s||"").toLowerCase();
-    if(s==="paid") return "paid";
-    if(s==="used") return "used";
-    if(s==="pending") return "pending";
-    return "unknown";
+    // auto-scroll so attendant sees message
+    document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
   }
 
   function showDetails(v){
@@ -528,23 +531,35 @@
     document.getElementById("statusLine").innerHTML = `
       <span class="k">Status:</span>
       <span class="statusChip ${stCls}">${st || "UNKNOWN"}</span>
-      <span class="msgOk">QR Signature: OK</span>
-      ${stCls === "used" ? `<span class="msgWarn">⚠️ Voucher already used.</span>` : `<span class="msgOk">✅ Ready to dispense.</span>`}
+      <span class="msgOk">✅ QR OK</span>
+      ${stCls === "used"
+        ? `<span class="msgWarn">⚠️ Voucher already used.</span>`
+        : (stCls === "paid"
+            ? `<span class="msgOk">✅ Ready to dispense.</span>`
+            : `<span class="msgWarn">⚠️ Not paid yet.</span>`
+          )
+      }
     `;
 
     const btn = document.getElementById("dispenseBtn");
     const msg = document.getElementById("dispenseMsg");
 
-    // If already used, disable dispense
     if(stCls === "used"){
       btn.disabled = true;
       btn.textContent = "✔ Done";
       msg.innerHTML = `<span class="msgWarn">⚠️ Already used. No further action.</span>`;
+    }else if(stCls !== "paid"){
+      btn.disabled = true;
+      btn.textContent = "✅ Dispense Fuel";
+      msg.innerHTML = `<span class="msgWarn">⚠️ Cannot dispense until payment is PAID.</span>`;
     }else{
       btn.disabled = false;
       btn.textContent = "✅ Dispense Fuel";
       msg.innerHTML = "";
     }
+
+    // ensure attendant sees status immediately
+    document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
   }
 
   async function dispenseFuel(){
@@ -565,10 +580,7 @@
     btn.textContent = "Dispensing…";
     msg.innerHTML = "";
 
-    const body = {
-      voucher: currentVoucher.id,
-      sig: currentVoucher.sig || null
-    };
+    const body = { voucher: currentVoucher.id, sig: currentVoucher.sig || null };
 
     const res = await fetch(`${API}/attendant/dispense`, {
       method: "POST",
@@ -585,20 +597,18 @@
       btn.disabled = false;
       btn.textContent = "✅ Dispense Fuel";
       msg.innerHTML = `<span class="msgBad">❌ Dispense failed: ${safeText(data.detail || "Failed")}</span>`;
-      // scroll so attendant sees error immediately
       document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
       return;
     }
 
-    // success: mark as done + scroll to status
     btn.textContent = "✔ Done";
     btn.disabled = true;
     msg.innerHTML = `<span class="msgOk">✅ Dispensed. Status updated to USED.</span>`;
 
-    // refresh details (so status changes to USED)
+    // refresh details so status becomes USED
     await checkVoucher();
 
-    // ensure attendant sees confirmation immediately
+    // final scroll
     document.getElementById("statusLine").scrollIntoView({ behavior:"smooth", block:"center" });
   }
 
@@ -606,22 +616,22 @@
   window.addEventListener("load", () => {
     renderPair();
 
-    // Auto-handle direct link like attendant.html?dt=... (pairing)
+    // If opened with attendant.html?dt=... (pair)
     const url = new URL(window.location.href);
     const dt = url.searchParams.get("dt");
     if(dt){
-      setDeviceToken(dt);
-      // clean URL
+      setDeviceToken(sanitizeHexId(dt) || dt);
       url.searchParams.delete("dt");
       history.replaceState({}, "", url.toString());
     }
 
-    // Auto-handle direct voucher link (optional)
+    // If opened with voucher link
     const v = url.searchParams.get("voucher");
     const sig = url.searchParams.get("sig");
     if(v){
-      document.getElementById("voucherInput").value = sig ? `${v}|${sig}` : v;
-      // (don’t auto-check if not paired)
+      const vid = sanitizeHexId(v) || v;
+      const sg  = sig ? (sanitizeHexId(sig) || sig) : "";
+      document.getElementById("voucherInput").value = sg ? `${vid}|${sg}` : vid;
       if(getDeviceToken()) checkVoucher();
     }
   });

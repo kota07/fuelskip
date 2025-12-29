@@ -71,7 +71,7 @@ class VoucherDB(Base):
     vehicle_type = Column(String, nullable=True)
     vehicle_no = Column(String, nullable=True)
 
-    # ✅ NEW: fuel type
+    # ✅ fuel type
     fuel_type = Column(String, nullable=True)  # PETROL/DIESEL/CNG/EV
 
     # ✅ Only razorpay now (kept for record)
@@ -105,6 +105,8 @@ class DeviceDB(Base):
     device_token = Column(String, unique=True, index=True)
     created_at = Column(DateTime)
     last_seen_at = Column(DateTime, nullable=True)
+
+    revoked = Column(Boolean, default=False)  # ✅ NEW: owner can disable a device
 
 
 def get_db():
@@ -259,6 +261,11 @@ def on_startup():
             if "fuel_type" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN fuel_type VARCHAR"))
 
+            # ✅ NEW: add revoked column to devices table if missing
+            dcols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(devices)")).fetchall()]
+            if "revoked" not in dcols:
+                conn.execute(sql_text("ALTER TABLE devices ADD COLUMN revoked BOOLEAN DEFAULT 0"))
+
 
 # ----- Razorpay setup -----
 RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID")
@@ -318,10 +325,8 @@ class CreateVoucher(BaseModel):
     user_id: int | None = None
     vehicle_type: str | None = None
     vehicle_no: str | None = None
-    fuel_type: str | None = "PETROL"  # ✅ petrol/diesel/cng/ev
-
-    # ✅ wallet removed
-    pay_method: str | None = "razorpay"
+    fuel_type: str | None = "PETROL"  # PETROL/DIESEL/CNG/EV
+    pay_method: str | None = "razorpay"  # wallet removed
 
 
 class LoginRequest(BaseModel):
@@ -338,6 +343,11 @@ class LoginResponse(BaseModel):
 class RegisterDeviceRequest(BaseModel):
     name: str | None = None
     bunk_id: str
+
+
+class RevokeDeviceRequest(BaseModel):
+    device_id: int
+    revoke: bool = True
 # --------------------------------
 
 
@@ -355,13 +365,11 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
     else:
-        # allow name update on login if provided
         if req.name and (not user.name):
             user.name = req.name
             db.commit()
             db.refresh(user)
 
-    # ✅ wallet removed from response
     return LoginResponse(user_id=user.id, phone=user.phone, name=user.name)
 
 
@@ -410,10 +418,8 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     now = datetime.datetime.utcnow()
     expires = now + datetime.timedelta(minutes=30)
 
-    # ✅ WALLET REMOVED: only razorpay allowed
     pay_method = "razorpay"
 
-    # Razorpay order
     try:
         order = razor_client.order.create(
             {
@@ -510,6 +516,7 @@ def register_device(
         device_token=token,
         created_at=datetime.datetime.utcnow(),
         last_seen_at=None,
+        revoked=False,
     )
     db.add(d)
     db.commit()
@@ -525,9 +532,33 @@ def list_devices(
     _require_token(OWNER_TOKEN, x_owner_token, "Owner")
     devices = db.query(DeviceDB).order_by(DeviceDB.created_at.desc()).all()
     return [
-        {"id": d.id, "name": d.name, "bunk_id": d.bunk_id, "created_at": d.created_at, "last_seen_at": d.last_seen_at}
+        {
+            "id": d.id,
+            "name": d.name,
+            "bunk_id": d.bunk_id,
+            "created_at": d.created_at,
+            "last_seen_at": d.last_seen_at,
+            "revoked": bool(getattr(d, "revoked", False)),
+        }
         for d in devices
     ]
+
+
+@app.post("/devices/revoke")
+def revoke_device(
+    req: RevokeDeviceRequest,
+    db: Session = Depends(get_db),
+    x_owner_token: str | None = Header(None, alias="X-OWNER-TOKEN"),
+):
+    _require_token(OWNER_TOKEN, x_owner_token, "Owner")
+
+    d = db.query(DeviceDB).filter(DeviceDB.id == req.device_id).first()
+    if not d:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    d.revoked = bool(req.revoke)
+    db.commit()
+    return {"ok": True, "device_id": d.id, "revoked": bool(d.revoked)}
 # ------------------------------------------------------------
 
 
@@ -547,6 +578,9 @@ def validate_voucher(
     device = None
     if x_device_token:
         device = db.query(DeviceDB).filter(DeviceDB.device_token == x_device_token).first()
+
+    if device and bool(getattr(device, "revoked", False)):
+        raise HTTPException(status_code=403, detail="Device revoked by owner")
 
     if not device:
         _require_token(ATTENDANT_TOKEN, x_attendant_token, "Attendant")

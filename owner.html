@@ -7,121 +7,47 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      margin:0; padding:16px;
-      background:#0f172a; color:#e5e7eb;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin:0; padding:16px; background:#0f172a; color:#e5e7eb; }
     h2 { margin-top:0; text-align:center; }
 
-    .panel {
-      background:#020617;
-      border-radius:16px;
-      padding:12px 14px;
-      box-shadow:0 10px 25px rgba(15,23,42,0.4);
-      margin-bottom:12px;
-      border:1px solid rgba(148,163,184,0.12);
-    }
-    .row {
-      display:flex; flex-wrap:wrap;
-      gap:8px; align-items:center;
-      justify-content:space-between;
-    }
+    .panel { background:#020617; border-radius:16px; padding:12px 14px; box-shadow:0 10px 25px rgba(15,23,42,0.4); margin-bottom:12px; border:1px solid rgba(148,163,184,0.12); }
+    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
     .field-group { display:flex; align-items:center; gap:6px; font-size:13px; }
     label { font-weight:800; color:#cbd5e1; }
 
-    input, select {
-      padding:6px 8px;
-      border-radius:10px;
-      border:1px solid #334155;
-      background:#020617;
-      color:#e5e7eb;
-      font-size:13px;
-      outline:none;
-    }
+    input, select { padding:6px 8px; border-radius:10px; border:1px solid #334155; background:#020617; color:#e5e7eb; font-size:13px; outline:none; }
     input:focus, select:focus { border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,0.16); }
 
-    button {
-      padding:8px 12px;
-      border-radius:12px;
-      border:none;
-      cursor:pointer;
-      font-weight:800;
-      font-size:13px;
-      background:#22c55e;
-      color:white;
-    }
+    button { padding:8px 12px; border-radius:12px; border:none; cursor:pointer; font-weight:800; font-size:13px; background:#22c55e; color:white; }
     button:active { transform:scale(0.98); }
     .btn-blue { background:#3b82f6; }
     .btn-red  { background:#ef4444; }
     .btn-gray { background:#334155; }
+    .btn-amber{ background:#f59e0b; color:#111827; font-weight:900; }
 
-    .summary {
-      margin-top:12px;
-      display:flex; flex-wrap:wrap;
-      gap:8px; font-size:13px;
-    }
-    .chip {
-      padding:6px 10px;
-      border-radius:999px;
-      background:#020617;
-      border:1px solid #1f2937;
-      color:#e2e8f0;
-      font-weight:800;
-    }
+    .summary { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; font-size:13px; }
+    .chip { padding:6px 10px; border-radius:999px; background:#020617; border:1px solid #1f2937; color:#e2e8f0; font-weight:800; }
 
-    .scroll-wrap {
-      margin-top:12px;
-      max-height:55vh;
-      overflow:auto;
-      border-radius:16px;
-      border:1px solid rgba(148,163,184,0.12);
-    }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
-      background:#020617;
-      overflow:hidden;
-    }
-    th, td {
-      padding:8px 10px;
-      font-size:13px;
-      border-bottom:1px solid #111827;
-      text-align:left;
-      white-space:nowrap;
-      color:#e5e7eb;
-    }
+    .scroll-wrap { margin-top:12px; max-height:55vh; overflow:auto; border-radius:16px; border:1px solid rgba(148,163,184,0.12); }
+    table { width:100%; border-collapse:collapse; background:#020617; overflow:hidden; }
+    th, td { padding:8px 10px; font-size:13px; border-bottom:1px solid #111827; text-align:left; white-space:nowrap; color:#e5e7eb; }
     tbody tr:nth-child(even) { background:#030712; }
     tbody tr:nth-child(odd)  { background:#020617; }
-    th {
-      position:sticky;
-      top:0;
-      z-index:1;
-      background:#0b1220;
-      color:#cbd5e1;
-      font-weight:900;
-      letter-spacing:0.2px;
-    }
+    th { position:sticky; top:0; z-index:1; background:#0b1220; color:#cbd5e1; font-weight:900; letter-spacing:0.2px; }
 
-    .pill {
-      display:inline-block;
-      padding:2px 8px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:900;
-      text-transform:uppercase;
-      border:1px solid rgba(255,255,255,0.14);
-    }
-    .paid    { background:#14532d; color:#dcfce7; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:900; text-transform:uppercase; border:1px solid rgba(255,255,255,0.14); }
+    .paid { background:#14532d; color:#dcfce7; }
     .pending { background:#7c2d12; color:#ffedd5; }
-    .used    { background:#1e3a8a; color:#dbeafe; }
-    .failed  { background:#7f1d1d; color:#fee2e2; }
+    .used { background:#1e3a8a; color:#dbeafe; }
+    .failed { background:#7f1d1d; color:#fee2e2; }
 
     .mini { margin-top:8px; font-size:12px; color:#94a3b8; line-height:1.4; }
     #qrBox { background:#0b1220; border:1px solid #1f2937; border-radius:16px; padding:12px; margin-top:10px; }
     #qr { display:flex; justify-content:center; padding:12px; background:#fff; border-radius:12px; }
     code { color:#93c5fd; word-break:break-all; }
+
+    .dangerText { color:#fecaca; font-weight:900; }
+    .okText { color:#bbf7d0; font-weight:900; }
 
     @media (max-width: 720px){
       body{ padding:12px; }
@@ -131,11 +57,21 @@
       button{ width:100%; }
       th, td{ font-size:12px; }
     }
+
+    /* hidden copy input fallback */
+    #copyFallback {
+      position:fixed;
+      left:-9999px;
+      top:-9999px;
+      opacity:0;
+    }
   </style>
 </head>
 
 <body>
   <h2>⛽ FuelSkip – Owner Dashboard</h2>
+
+  <input id="copyFallback" />
 
   <div class="panel">
     <div class="row">
@@ -146,9 +82,7 @@
       <button class="btn-blue" onclick="saveOwnerToken()">Save</button>
       <button class="btn-red" onclick="clearOwnerToken()">Clear</button>
     </div>
-    <div class="mini">
-      Stored only in your browser localStorage.
-    </div>
+    <div class="mini">Stored only in your browser localStorage.</div>
   </div>
 
   <div class="panel">
@@ -163,27 +97,23 @@
         <input id="pairName" value="Attendant Phone" />
       </div>
       <button onclick="createPairQR()">Generate Pair QR</button>
+      <button class="btn-gray" onclick="copyPairLink()" id="copyPairBtn" disabled>Copy Pair Link</button>
     </div>
 
     <div id="qrBox" style="display:none;">
-      <div class="mini">
-        Scan this QR on attendant phone (once). It will auto-pair and remove token prompts.
-      </div>
+      <div class="mini">Scan this QR on attendant phone (once). It will auto-pair and remove token prompts.</div>
       <div id="qr"></div>
-      <div class="mini">
-        Pair link: <code id="pairLink"></code>
-      </div>
+      <div class="mini">Pair link: <code id="pairLink"></code></div>
     </div>
   </div>
 
-  <!-- ✅ Devices list -->
   <div class="panel">
     <div class="row">
       <div style="font-weight:900;">📟 Devices</div>
       <button class="btn-gray" onclick="loadDevices()">Refresh Devices</button>
     </div>
-    <div class="mini">Shows all registered devices + last seen. Helps debug pairing issues.</div>
-    <div class="scroll-wrap" style="max-height:32vh;">
+    <div class="mini">Revoke disables a device token immediately (anti-fraud / lost phone).</div>
+    <div class="scroll-wrap" style="max-height:34vh;">
       <table id="devTbl">
         <thead>
           <tr>
@@ -191,11 +121,14 @@
             <th>Bunk</th>
             <th>Created</th>
             <th>Last Seen (IST)</th>
+            <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
+    <div class="mini" id="autoRefInfo">Auto refresh: ON (every 20s)</div>
   </div>
 
   <div class="panel">
@@ -242,15 +175,12 @@
       </table>
     </div>
 
-    <div class="mini">
-      Note: “USED” is shown if status is used OR used=true (safer).
-    </div>
+    <div class="mini">Note: “USED” is shown if status is used OR used=true (safer).</div>
   </div>
 
 <script>
 const API = window.location.origin;
 
-// ✅ Keep bunk names here (same as customer side)
 const BUNK_META = {
   "BUNK-1": { name: "BPCL Siripuram" },
   "BUNK-2": { name: "Gajuwaka Expressway" }
@@ -267,9 +197,9 @@ function niceFuel(ft){
 }
 function nicePay(pm){
   const x = String(pm || "").toLowerCase();
-  if(x === "wallet") return "Wallet";
+  if(!x) return "Razorpay";
   if(x === "razorpay") return "Razorpay";
-  return x ? x : "-";
+  return x;
 }
 
 function ownerToken() {
@@ -280,6 +210,8 @@ function saveOwnerToken() {
   if (!t) return alert("Paste OWNER_TOKEN");
   localStorage.setItem("FUELSKIP_OWNER_TOKEN", t);
   alert("Saved.");
+  // ✅ Immediately refresh devices after saving token
+  loadDevices();
 }
 function clearOwnerToken() {
   localStorage.removeItem("FUELSKIP_OWNER_TOKEN");
@@ -316,6 +248,8 @@ function populateBunks(){
   document.getElementById("bunkInput").value = "BUNK-1";
 }
 
+let lastPairLink = "";
+
 async function createPairQR() {
   const tok = ownerToken();
   if (!tok) return alert("Save OWNER_TOKEN first");
@@ -325,30 +259,79 @@ async function createPairQR() {
 
   const res = await fetch(`${API}/devices/register`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-OWNER-TOKEN": tok
-    },
+    headers: { "Content-Type": "application/json", "X-OWNER-TOKEN": tok },
     body: JSON.stringify({ bunk_id, name })
   });
 
   const data = await res.json();
   if (!res.ok) return alert(data.detail || "Failed to register device");
 
-  const link = `${window.location.origin}/attendant.html?dt=${encodeURIComponent(data.device_token)}`;
+  lastPairLink = `${window.location.origin}/attendant.html?dt=${encodeURIComponent(data.device_token)}`;
 
-  document.getElementById("pairLink").textContent = link;
+  document.getElementById("pairLink").textContent = lastPairLink;
   document.getElementById("qrBox").style.display = "block";
   document.getElementById("qr").innerHTML = "";
-  new QRCode(document.getElementById("qr"), { text: link, width: 200, height: 200 });
+  new QRCode(document.getElementById("qr"), { text: lastPairLink, width: 200, height: 200 });
+
+  document.getElementById("copyPairBtn").disabled = false;
+  loadDevices();
+}
+
+async function copyPairLink(){
+  if(!lastPairLink) return alert("Generate Pair QR first");
+
+  // ✅ Modern clipboard first
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(lastPairLink);
+      alert("Pair link copied ✅");
+      return;
+    }
+  }catch(e){ /* fallthrough */ }
+
+  // ✅ Fallback: hidden input + execCommand
+  const el = document.getElementById("copyFallback");
+  el.value = lastPairLink;
+  el.focus();
+  el.select();
+  try{
+    const ok = document.execCommand("copy");
+    alert(ok ? "Pair link copied ✅" : "Copy failed");
+  }catch(e){
+    alert("Copy failed");
+  }
+}
+
+async function revokeDevice(device_id, revoke){
+  const tok = ownerToken();
+  if (!tok) return alert("Save OWNER_TOKEN first");
+
+  const confirmMsg = revoke
+    ? "Revoke this device? It will stop working immediately."
+    : "Un-revoke this device? It will work again.";
+
+  if(!confirm(confirmMsg)) return;
+
+  const res = await fetch(`${API}/devices/revoke`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "X-OWNER-TOKEN": tok },
+    body: JSON.stringify({ device_id, revoke })
+  });
+  const data = await res.json();
+  if(!res.ok){
+    alert(data.detail || "Revoke failed");
+    return;
+  }
+  alert(revoke ? "Device revoked ✅" : "Device re-enabled ✅");
+  loadDevices();
 }
 
 async function loadDevices(){
   const tok = ownerToken();
-  if (!tok) return alert("Save OWNER_TOKEN first");
+  if (!tok) return;
 
   const tbody = document.querySelector("#devTbl tbody");
-  tbody.innerHTML = "<tr><td colspan='4'>Loading...</td></tr>";
+  tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
 
   const res = await fetch(`${API}/devices`, {
     headers: { "X-OWNER-TOKEN": tok },
@@ -357,23 +340,31 @@ async function loadDevices(){
 
   const data = await res.json();
   if(!res.ok){
-    tbody.innerHTML = `<tr><td colspan='4'>Error: ${data.detail || "load failed"}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan='6'>Error: ${data.detail || "load failed"}</td></tr>`;
     return;
   }
 
   if(!data.length){
-    tbody.innerHTML = "<tr><td colspan='4'>No devices registered</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='6'>No devices registered</td></tr>";
     return;
   }
 
   tbody.innerHTML = "";
   data.forEach(d=>{
+    const revoked = !!d.revoked;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${d.name || "Device"}</td>
       <td>${bunkName(d.bunk_id)} (${d.bunk_id})</td>
       <td>${fmtIST(d.created_at)}</td>
       <td>${d.last_seen_at ? fmtIST(d.last_seen_at) : "-"}</td>
+      <td>${revoked ? `<span class="dangerText">REVOKED</span>` : `<span class="okText">ACTIVE</span>`}</td>
+      <td>
+        ${revoked
+          ? `<button class="btn-amber" onclick="revokeDevice(${d.id}, false)">Enable</button>`
+          : `<button class="btn-red" onclick="revokeDevice(${d.id}, true)">Revoke</button>`
+        }
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -407,7 +398,7 @@ async function loadVouchers() {
     return;
   }
   if (!data.length) {
-    tbody.innerHTML = "<tr><td colspan='8'>No vouchers found</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='8'>No vouchers found</td></tr>`;
     return;
   }
 
@@ -442,11 +433,18 @@ async function loadVouchers() {
   sumRow.style.display = "flex";
 }
 
-// init
+let autoTimer = null;
+
 window.addEventListener("load", () => {
   document.getElementById("ownerToken").value = ownerToken();
   populateBunks();
   loadDevices();
+
+  // ✅ Auto refresh devices every 20s (pilot friendly)
+  if(autoTimer) clearInterval(autoTimer);
+  autoTimer = setInterval(() => {
+    if(ownerToken()) loadDevices();
+  }, 20000);
 });
 </script>
 </body>
