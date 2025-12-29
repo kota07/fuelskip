@@ -1099,10 +1099,10 @@
         showSection("home");
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (e) {
-        console.error(e);
+        console.error("Login Exception:", e);
         btn.textContent = "Login";
         btn.disabled = false;
-        alert("Connection error");
+        alert("Login Error: " + (e.message || e));
       }
     }
 
