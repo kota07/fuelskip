@@ -132,88 +132,6 @@
       width: 100%;
     }
 
-    /* Mobile: sidebar becomes bottom bar */
-    @media (max-width: 1024px) {
-      .app {
-        flex-direction: column;
-        padding-bottom: 80px;
-      }
-
-      /* Space for bottom bar */
-      .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        height: auto;
-        border-right: none;
-        border-top: 1px solid var(--border);
-        background: #fff;
-        z-index: 1000;
-        padding: 6px 12px;
-        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
-        display: flex;
-        justify-content: center;
-      }
-
-      /* Hide non-nav items in sidebar on mobile */
-      .sidebar .brandRow,
-      .sidebar .sessionCard,
-      .sidebar .hint {
-        display: none;
-      }
-
-      .nav {
-        flex-direction: row;
-        width: 100%;
-        margin: 0;
-        gap: 0;
-        justify-content: space-around;
-      }
-
-      .nav button {
-        flex-direction: column;
-        gap: 4px;
-        padding: 8px 4px;
-        border: none;
-        box-shadow: none;
-        background: transparent;
-        color: var(--muted);
-        font-size: 10px;
-        font-weight: 700;
-        border-radius: 8px;
-        width: 100%;
-      }
-
-      .nav button span {
-        font-size: 18px;
-        display: block;
-        margin-bottom: 2px;
-      }
-
-      /* Icon size */
-      .nav button small {
-        display: none;
-      }
-
-      /* Hide small text */
-
-      .nav button.active {
-        background: transparent;
-        color: var(--brand);
-      }
-
-      .nav button.active span {
-        transform: scale(1.1);
-        transition: transform .2s;
-      }
-
-      .main {
-        padding: 16px;
-        margin: 0;
-      }
-    }
 
     /* Brand */
     .brandRow {
@@ -654,6 +572,84 @@
     .welcomeActions button {
       flex: 1;
       min-width: 160px;
+    }
+
+    /* Mobile: sidebar becomes bottom bar (Moved to end for cascade) */
+    @media (max-width: 1024px) {
+      .app {
+        flex-direction: column;
+        padding-bottom: 80px;
+      }
+
+      .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        background: #fff;
+        z-index: 1000;
+        padding: 6px 12px;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
+        display: flex;
+        justify-content: center;
+      }
+
+      .sidebar .brandRow,
+      .sidebar .sessionCard,
+      .sidebar .hint {
+        display: none;
+      }
+
+      .nav {
+        flex-direction: row;
+        width: 100%;
+        margin: 0;
+        gap: 0;
+        justify-content: space-around;
+      }
+
+      .nav button {
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 4px;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        border-radius: 8px;
+        width: 100%;
+      }
+
+      .nav button span {
+        font-size: 18px;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .nav button small {
+        display: none;
+      }
+
+      .nav button.active {
+        background: transparent;
+        color: var(--brand);
+      }
+
+      .nav button.active span {
+        transform: scale(1.1);
+        transition: transform .2s;
+      }
+
+      .main {
+        padding: 16px;
+        margin: 0;
+      }
     }
   </style>
 </head>
@@ -1667,13 +1663,25 @@
           name: "FuelSkip Voucher",
           description: `Prepaid fuel voucher (${fuel_type})`,
           order_id: data.razorpay_order_id,
-          handler: function () {
-            toast("Payment done. Updating...");
-            document.getElementById("homeStatus").textContent = "Payment done. Updating status...";
-            setTimeout(async () => {
-              await loadMyVouchers(true);
-              document.getElementById("homeStatus").textContent = "Voucher updated ✅";
-            }, 1600);
+          handler: function (response) {
+            toast("Payment done. Verifying...");
+            document.getElementById("homeStatus").textContent = "Payment done. Verifying...";
+
+            // Create a lightweight verify call
+            const s = getSession();
+            fetch(`${API}/verify-payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
+              body: JSON.stringify({ voucher_id: data.id, razorpay_payment_id: response.razorpay_payment_id })
+            }).then(() => {
+              toast("Verified! Updating...");
+              setTimeout(async () => {
+                await loadMyVouchers(true);
+                document.getElementById("homeStatus").textContent = "Voucher updated ✅";
+              }, 1000);
+            }).catch(() => {
+              alert("Verification failed but payment may have succeeded.");
+            });
           },
           theme: { color: "#4f46e5" }
         };
