@@ -584,6 +584,8 @@
       .sidebar {
         position: fixed;
         bottom: 0;
+        top: auto;
+        /* Reset desktop top:0 sticky */
         left: 0;
         right: 0;
         width: 100%;
@@ -698,28 +700,8 @@
         </button>
       </div>
 
-      <div class="sessionCard">
-        <div class="sessionRow">
-          <div>
-            <div class="pill" id="pillUser">Not logged in</div>
-            <div class="muted" id="pillSub" style="margin-top:6px;">
-              Login to save & reuse details.
-            </div>
-          </div>
-          <button class="btnDanger" id="btnLogout" onclick="logout()" disabled>Logout</button>
-        </div>
-
-        <div style="margin-top:10px;" class="row">
-          <button class="btn btnPrimary" onclick="openLogin()">Login</button>
-          <button class="btn btnGhost" onclick="refreshAll()">Refresh</button>
-        </div>
-
-        <div class="muted" style="margin-top:10px; font-size:12px; font-weight:800;">
-          Data saving:
-          <br>• Session (login) → browser storage
-          <br>• Vehicles + Vouchers → server database
-        </div>
-      </div>
+      <!-- Session Card Removed as per user request (moved to Profile view) -->
+      <div class="sessionCard" style="display:none;"></div>
 
       <div class="hint">
         Tip: Create voucher before you reach bunk. Show QR to attendant for scanning.
@@ -1750,7 +1732,8 @@
     }
 
     window.addEventListener("load", async () => {
-      setupFuelCalc(); // INIT CALC
+      try { setupFuelCalc(); } catch (e) { console.error("FuelCalc Init Error", e); }
+
       setTimeout(() => document.getElementById("splash").classList.add("hidden"), 650);
 
       updateSessionUI();
