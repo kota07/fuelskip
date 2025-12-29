@@ -55,6 +55,18 @@ async def serve_owner():
         return FileResponse("owner.html")
     return {"error": "owner.html not found"}
 
+@app.get("/terms.html")
+async def serve_terms():
+    if os.path.exists("terms.html"):
+        return FileResponse("terms.html")
+    return {"error": "Not found"}
+
+@app.get("/privacy.html")
+async def serve_privacy():
+    if os.path.exists("privacy.html"):
+        return FileResponse("privacy.html")
+    return {"error": "Not found"}
+
 @app.get("/manifest.json")
 async def serve_manifest():
     if os.path.exists("manifest.json"):
