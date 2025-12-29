@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>FuelSkip – Customer</title>
@@ -12,951 +13,1175 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
   <style>
-    :root{
-      --bg:#f5f7fb;
-      --card:#ffffff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --border:#e6edf7;
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e6edf7;
 
-      --brand:#4f46e5;        /* indigo */
-      --accent:#06b6d4;       /* cyan */
-      --good:#22c55e;
-      --warn:#f59e0b;
-      --bad:#ef4444;
+      --brand: #4f46e5;
+      /* indigo */
+      --accent: #06b6d4;
+      /* cyan */
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --bad: #ef4444;
 
-      --chip:#eef2ff;
-      --chipText:#3730a3;
-      --shadow: 0 10px 30px rgba(15,23,42,.08);
-      --radius:16px;
+      --chip: #eef2ff;
+      --chipText: #3730a3;
+      --shadow: 0 10px 30px rgba(15, 23, 42, .08);
+      --radius: 16px;
     }
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
 
     /* -------- Splash -------- */
-    .splash{
-      position:fixed;
-      inset:0;
+    .splash {
+      position: fixed;
+      inset: 0;
       background: radial-gradient(circle at 20% 20%, #eef2ff, #f5f7fb 55%, #ecfeff);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
       transition: opacity .25s ease;
     }
-    .splash.hidden{ opacity:0; pointer-events:none; }
-    .splashCard{
-      width:min(420px, 92vw);
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:22px;
+
+    .splash.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .splashCard {
+      width: min(420px, 92vw);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 22px;
       box-shadow: var(--shadow);
-      padding:18px;
-      display:flex;
-      align-items:center;
-      gap:14px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
-    .logoMarkBig{
-      width:56px; height:56px;
-      border-radius:18px;
+
+    .logoMarkBig {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
       background: radial-gradient(circle at 30% 30%, #7c3aed, #4f46e5 60%, #06b6d4);
-      display:grid;
-      place-items:center;
-      color:#fff;
-      font-weight:900;
-      font-size:22px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 22px;
     }
-    .splashText .name{
-      font-weight:1000;
-      font-size:20px;
-      letter-spacing:.2px;
+
+    .splashText .name {
+      font-weight: 1000;
+      font-size: 20px;
+      letter-spacing: .2px;
     }
-    .splashText .tag{
-      color:var(--muted);
-      font-size:13px;
-      font-weight:800;
-      margin-top:2px;
+
+    .splashText .tag {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      margin-top: 2px;
     }
-    .splashText .sub{
-      margin-top:8px;
-      color:#475569;
-      font-size:12px;
-      font-weight:800;
+
+    .splashText .sub {
+      margin-top: 8px;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 800;
     }
 
     /* Layout */
-    .app{
-      display:flex;
-      min-height:100vh;
-      width:100%;
-    }
-    .sidebar{
-      width: 270px;
-      background: linear-gradient(180deg, #ffffff, #f3f6ff);
-      border-right:1px solid var(--border);
-      padding:14px 12px;
-      position:sticky;
-      top:0;
-      height:100vh;
-      overflow:auto;
-    }
-    .main{
-      flex:1;
-      padding:16px;
-      max-width: 1100px;
-      margin: 0 auto;
-      width:100%;
+    .app {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
     }
 
-    /* Mobile: sidebar becomes top bar */
-    @media (max-width: 860px){
-      .app{ flex-direction:column; }
-      .sidebar{
-        width:100%;
-        height:auto;
-        position:relative;
-        border-right:none;
-        border-bottom:1px solid var(--border);
-        padding-bottom:12px;
+    .sidebar {
+      width: 270px;
+      background: linear-gradient(180deg, #ffffff, #f3f6ff);
+      border-right: 1px solid var(--border);
+      padding: 14px 12px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    .main {
+      flex: 1;
+      padding: 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Mobile: sidebar becomes bottom bar */
+    @media (max-width: 860px) {
+      .app {
+        flex-direction: column;
+        padding-bottom: 80px;
       }
-      .main{ padding:14px; }
+
+      /* Space for bottom bar */
+      .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        background: #fff;
+        z-index: 1000;
+        padding: 6px 12px;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
+        display: flex;
+        justify-content: center;
+      }
+
+      /* Hide non-nav items in sidebar on mobile */
+      .sidebar .brandRow,
+      .sidebar .sessionCard,
+      .sidebar .hint {
+        display: none;
+      }
+
+      .nav {
+        flex-direction: row;
+        width: 100%;
+        margin: 0;
+        gap: 0;
+        justify-content: space-around;
+      }
+
+      .nav button {
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px 4px;
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        border-radius: 8px;
+        width: 100%;
+      }
+
+      .nav button span {
+        font-size: 18px;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      /* Icon size */
+      .nav button small {
+        display: none;
+      }
+
+      /* Hide small text */
+
+      .nav button.active {
+        background: transparent;
+        color: var(--brand);
+      }
+
+      .nav button.active span {
+        transform: scale(1.1);
+        transition: transform .2s;
+      }
+
+      .main {
+        padding: 16px;
+        margin: 0;
+      }
     }
 
     /* Brand */
-    .brandRow{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px;
-      border-radius:14px;
+    .brandRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 14px;
       background: #fff;
-      border:1px solid var(--border);
+      border: 1px solid var(--border);
       box-shadow: var(--shadow);
-      margin-bottom:12px;
+      margin-bottom: 12px;
     }
-    .logoMark{
-      width:40px; height:40px;
-      border-radius:12px;
+
+    .logoMark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
       background: radial-gradient(circle at 30% 30%, #7c3aed, #4f46e5 60%, #06b6d4);
-      display:grid;
-      place-items:center;
-      color:#fff;
-      font-weight:900;
-      letter-spacing:.5px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      letter-spacing: .5px;
     }
-    .brandText{
-      display:flex;
-      flex-direction:column;
-      line-height:1.1;
+
+    .brandText {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
     }
-    .brandText .name{
-      font-weight:900;
-      font-size:16px;
-      letter-spacing:.2px;
+
+    .brandText .name {
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: .2px;
     }
-    .brandText .tag{
-      color:var(--muted);
-      font-size:12px;
-      font-weight:600;
+
+    .brandText .tag {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
     }
 
     /* Sidebar nav */
-    .nav{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      margin-top:10px;
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
     }
-    .nav button{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      width:100%;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:#fff;
-      cursor:pointer;
-      font-weight:800;
-      color:#1f2937;
-      box-shadow: 0 6px 18px rgba(15,23,42,.05);
+
+    .nav button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 800;
+      color: #1f2937;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, .05);
     }
-    .nav button.active{
-      border-color: rgba(79,70,229,.35);
+
+    .nav button.active {
+      border-color: rgba(79, 70, 229, .35);
       background: linear-gradient(90deg, #eef2ff, #ecfeff);
     }
-    .nav small{
-      color:var(--muted);
-      font-weight:800;
-      font-size:12px;
+
+    .nav small {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
     }
-    .nav button:disabled{
-      opacity:.55;
-      cursor:not-allowed;
+
+    .nav button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
     }
 
     /* Mobile nav becomes horizontal */
-    @media (max-width: 860px){
-      .nav{
-        flex-direction:row;
-        overflow:auto;
-        padding-bottom:4px;
-      }
-      .nav button{
-        width:auto;
-        min-width:max-content;
-      }
-    }
+    /* Mobile nav overrides handled above */
 
     /* Session card */
-    .sessionCard{
-      margin-top:12px;
-      background:#fff;
-      border:1px solid var(--border);
+    .sessionCard {
+      margin-top: 12px;
+      background: #fff;
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding:12px;
+      padding: 12px;
     }
-    .sessionRow{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
+
+    .sessionRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
       background: var(--chip);
       color: var(--chipText);
-      border:1px solid rgba(79,70,229,.18);
-      font-weight:900;
-      font-size:12px;
+      border: 1px solid rgba(79, 70, 229, .18);
+      font-weight: 900;
+      font-size: 12px;
     }
-    .btn{
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:#fff;
-      cursor:pointer;
-      font-weight:900;
+
+    .btn {
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 900;
     }
-    .btnPrimary{
+
+    .btnPrimary {
       background: var(--brand);
-      color:#fff;
-      border-color: rgba(79,70,229,.25);
-      box-shadow: 0 10px 22px rgba(79,70,229,.22);
+      color: #fff;
+      border-color: rgba(79, 70, 229, .25);
+      box-shadow: 0 10px 22px rgba(79, 70, 229, .22);
     }
-    .btnPrimary:active{ transform:scale(.98); }
-    .btnGhost{
-      background:#fff;
-      color:#1f2937;
+
+    .btnPrimary:active {
+      transform: scale(.98);
     }
-    .btnDanger{
-      background:#fff;
-      border-color: rgba(239,68,68,.35);
+
+    .btnGhost {
+      background: #fff;
+      color: #1f2937;
+    }
+
+    .btnDanger {
+      background: #fff;
+      border-color: rgba(239, 68, 68, .35);
       color: #b91c1c;
-      font-weight:1000;
+      font-weight: 1000;
     }
 
     /* Page cards */
-    .card{
+    .card {
       background: var(--card);
-      border:1px solid var(--border);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding:14px;
-      margin-bottom:14px;
+      padding: 14px;
+      margin-bottom: 14px;
     }
-    .card h2{
-      margin:0 0 10px 0;
-      font-size:18px;
-      letter-spacing:.2px;
-    }
-    .muted{ color: var(--muted); font-weight:700; font-size:13px; }
 
-    .grid2{
-      display:grid;
+    .card h2 {
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      letter-spacing: .2px;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .grid2 {
+      display: grid;
       grid-template-columns: 1fr 1fr;
-      gap:12px;
-    }
-    @media (max-width: 860px){
-      .grid2{ grid-template-columns: 1fr; }
+      gap: 12px;
     }
 
-    label{ font-size:12px; font-weight:900; color:#334155; }
-    input, select{
-      width:100%;
-      padding:10px 11px;
-      border-radius:14px;
-      border:1px solid var(--border);
-      background:#fff;
-      font-weight:800;
-      color:#0f172a;
-      outline:none;
-    }
-    input:focus, select:focus{
-      border-color: rgba(79,70,229,.45);
-      box-shadow: 0 0 0 4px rgba(79,70,229,.12);
+    @media (max-width: 860px) {
+      .grid2 {
+        grid-template-columns: 1fr;
+      }
     }
 
-    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .row > *{ flex:1; min-width: 140px; }
+    label {
+      font-size: 12px;
+      font-weight: 900;
+      color: #334155;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 10px 11px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-weight: 800;
+      color: #0f172a;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(79, 70, 229, .45);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, .12);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .row>* {
+      flex: 1;
+      min-width: 140px;
+    }
 
     /* Voucher list */
-    .voucherList{ display:flex; flex-direction:column; gap:10px; }
-    .voucherItem{
-      border:1px solid var(--border);
-      background:#fff;
-      border-radius:16px;
-      padding:12px;
-      display:grid;
+    .voucherList {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .voucherItem {
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 16px;
+      padding: 12px;
+      display: grid;
       grid-template-columns: 1fr auto;
-      gap:10px;
-      align-items:center;
-    }
-    @media (max-width: 860px){
-      .voucherItem{ grid-template-columns: 1fr; }
-    }
-    .voucherLeft{ display:flex; flex-direction:column; gap:6px; min-width:0; }
-    .voucherTitle{
-      font-weight:1000;
-      font-size:14px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:4px 10px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:1000;
-      border:1px solid transparent;
-      white-space:nowrap;
-    }
-    .bPending{ background:#fff7ed; color:#9a3412; border-color:#fed7aa; }
-    .bPaid{ background:#ecfdf5; color:#166534; border-color:#bbf7d0; }
-    .bUsed{ background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe; }
-    .bFailed{ background:#fef2f2; color:#b91c1c; border-color:#fecaca; }
-
-    .voucherMeta{
-      color:var(--muted);
-      font-weight:800;
-      font-size:12px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
+      gap: 10px;
+      align-items: center;
     }
 
-    .qrBox{
+    @media (max-width: 860px) {
+      .voucherItem {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .voucherLeft {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .voucherTitle {
+      font-weight: 1000;
+      font-size: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 1000;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .bPending {
+      background: #fff7ed;
+      color: #9a3412;
+      border-color: #fed7aa;
+    }
+
+    .bPaid {
+      background: #ecfdf5;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .bUsed {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .bFailed {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .voucherMeta {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .qrBox {
       width: 220px;
       max-width: 92vw;
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:10px;
-      background:#f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 10px;
+      background: #f8fafc;
     }
-    .qrBox .qrCanvas{
-      background:#fff;
-      border-radius:12px;
-      padding:10px;
-      display:flex;
-      justify-content:center;
+
+    .qrBox .qrCanvas {
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      justify-content: center;
     }
-    .smallBtn{
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      cursor:pointer;
-      font-weight:900;
-      font-size:12px;
+
+    .smallBtn {
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 12px;
     }
 
     /* Sections visibility */
-    .section{ display:none; }
-    .section.active{ display:block; }
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
 
     /* Analytics tiles */
-    .tiles{
-      display:grid;
-      grid-template-columns: repeat(4, minmax(0,1fr));
-      gap:10px;
-      margin-top:10px;
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
     }
-    @media (max-width: 860px){
-      .tiles{ grid-template-columns: repeat(2, minmax(0,1fr)); }
-    }
-    .tile{
-      border:1px solid var(--border);
-      border-radius:16px;
-      background:#fff;
-      padding:12px;
-    }
-    .tile .k{ font-size:12px; color:var(--muted); font-weight:900; }
-    .tile .v{ font-size:18px; font-weight:1000; margin-top:4px; }
 
-    .hint{
-      padding:10px 12px;
-      border-radius:16px;
+    @media (max-width: 860px) {
+      .tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .tile {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .tile .k {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .tile .v {
+      font-size: 18px;
+      font-weight: 1000;
+      margin-top: 4px;
+    }
+
+    .hint {
+      padding: 10px 12px;
+      border-radius: 16px;
       background: linear-gradient(90deg, #eef2ff, #ecfeff);
-      border: 1px solid rgba(79,70,229,.18);
-      font-weight:900;
-      color:#1f2937;
-      margin-top:10px;
-      font-size:13px;
+      border: 1px solid rgba(79, 70, 229, .18);
+      font-weight: 900;
+      color: #1f2937;
+      margin-top: 10px;
+      font-size: 13px;
     }
 
     /* Toast */
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:18px;
-      transform:translateX(-50%);
-      background:#111827;
-      color:#fff;
-      padding:10px 14px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:13px;
-      box-shadow: 0 16px 40px rgba(0,0,0,.25);
-      display:none;
-      z-index:9999;
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 13px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, .25);
+      display: none;
+      z-index: 9999;
       max-width: 92vw;
-      text-align:center;
+      text-align: center;
     }
 
     /* Welcome/Login section */
-    .welcomeWrap{
-      display:flex;
-      align-items:center;
-      justify-content:center;
+    .welcomeWrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       min-height: calc(100vh - 70px);
     }
-    .welcomeCard{
-      width:min(560px, 96vw);
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:22px;
+
+    .welcomeCard {
+      width: min(560px, 96vw);
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 22px;
       box-shadow: var(--shadow);
-      padding:18px;
+      padding: 18px;
     }
-    .welcomeTop{
-      display:flex; gap:12px; align-items:center;
+
+    .welcomeTop {
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
-    .welcomeTop .logoMarkBig{ flex:0 0 auto; }
-    .welcomeActions{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;
+
+    .welcomeTop .logoMarkBig {
+      flex: 0 0 auto;
     }
-    .welcomeActions button{ flex:1; min-width: 160px; }
+
+    .welcomeActions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .welcomeActions button {
+      flex: 1;
+      min-width: 160px;
+    }
   </style>
 </head>
 
 <body>
 
-<!-- Splash (logo first) -->
-<div id="splash" class="splash">
-  <div class="splashCard">
-    <div class="logoMarkBig">⛽</div>
-    <div class="splashText">
-      <div class="name">FuelSkip</div>
-      <div class="tag">Prepaid Voucher • Fast Dispense</div>
-      <div class="sub">Loading customer app…</div>
-    </div>
-  </div>
-</div>
-
-<div class="app">
-
-  <!-- SIDEBAR / TOPBAR -->
-  <aside class="sidebar">
-    <div class="brandRow">
-      <div class="logoMark">⛽</div>
-      <div class="brandText">
+  <!-- Splash (logo first) -->
+  <div id="splash" class="splash">
+    <div class="splashCard">
+      <div class="logoMarkBig">⛽</div>
+      <div class="splashText">
         <div class="name">FuelSkip</div>
         <div class="tag">Prepaid Voucher • Fast Dispense</div>
+        <div class="sub">Loading customer app…</div>
       </div>
     </div>
+  </div>
 
-    <div class="nav">
-      <button id="navWelcome" class="active" onclick="showSection('welcome')">
-        <span>✨ Welcome</span><small>Login</small>
-      </button>
-      <button id="navHome" onclick="showSection('home')" disabled>
-        <span>🏠 Home</span><small>Voucher</small>
-      </button>
-      <button id="navVouchers" onclick="showSection('vouchers')" disabled>
-        <span>🎟️ Vouchers</span><small>History</small>
-      </button>
-      <button id="navVehicles" onclick="showSection('vehicles')" disabled>
-        <span>🚗 Vehicles</span><small>Saved</small>
-      </button>
-      <button id="navAnalytics" onclick="showSection('analytics')" disabled>
-        <span>📊 Analytics</span><small>Insights</small>
-      </button>
-    </div>
+  <div class="app">
 
-    <div class="sessionCard">
-      <div class="sessionRow">
-        <div>
-          <div class="pill" id="pillUser">Not logged in</div>
-          <div class="muted" id="pillSub" style="margin-top:6px;">
-            Login to save & reuse details.
+    <!-- SIDEBAR / TOPBAR -->
+    <aside class="sidebar">
+      <div class="brandRow">
+        <div class="logoMark">⛽</div>
+        <div class="brandText">
+          <div class="name">FuelSkip</div>
+          <div class="tag">Prepaid Voucher • Fast Dispense</div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <button id="navWelcome" class="active" onclick="showSection('welcome')">
+          <span>✨ Welcome</span><small>Login</small>
+        </button>
+        <button id="navHome" onclick="showSection('home')" disabled>
+          <span>🏠 Home</span><small>Voucher</small>
+        </button>
+        <button id="navVouchers" onclick="showSection('vouchers')" disabled>
+          <span>🎟️ Vouchers</span><small>History</small>
+        </button>
+        <button id="navVehicles" onclick="showSection('vehicles')" disabled>
+          <span>🚗 Vehicles</span><small>Saved</small>
+        </button>
+        <button id="navAnalytics" onclick="showSection('analytics')" disabled>
+          <span>📊 Analytics</span><small>Insights</small>
+        </button>
+      </div>
+
+      <div class="sessionCard">
+        <div class="sessionRow">
+          <div>
+            <div class="pill" id="pillUser">Not logged in</div>
+            <div class="muted" id="pillSub" style="margin-top:6px;">
+              Login to save & reuse details.
+            </div>
+          </div>
+          <button class="btnDanger" id="btnLogout" onclick="logout()" disabled>Logout</button>
+        </div>
+
+        <div style="margin-top:10px;" class="row">
+          <button class="btn btnPrimary" onclick="openLogin()">Login</button>
+          <button class="btn btnGhost" onclick="refreshAll()">Refresh</button>
+        </div>
+
+        <div class="muted" style="margin-top:10px; font-size:12px; font-weight:800;">
+          Data saving:
+          <br>• Session (login) → browser storage
+          <br>• Vehicles + Vouchers → server database
+        </div>
+      </div>
+
+      <div class="hint">
+        Tip: Create voucher before you reach bunk. Show QR to attendant for scanning.
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- WELCOME / LOGIN -->
+      <!-- LOGIN (replaces Welcome) -->
+      <section id="secWelcome" class="section active">
+        <div class="welcomeWrap">
+          <div class="welcomeCard">
+            <div class="welcomeTop">
+              <div class="logoMarkBig">⛽</div>
+              <div>
+                <div style="font-weight:1000; font-size:24px;">FuelSkip</div>
+                <div class="muted" style="margin-top:4px;">Login to access your vouchers</div>
+              </div>
+            </div>
+
+            <div style="margin-top:24px;">
+              <div style="margin-bottom:12px;">
+                <label>Phone Number</label>
+                <input id="loginPhone" type="tel" placeholder="e.g. 9876543210" style="font-size:16px; padding:14px;" />
+              </div>
+
+              <div style="margin-bottom:12px;">
+                <label>4-Digit PIN (Create or Enter)</label>
+                <input id="loginPin" type="password" inputmode="numeric" placeholder="••••" maxlength="6"
+                  style="font-size:16px; padding:14px; letter-spacing:4px;" />
+              </div>
+
+              <div style="margin-bottom:16px;">
+                <label>Name (Optional)</label>
+                <input id="loginName" placeholder="Your Name" style="font-size:16px; padding:14px;" />
+              </div>
+
+              <button id="btnLoginAction" class="btn btnPrimary" style="width:100%; font-size:16px; padding:14px;"
+                onclick="processLogin()">Login</button>
+            </div>
+
+            <div class="muted" style="margin-top:16px; font-size:12px; text-align:center;">
+              <a href="#" onclick="showSection('home'); return false;"
+                style="color:var(--brand); text-decoration:none; font-weight:800;">Continue as Guest (View Only)</a>
+            </div>
           </div>
         </div>
-        <button class="btnDanger" id="btnLogout" onclick="logout()" disabled>Logout</button>
-      </div>
+      </section>
 
-      <div style="margin-top:10px;" class="row">
-        <button class="btn btnPrimary" onclick="openLogin()">Login</button>
-        <button class="btn btnGhost" onclick="refreshAll()">Refresh</button>
-      </div>
+      <!-- HOME -->
+      <section id="secHome" class="section">
+        <div class="card">
+          <h2>Create Voucher</h2>
+          <div class="muted">Choose bunk + fuel type + amount/litres. Pay securely via Razorpay.</div>
 
-      <div class="muted" style="margin-top:10px; font-size:12px; font-weight:800;">
-        Data saving:
-        <br>• Session (login) → browser storage
-        <br>• Vehicles + Vouchers → server database
-      </div>
-    </div>
-
-    <div class="hint">
-      Tip: Create voucher before you reach bunk. Show QR to attendant for scanning.
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-
-    <!-- WELCOME / LOGIN -->
-    <section id="secWelcome" class="section active">
-      <div class="welcomeWrap">
-        <div class="welcomeCard">
-          <div class="welcomeTop">
-            <div class="logoMarkBig">⛽</div>
+          <div class="grid2" style="margin-top:12px;">
             <div>
-              <div style="font-weight:1000; font-size:20px;">FuelSkip Customer</div>
-              <div class="muted" style="margin-top:4px;">
-                Login once. Your vehicles + voucher history stay saved on the server.
-              </div>
+              <label>Fuel Type</label>
+              <select id="fuelType">
+                <option value="PETROL">PETROL</option>
+                <option value="DIESEL">DIESEL</option>
+                <option value="CNG">CNG</option>
+                <option value="EV">EV (charge)</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Nearby Bunks (or pick)</label>
+              <select id="bunkSelect"></select>
+            </div>
+
+            <div>
+              <label>Amount (₹)</label>
+              <input id="amountInput" type="number" inputmode="decimal" placeholder="e.g. 500" />
+            </div>
+
+            <div>
+              <label>Or Litres (L)</label>
+              <input id="litresInput" type="number" inputmode="decimal" placeholder="e.g. 5" />
+            </div>
+
+            <div>
+              <label>Vehicle (optional)</label>
+              <select id="vehiclePick"></select>
+            </div>
+
+            <div>
+              <label>Payment Method</label>
+              <input value="Razorpay" disabled />
             </div>
           </div>
 
-          <div class="hint" style="margin-top:14px;">
-            After login you can generate a prepaid voucher, show QR to attendant, and dispense instantly.
+          <div class="row" style="margin-top:12px;">
+            <button class="btn btnPrimary" onclick="createVoucher()">Generate Voucher</button>
+            <button class="btn" onclick="useCurrentLocation()">Find Nearby Bunks</button>
+            <button class="btn" onclick="scrollToLatestQR()">Scroll to QR</button>
           </div>
 
-          <div class="welcomeActions">
-            <button class="btn btnPrimary" onclick="openLogin()">Login</button>
-            <button class="btn" onclick="showSection('home')">Continue (view only)</button>
-          </div>
+          <div id="homeStatus" class="muted" style="margin-top:10px;"></div>
+        </div>
 
-          <div class="muted" style="margin-top:12px; font-size:12px;">
-            Note: Without login you can view the UI, but vouchers/vehicles won’t load.
+        <div class="card" id="latestCard">
+          <h2>Latest Voucher QR</h2>
+          <div class="muted">This QR is scanned by attendant for instant dispense.</div>
+
+          <div id="latestWrap" style="margin-top:12px;">
+            <div class="muted">No voucher yet.</div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- HOME -->
-    <section id="secHome" class="section">
-      <div class="card">
-        <h2>Create Voucher</h2>
-        <div class="muted">Choose bunk + fuel type + amount/litres. Pay securely via Razorpay.</div>
-
-        <div class="grid2" style="margin-top:12px;">
-          <div>
-            <label>Fuel Type</label>
-            <select id="fuelType">
-              <option value="PETROL">PETROL</option>
-              <option value="DIESEL">DIESEL</option>
-              <option value="CNG">CNG</option>
-              <option value="EV">EV (charge)</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Nearby Bunks (or pick)</label>
-            <select id="bunkSelect"></select>
-          </div>
-
-          <div>
-            <label>Amount (₹)</label>
-            <input id="amountInput" type="number" inputmode="decimal" placeholder="e.g. 500" />
-          </div>
-
-          <div>
-            <label>Or Litres (L)</label>
-            <input id="litresInput" type="number" inputmode="decimal" placeholder="e.g. 5" />
-          </div>
-
-          <div>
-            <label>Vehicle (optional)</label>
-            <select id="vehiclePick"></select>
-          </div>
-
-          <div>
-            <label>Payment Method</label>
-            <input value="Razorpay" disabled />
+      <!-- VOUCHERS -->
+      <section id="secVouchers" class="section">
+        <div class="card">
+          <h2>Voucher History</h2>
+          <div class="muted">Your vouchers (pending/paid/used). Used vouchers stay visible.</div>
+          <div class="row" style="margin-top:10px;">
+            <button class="btn btnPrimary" onclick="loadMyVouchers(true)">Reload</button>
+            <button class="btn" onclick="scrollToLatestQR()">Go to Latest QR</button>
           </div>
         </div>
 
-        <div class="row" style="margin-top:12px;">
-          <button class="btn btnPrimary" onclick="createVoucher()">Generate Voucher</button>
-          <button class="btn" onclick="useCurrentLocation()">Find Nearby Bunks</button>
-          <button class="btn" onclick="scrollToLatestQR()">Scroll to QR</button>
-        </div>
-
-        <div id="homeStatus" class="muted" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="card" id="latestCard">
-        <h2>Latest Voucher QR</h2>
-        <div class="muted">This QR is scanned by attendant for instant dispense.</div>
-
-        <div id="latestWrap" style="margin-top:12px;">
-          <div class="muted">No voucher yet.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VOUCHERS -->
-    <section id="secVouchers" class="section">
-      <div class="card">
-        <h2>Voucher History</h2>
-        <div class="muted">Your vouchers (pending/paid/used). Used vouchers stay visible.</div>
-        <div class="row" style="margin-top:10px;">
-          <button class="btn btnPrimary" onclick="loadMyVouchers(true)">Reload</button>
-          <button class="btn" onclick="scrollToLatestQR()">Go to Latest QR</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div id="voucherList" class="voucherList">
-          <div class="muted">Login to view vouchers.</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- VEHICLES -->
-    <section id="secVehicles" class="section">
-      <div class="card">
-        <h2>Vehicles</h2>
-        <div class="muted">Saved in server DB. Remains after logout/login.</div>
-
-        <div class="grid2" style="margin-top:12px;">
-          <div>
-            <label>Vehicle Type</label>
-            <select id="vehType">
-              <option value="2-Wheeler">2-Wheeler</option>
-              <option value="4-Wheeler">4-Wheeler</option>
-              <option value="Auto">Auto</option>
-              <option value="Truck">Truck</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label>Vehicle Number</label>
-            <input id="vehNo" placeholder="e.g. AP31AB1234" />
+        <div class="card">
+          <div id="voucherList" class="voucherList">
+            <div class="muted">Login to view vouchers.</div>
           </div>
         </div>
+      </section>
 
-        <div class="row" style="margin-top:12px;">
-          <button class="btn btnPrimary" onclick="addVehicle()">Add Vehicle</button>
-          <button class="btn" onclick="loadVehicles()">Refresh</button>
-        </div>
+      <!-- VEHICLES -->
+      <section id="secVehicles" class="section">
+        <div class="card">
+          <h2>Vehicles</h2>
+          <div class="muted">Saved in server DB. Remains after logout/login.</div>
 
-        <table class="table" id="vehTable" style="margin-top:12px;">
-          <thead>
-            <tr>
-              <th>Vehicle</th>
-              <th>Type</th>
-              <th>Default</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ANALYTICS -->
-    <section id="secAnalytics" class="section">
-      <div class="card">
-        <h2>Analytics</h2>
-        <div class="muted">Useful metrics: spend, fuel split, bunk usage, vehicle usage.</div>
-
-        <div class="tiles">
-          <div class="tile">
-            <div class="k">Total Spent</div>
-            <div class="v" id="anSpent">₹0</div>
+          <div class="grid2" style="margin-top:12px;">
+            <div>
+              <label>Vehicle Type</label>
+              <select id="vehType">
+                <option value="2-Wheeler">2-Wheeler</option>
+                <option value="4-Wheeler">4-Wheeler</option>
+                <option value="Auto">Auto</option>
+                <option value="Truck">Truck</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Vehicle Number</label>
+              <input id="vehNo" placeholder="e.g. AP31AB1234" />
+            </div>
           </div>
-          <div class="tile">
-            <div class="k">Total Litres</div>
-            <div class="v" id="anLitres">0 L</div>
+
+          <div class="row" style="margin-top:12px;">
+            <button class="btn btnPrimary" onclick="addVehicle()">Add Vehicle</button>
+            <button class="btn" onclick="loadVehicles()">Refresh</button>
           </div>
-          <div class="tile">
-            <div class="k">Most Used Bunk</div>
-            <div class="v" id="anBunk">—</div>
+
+          <table class="table" id="vehTable" style="margin-top:12px;">
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Type</th>
+                <th>Default</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section id="secAnalytics" class="section">
+        <div class="card">
+          <h2>Analytics</h2>
+          <div class="muted">Useful metrics: spend, fuel split, bunk usage, vehicle usage.</div>
+
+          <div class="tiles">
+            <div class="tile">
+              <div class="k">Total Spent</div>
+              <div class="v" id="anSpent">₹0</div>
+            </div>
+            <div class="tile">
+              <div class="k">Total Litres</div>
+              <div class="v" id="anLitres">0 L</div>
+            </div>
+            <div class="tile">
+              <div class="k">Most Used Bunk</div>
+              <div class="v" id="anBunk">—</div>
+            </div>
+            <div class="tile">
+              <div class="k">Most Used Vehicle</div>
+              <div class="v" id="anVeh">—</div>
+            </div>
           </div>
-          <div class="tile">
-            <div class="k">Most Used Vehicle</div>
-            <div class="v" id="anVeh">—</div>
+
+          <div class="tile" style="margin-top:12px;">
+            <div class="k">Fuel Split</div>
+            <div class="v" style="font-size:14px; font-weight:1000;" id="anFuelSplit">—</div>
+          </div>
+
+          <div class="hint" style="margin-top:12px;">
+            Pilot tip: Generate voucher before joining the queue to save time at peak hours.
           </div>
         </div>
+      </section>
 
-        <div class="tile" style="margin-top:12px;">
-          <div class="k">Fuel Split</div>
-          <div class="v" style="font-size:14px; font-weight:1000;" id="anFuelSplit">—</div>
-        </div>
+    </main>
+  </div>
 
-        <div class="hint" style="margin-top:12px;">
-          Pilot tip: Generate voucher before joining the queue to save time at peak hours.
-        </div>
-      </div>
-    </section>
+  <div class="toast" id="toast"></div>
 
-  </main>
-</div>
+  <script>
+    const API = window.location.origin;
 
-<div class="toast" id="toast"></div>
+    // ---------------- Compact QR helpers ----------------
+    // QR payload is SMALL: "voucherId|sig"
+    function makeCompactPayload(voucherId, sig) {
+      return `${voucherId}|${sig || ""}`;
+    }
+    function makeFullAttendantLink(voucherId, sig) {
+      return sig
+        ? `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`
+        : `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}`;
+    }
 
-<script>
-  const API = window.location.origin;
+    async function ensureVoucherSig(v) {
+      if (v && v.qr_sig) return v.qr_sig;
+      try {
+        const s = getSession();
+        if (!s || !s.token || !v || !v.id) return "";
+        const res = await fetch(`${API}/voucher/${encodeURIComponent(v.id)}`, {
+          headers: { "X-USER-TOKEN": s.token },
+          cache: "no-store"
+        });
+        const data = await res.json();
+        if (res.ok && data && data.qr_sig) {
+          v.qr_sig = data.qr_sig;
+          return v.qr_sig;
+        }
+      } catch (e) { }
+      return (v && v.qr_sig) ? v.qr_sig : "";
+    }
 
-  // ---------------- Compact QR helpers ----------------
-  // QR payload is SMALL: "voucherId|sig"
-  function makeCompactPayload(voucherId, sig){
-    return `${voucherId}|${sig || ""}`;
-  }
-  function makeFullAttendantLink(voucherId, sig){
-    return sig
-      ? `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`
-      : `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}`;
-  }
+    // ---------------- Session ----------------
+    function getSession() {
+      try { return JSON.parse(localStorage.getItem("FUELSKIP_SESSION") || "null"); }
+      catch (e) { return null; }
+    }
+    function setSession(obj) {
+      localStorage.setItem("FUELSKIP_SESSION", JSON.stringify(obj));
+      updateSessionUI();
+    }
+    function clearSession() {
+      localStorage.removeItem("FUELSKIP_SESSION");
+      updateSessionUI();
+    }
 
-  async function ensureVoucherSig(v){
-    if (v && v.qr_sig) return v.qr_sig;
-    try{
-      const s = getSession();
-      if (!s || !s.token || !v || !v.id) return "";
-      const res = await fetch(`${API}/voucher/${encodeURIComponent(v.id)}`, {
-        headers: { "X-USER-TOKEN": s.token },
-        cache: "no-store"
+    function toast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => t.style.display = "none", 2200);
+    }
+
+    function setNavEnabled(isEnabled) {
+      ["navHome", "navVouchers", "navVehicles", "navAnalytics"].forEach(id => {
+        const b = document.getElementById(id);
+        if (b) b.disabled = !isEnabled;
       });
-      const data = await res.json();
-      if (res.ok && data && data.qr_sig){
-        v.qr_sig = data.qr_sig;
-        return v.qr_sig;
-      }
-    }catch(e){}
-    return (v && v.qr_sig) ? v.qr_sig : "";
-  }
-
-  // ---------------- Session ----------------
-  function getSession(){
-    try { return JSON.parse(localStorage.getItem("FUELSKIP_SESSION") || "null"); }
-    catch(e){ return null; }
-  }
-  function setSession(obj){
-    localStorage.setItem("FUELSKIP_SESSION", JSON.stringify(obj));
-    updateSessionUI();
-  }
-  function clearSession(){
-    localStorage.removeItem("FUELSKIP_SESSION");
-    updateSessionUI();
-  }
-
-  function toast(msg){
-    const t = document.getElementById("toast");
-    t.textContent = msg;
-    t.style.display = "block";
-    clearTimeout(window.__toastTimer);
-    window.__toastTimer = setTimeout(()=> t.style.display="none", 2200);
-  }
-
-  function setNavEnabled(isEnabled){
-    ["navHome","navVouchers","navVehicles","navAnalytics"].forEach(id=>{
-      const b = document.getElementById(id);
-      if(b) b.disabled = !isEnabled;
-    });
-    document.getElementById("btnLogout").disabled = !isEnabled;
-  }
-
-  function updateSessionUI(){
-    const s = getSession();
-    const pill = document.getElementById("pillUser");
-    const sub = document.getElementById("pillSub");
-
-    if(!s){
-      pill.textContent = "Not logged in";
-      sub.textContent = "Login to save & reuse details.";
-      setNavEnabled(false);
-      return;
-    }
-    pill.textContent = `Logged: ${s.phone}`;
-    sub.textContent = s.name ? `Hi ${s.name}` : `User ID: ${s.user_id}`;
-    setNavEnabled(true);
-  }
-
-  function logout(){
-    clearSession();
-    window.__myVouchers = [];
-    toast("Logged out");
-    showSection("welcome");
-    document.getElementById("voucherList").innerHTML = `<div class="muted">Login to view vouchers.</div>`;
-    document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
-  }
-
-  async function openLogin(){
-    const phone = prompt("Enter Phone Number (pilot login):");
-    if(!phone) return;
-    const pin = prompt("Create/Enter 4-digit PIN (to secure your account):");
-    if(!pin) return alert("PIN is required");
-    const name = prompt("Name (optional):") || "";
-
-    const res = await fetch(`${API}/login`, {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ phone, name, pin })
-    });
-    const data = await res.json();
-    if(!res.ok){
-      alert(data.detail || "Login failed");
-      return;
+      document.getElementById("btnLogout").disabled = !isEnabled;
     }
 
-    setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "" });
+    function updateSessionUI() {
+      const s = getSession();
+      const pill = document.getElementById("pillUser");
+      const sub = document.getElementById("pillSub");
 
-    if(data.last_fuel_type) document.getElementById("fuelType").value = data.last_fuel_type;
-    if(data.last_amount) document.getElementById("amountInput").value = data.last_amount;
-
-    await loadBunks();
-    if(data.last_bunk){
-      const sel = document.getElementById("bunkSelect");
-      if([...sel.options].some(o=>o.value===data.last_bunk)) sel.value = data.last_bunk;
-    }
-
-    await loadVehicles();
-    await loadMyVouchers(true);
-
-    toast("Login OK");
-    showSection("home");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  // ---------------- Navigation ----------------
-  function showSection(key){
-    const map = {
-      welcome: "secWelcome",
-      home: "secHome",
-      vouchers: "secVouchers",
-      vehicles: "secVehicles",
-      analytics: "secAnalytics"
-    };
-
-    document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
-    document.getElementById(map[key]).classList.add("active");
-
-    document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
-    const navId = "nav" + key.charAt(0).toUpperCase()+key.slice(1);
-    const navBtn = document.getElementById(navId);
-    if(navBtn) navBtn.classList.add("active");
-
-    if(key === "vouchers") loadMyVouchers(false);
-    if(key === "vehicles") loadVehicles();
-    if(key === "analytics") buildAnalytics();
-  }
-
-  // ---------------- Bunks ----------------
-  async function loadBunks(nearbyList){
-    const sel = document.getElementById("bunkSelect");
-    sel.innerHTML = "";
-    let list = nearbyList;
-    if(!list){
-      list = [
-        {id:"BUNK-1", name:"BPCL Siripuram"},
-        {id:"BUNK-2", name:"Gajuwaka Expressway"},
-      ];
-    }
-    list.forEach(b=>{
-      const opt = document.createElement("option");
-      opt.value = b.id;
-      opt.textContent = `${b.name} (${b.id})`;
-      sel.appendChild(opt);
-    });
-  }
-
-  async function useCurrentLocation(){
-    if(!navigator.geolocation){
-      alert("Geolocation not supported");
-      return;
-    }
-    toast("Getting location...");
-    navigator.geolocation.getCurrentPosition(async (pos)=>{
-      const {latitude, longitude} = pos.coords;
-      const res = await fetch(`${API}/nearby-bunks?lat=${latitude}&lon=${longitude}`, { cache:"no-store" });
-      const data = await res.json();
-      if(!res.ok){
-        alert(data.detail || "Nearby lookup failed");
+      if (!s) {
+        pill.textContent = "Not logged in";
+        sub.textContent = "Login to save & reuse details.";
+        setNavEnabled(false);
         return;
       }
-      await loadBunks(data);
-      toast("Nearby bunks updated");
-      const s = getSession();
-      if(s){
-        await saveUserDefaults({ last_bunk: document.getElementById("bunkSelect").value });
+      pill.textContent = `Logged: ${s.phone}`;
+      sub.textContent = s.name ? `Hi ${s.name}` : `User ID: ${s.user_id}`;
+      setNavEnabled(true);
+    }
+
+    function logout() {
+      clearSession();
+      window.__myVouchers = [];
+      toast("Logged out");
+      showSection("welcome");
+      document.getElementById("voucherList").innerHTML = `<div class="muted">Login to view vouchers.</div>`;
+      document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
+    }
+
+    async function processLogin() {
+      const phone = document.getElementById("loginPhone").value.trim();
+      const pin = document.getElementById("loginPin").value.trim();
+      const name = document.getElementById("loginName").value.trim();
+
+      if (!phone || phone.length < 6) return alert("Enter valid phone");
+      if (!pin || pin.length < 4) return alert("Enter 4-digit PIN");
+
+      const btn = document.getElementById("btnLoginAction");
+      btn.textContent = "Verifying...";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, name, pin })
+        });
+        const data = await res.json();
+
+        btn.textContent = "Login";
+        btn.disabled = false;
+
+        if (!res.ok) {
+          alert(data.detail || "Login failed");
+          return;
+        }
+
+        setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "" });
+
+        if (data.last_fuel_type) document.getElementById("fuelType").value = data.last_fuel_type;
+        if (data.last_amount) document.getElementById("amountInput").value = data.last_amount;
+
+        await loadBunks();
+        if (data.last_bunk) {
+          const sel = document.getElementById("bunkSelect");
+          if ([...sel.options].some(o => o.value === data.last_bunk)) sel.value = data.last_bunk;
+        }
+
+        await loadVehicles();
+        await loadMyVouchers(true);
+
+        toast("Welcome Back!");
+        showSection("home");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (e) {
+        btn.textContent = "Login";
+        btn.disabled = false;
+        alert("Connection error");
       }
-    }, ()=>{
-      alert("Location permission denied / error");
-    }, { enableHighAccuracy:true, timeout:8000 });
-  }
-
-  // ---------------- Vehicles (server) ----------------
-  async function loadVehicles(){
-    const s = getSession();
-    const tableBody = document.querySelector("#vehTable tbody");
-    const pick = document.getElementById("vehiclePick");
-
-    pick.innerHTML = "";
-    const optNone = document.createElement("option");
-    optNone.value = "";
-    optNone.textContent = "None";
-    pick.appendChild(optNone);
-
-    tableBody.innerHTML = "";
-    if(!s){
-      tableBody.innerHTML = `<tr><td colspan="4" class="muted">Login to manage vehicles.</td></tr>`;
-      return;
     }
 
-    const res = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, { cache:"no-store" });
-    const data = await res.json();
-    if(!res.ok){
-      tableBody.innerHTML = `<tr><td colspan="4">Error: ${data.detail || "load failed"}</td></tr>`;
-      return;
+    // ---------------- Navigation ----------------
+    function showSection(key) {
+      const map = {
+        welcome: "secWelcome",
+        home: "secHome",
+        vouchers: "secVouchers",
+        vehicles: "secVehicles",
+        analytics: "secAnalytics"
+      };
+
+      document.querySelectorAll(".section").forEach(x => x.classList.remove("active"));
+      document.getElementById(map[key]).classList.add("active");
+
+      document.querySelectorAll(".nav button").forEach(x => x.classList.remove("active"));
+      const navId = "nav" + key.charAt(0).toUpperCase() + key.slice(1);
+      const navBtn = document.getElementById(navId);
+      if (navBtn) navBtn.classList.add("active");
+
+      if (key === "vouchers") loadMyVouchers(false);
+      if (key === "vehicles") loadVehicles();
+      if (key === "analytics") buildAnalytics();
     }
 
-    if(!data.length){
-      tableBody.innerHTML = `<tr><td colspan="4" class="muted">No vehicles saved yet.</td></tr>`;
-      return;
+    // ---------------- Bunks ----------------
+    async function loadBunks(nearbyList) {
+      const sel = document.getElementById("bunkSelect");
+      sel.innerHTML = "";
+      let list = nearbyList;
+      if (!list) {
+        list = [
+          { id: "BUNK-1", name: "BPCL Siripuram" },
+          { id: "BUNK-2", name: "Gajuwaka Expressway" },
+        ];
+      }
+      list.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b.id;
+        opt.textContent = `${b.name} (${b.id})`;
+        sel.appendChild(opt);
+      });
     }
 
-    data.forEach(v=>{
-      const opt = document.createElement("option");
-      opt.value = v.id;
-      opt.textContent = `${v.vehicle_no} (${v.vehicle_type})`;
-      pick.appendChild(opt);
+    async function useCurrentLocation() {
+      if (!navigator.geolocation) {
+        alert("Geolocation not supported");
+        return;
+      }
+      toast("Getting location...");
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const res = await fetch(`${API}/nearby-bunks?lat=${latitude}&lon=${longitude}`, { cache: "no-store" });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.detail || "Nearby lookup failed");
+          return;
+        }
+        await loadBunks(data);
+        toast("Nearby bunks updated");
+        const s = getSession();
+        if (s) {
+          await saveUserDefaults({ last_bunk: document.getElementById("bunkSelect").value });
+        }
+      }, () => {
+        alert("Location permission denied / error");
+      }, { enableHighAccuracy: true, timeout: 8000 });
+    }
 
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
+    // ---------------- Vehicles (server) ----------------
+    async function loadVehicles() {
+      const s = getSession();
+      const tableBody = document.querySelector("#vehTable tbody");
+      const pick = document.getElementById("vehiclePick");
+
+      pick.innerHTML = "";
+      const optNone = document.createElement("option");
+      optNone.value = "";
+      optNone.textContent = "None";
+      pick.appendChild(optNone);
+
+      tableBody.innerHTML = "";
+      if (!s) {
+        tableBody.innerHTML = `<tr><td colspan="4" class="muted">Login to manage vehicles.</td></tr>`;
+        return;
+      }
+
+      const res = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) {
+        tableBody.innerHTML = `<tr><td colspan="4">Error: ${data.detail || "load failed"}</td></tr>`;
+        return;
+      }
+
+      if (!data.length) {
+        tableBody.innerHTML = `<tr><td colspan="4" class="muted">No vehicles saved yet.</td></tr>`;
+        return;
+      }
+
+      data.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v.id;
+        opt.textContent = `${v.vehicle_no} (${v.vehicle_type})`;
+        pick.appendChild(opt);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
         <td>${v.vehicle_no}</td>
         <td>${v.vehicle_type}</td>
         <td>${v.is_default ? "✅ Default" : ""}</td>
@@ -965,176 +1190,176 @@
           <button class="smallBtn" style="border-color: rgba(239,68,68,.35); color:#b91c1c;" onclick="deleteVehicle('${v.id}')">Delete</button>
         </td>
       `;
-      tableBody.appendChild(tr);
+        tableBody.appendChild(tr);
 
-      if(v.is_default){
-        pick.value = v.id;
-      }
-    });
-  }
-
-  async function addVehicle(){
-    const s = getSession();
-    if(!s){ alert("Login first"); return; }
-
-    const vehicle_type = document.getElementById("vehType").value;
-    const vehicle_no = (document.getElementById("vehNo").value || "").trim();
-
-    if(!vehicle_no || vehicle_no.length < 6){
-      alert("Enter valid vehicle number");
-      return;
-    }
-
-    const res = await fetch(`${API}/user/vehicles/add`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ user_id: s.user_id, vehicle_type, vehicle_no })
-    });
-    const data = await res.json();
-    if(!res.ok){
-      alert(data.detail || "Add failed");
-      return;
-    }
-    document.getElementById("vehNo").value = "";
-    toast(data.duplicate ? "Already exists (linked)" : "Vehicle added");
-    await loadVehicles();
-    await loadMyVouchers(false);
-    buildAnalytics();
-  }
-
-  async function setDefaultVehicle(vehicle_id){
-    const s = getSession();
-    if(!s){ alert("Login first"); return; }
-
-    const res = await fetch(`${API}/user/vehicles/set-default`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ user_id: s.user_id, vehicle_id })
-    });
-    const data = await res.json();
-    if(!res.ok){
-      alert(data.detail || "Set default failed");
-      return;
-    }
-    toast("Default set");
-    await loadVehicles();
-  }
-
-  async function deleteVehicle(vehicle_id){
-    const s = getSession();
-    if(!s){ alert("Login first"); return; }
-    if(!confirm("Delete this vehicle?")) return;
-
-    const res = await fetch(`${API}/user/vehicles/${encodeURIComponent(vehicle_id)}?user_id=${encodeURIComponent(s.user_id)}`,{
-      method:"DELETE"
-    });
-    const data = await res.json();
-    if(!res.ok){
-      alert(data.detail || "Delete failed");
-      return;
-    }
-    toast("Deleted");
-    await loadVehicles();
-  }
-
-  // ---------------- Defaults save ----------------
-  async function saveUserDefaults(partial){
-    const s = getSession();
-    if(!s) return;
-    const payload = { user_id: s.user_id, ...partial };
-    try{
-      await fetch(`${API}/user/update`,{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify(payload)
+        if (v.is_default) {
+          pick.value = v.id;
+        }
       });
-    }catch(e){}
-  }
-
-  // ---------------- Vouchers ----------------
-  function statusBadge(status, used){
-    const st = (status||"").toLowerCase();
-    if(used || st==="used") return `<span class="badge bUsed">USED</span>`;
-    if(st==="paid") return `<span class="badge bPaid">PAID</span>`;
-    if(st==="failed") return `<span class="badge bFailed">FAILED</span>`;
-    return `<span class="badge bPending">PENDING</span>`;
-  }
-
-  function fuelChip(ft){
-    const x = (ft||"PETROL").toUpperCase();
-    const map = { PETROL:"⛽ PETROL", DIESEL:"🛢️ DIESEL", CNG:"💨 CNG", EV:"⚡ EV" };
-    return `<span class="badge" style="background:#ecfeff;color:#155e75;border-color:#a5f3fc;">${map[x]||x}</span>`;
-  }
-
-  function payChip(){
-    return `<span class="badge" style="background:#eef2ff;color:#3730a3;border-color:#c7d2fe;">RAZORPAY</span>`;
-  }
-
-  function bunkNameFromId(id){
-    const map = {
-      "BUNK-1": "BPCL Siripuram",
-      "BUNK-2": "Gajuwaka Expressway"
-    };
-    return map[id] || id || "—";
-  }
-
-  function fmtIST(iso){
-    if(!iso) return "";
-    const d = new Date(iso);
-    return d.toLocaleString("en-IN", { timeZone:"Asia/Kolkata", hour12:true });
-  }
-
-  async function loadMyVouchers(rebuildLatest){
-    const s = getSession();
-    const list = document.getElementById("voucherList");
-    if(!s){
-      list.innerHTML = `<div class="muted">Login to view vouchers.</div>`;
-      document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
-      return [];
     }
 
-    list.innerHTML = `<div class="muted">Loading...</div>`;
-    const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(s.user_id)}`, { cache:"no-store" });
-    const data = await res.json();
-    if(!res.ok){
-      list.innerHTML = `<div class="muted">Error: ${data.detail || "load failed"}</div>`;
-      return [];
-    }
+    async function addVehicle() {
+      const s = getSession();
+      if (!s) { alert("Login first"); return; }
 
-    if(!data.length){
-      list.innerHTML = `<div class="muted">No vouchers yet.</div>`;
-      if(rebuildLatest) document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
-      window.__myVouchers = [];
+      const vehicle_type = document.getElementById("vehType").value;
+      const vehicle_no = (document.getElementById("vehNo").value || "").trim();
+
+      if (!vehicle_no || vehicle_no.length < 6) {
+        alert("Enter valid vehicle number");
+        return;
+      }
+
+      const res = await fetch(`${API}/user/vehicles/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: s.user_id, vehicle_type, vehicle_no })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || "Add failed");
+        return;
+      }
+      document.getElementById("vehNo").value = "";
+      toast(data.duplicate ? "Already exists (linked)" : "Vehicle added");
+      await loadVehicles();
+      await loadMyVouchers(false);
       buildAnalytics();
-      return [];
     }
 
-    try{
-      await Promise.all((data||[]).filter(v => v && v.id && !v.qr_sig).map(v => ensureVoucherSig(v)));
-    }catch(e){}
+    async function setDefaultVehicle(vehicle_id) {
+      const s = getSession();
+      if (!s) { alert("Login first"); return; }
 
-    list.innerHTML = "";
-    data.forEach(v=>{
-      const status = v.status || "pending";
-      const used = !!v.used || status==="used";
-      const sig = v.qr_sig || "";
-      const id = v.id;
+      const res = await fetch(`${API}/user/vehicles/set-default`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: s.user_id, vehicle_id })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || "Set default failed");
+        return;
+      }
+      toast("Default set");
+      await loadVehicles();
+    }
 
-      const qrLink = makeFullAttendantLink(id, sig);
-      const compact = makeCompactPayload(id, sig);
+    async function deleteVehicle(vehicle_id) {
+      const s = getSession();
+      if (!s) { alert("Login first"); return; }
+      if (!confirm("Delete this vehicle?")) return;
 
-      const metaParts = [
-        `Bunk: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id})`,
-        `Amount: ₹${Number(v.amount||0).toLocaleString("en-IN")}`,
-        `Litres: ${Number(v.litres||0).toFixed(2)} L`,
-        `Time: ${fmtIST(v.created_at)}`,
-      ];
-      if(v.vehicle_no) metaParts.push(`Vehicle: ${v.vehicle_no}`);
-      if(v.vehicle_type) metaParts.push(`${v.vehicle_type}`);
+      const res = await fetch(`${API}/user/vehicles/${encodeURIComponent(vehicle_id)}?user_id=${encodeURIComponent(s.user_id)}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || "Delete failed");
+        return;
+      }
+      toast("Deleted");
+      await loadVehicles();
+    }
 
-      const item = document.createElement("div");
-      item.className = "voucherItem";
-      item.innerHTML = `
+    // ---------------- Defaults save ----------------
+    async function saveUserDefaults(partial) {
+      const s = getSession();
+      if (!s) return;
+      const payload = { user_id: s.user_id, ...partial };
+      try {
+        await fetch(`${API}/user/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) { }
+    }
+
+    // ---------------- Vouchers ----------------
+    function statusBadge(status, used) {
+      const st = (status || "").toLowerCase();
+      if (used || st === "used") return `<span class="badge bUsed">USED</span>`;
+      if (st === "paid") return `<span class="badge bPaid">PAID</span>`;
+      if (st === "failed") return `<span class="badge bFailed">FAILED</span>`;
+      return `<span class="badge bPending">PENDING</span>`;
+    }
+
+    function fuelChip(ft) {
+      const x = (ft || "PETROL").toUpperCase();
+      const map = { PETROL: "⛽ PETROL", DIESEL: "🛢️ DIESEL", CNG: "💨 CNG", EV: "⚡ EV" };
+      return `<span class="badge" style="background:#ecfeff;color:#155e75;border-color:#a5f3fc;">${map[x] || x}</span>`;
+    }
+
+    function payChip() {
+      return `<span class="badge" style="background:#eef2ff;color:#3730a3;border-color:#c7d2fe;">RAZORPAY</span>`;
+    }
+
+    function bunkNameFromId(id) {
+      const map = {
+        "BUNK-1": "BPCL Siripuram",
+        "BUNK-2": "Gajuwaka Expressway"
+      };
+      return map[id] || id || "—";
+    }
+
+    function fmtIST(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      return d.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true });
+    }
+
+    async function loadMyVouchers(rebuildLatest) {
+      const s = getSession();
+      const list = document.getElementById("voucherList");
+      if (!s) {
+        list.innerHTML = `<div class="muted">Login to view vouchers.</div>`;
+        document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
+        return [];
+      }
+
+      list.innerHTML = `<div class="muted">Loading...</div>`;
+      const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(s.user_id)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) {
+        list.innerHTML = `<div class="muted">Error: ${data.detail || "load failed"}</div>`;
+        return [];
+      }
+
+      if (!data.length) {
+        list.innerHTML = `<div class="muted">No vouchers yet.</div>`;
+        if (rebuildLatest) document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
+        window.__myVouchers = [];
+        buildAnalytics();
+        return [];
+      }
+
+      try {
+        await Promise.all((data || []).filter(v => v && v.id && !v.qr_sig).map(v => ensureVoucherSig(v)));
+      } catch (e) { }
+
+      list.innerHTML = "";
+      data.forEach(v => {
+        const status = v.status || "pending";
+        const used = !!v.used || status === "used";
+        const sig = v.qr_sig || "";
+        const id = v.id;
+
+        const qrLink = makeFullAttendantLink(id, sig);
+        const compact = makeCompactPayload(id, sig);
+
+        const metaParts = [
+          `Bunk: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id})`,
+          `Amount: ₹${Number(v.amount || 0).toLocaleString("en-IN")}`,
+          `Litres: ${Number(v.litres || 0).toFixed(2)} L`,
+          `Time: ${fmtIST(v.created_at)}`,
+        ];
+        if (v.vehicle_no) metaParts.push(`Vehicle: ${v.vehicle_no}`);
+        if (v.vehicle_type) metaParts.push(`${v.vehicle_type}`);
+
+        const item = document.createElement("div");
+        item.className = "voucherItem";
+        item.innerHTML = `
         <div class="voucherLeft">
           <div class="voucherTitle">
             <span style="font-weight:1000;">Voucher: ${id}</span>
@@ -1145,7 +1370,7 @@
           <div class="voucherMeta">${metaParts.join(" • ")}</div>
 
           <div class="row" style="margin-top:8px;">
-            <button class="smallBtn" onclick="copyText('${qrLink.replace(/'/g,"")}')">Copy QR Link</button>
+            <button class="smallBtn" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy QR Link</button>
             <button class="smallBtn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
           </div>
         </div>
@@ -1155,59 +1380,59 @@
           <div class="qrCanvas" id="qr_${id}"></div>
         </div>
       `;
-      list.appendChild(item);
+        list.appendChild(item);
 
-      const qrEl = item.querySelector(`#qr_${CSS.escape(id)}`);
-      qrEl.innerHTML = "";
-      new QRCode(qrEl, { text: compact, width: 170, height: 170 });
-    });
+        const qrEl = item.querySelector(`#qr_${CSS.escape(id)}`);
+        qrEl.innerHTML = "";
+        new QRCode(qrEl, { text: compact, width: 170, height: 170 });
+      });
 
-    if(rebuildLatest){
-      const latest = data[0];
-      await renderLatestVoucher(latest);
-      scrollToLatestQR();
+      if (rebuildLatest) {
+        const latest = data[0];
+        await renderLatestVoucher(latest);
+        scrollToLatestQR();
+      }
+
+      window.__myVouchers = data;
+      buildAnalytics();
+      return data;
     }
 
-    window.__myVouchers = data;
-    buildAnalytics();
-    return data;
-  }
-
-  async function checkVoucherStatus(voucherId){
-    const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, { cache:"no-store" });
-    const data = await res.json();
-    if(!res.ok){
-      toast("Status error");
-      return;
-    }
-    toast(`Status: ${data.used || data.status==="used" ? "USED" : (data.status||"")}`);
-    await loadMyVouchers(false);
-  }
-
-  async function renderLatestVoucher(v){
-    const wrap = document.getElementById("latestWrap");
-    if(!v){
-      wrap.innerHTML = `<div class="muted">No voucher yet.</div>`;
-      return;
+    async function checkVoucherStatus(voucherId) {
+      const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast("Status error");
+        return;
+      }
+      toast(`Status: ${data.used || data.status === "used" ? "USED" : (data.status || "")}`);
+      await loadMyVouchers(false);
     }
 
-    const status = v.status || "pending";
-    const used = !!v.used || status==="used";
-    const id = v.id;
+    async function renderLatestVoucher(v) {
+      const wrap = document.getElementById("latestWrap");
+      if (!v) {
+        wrap.innerHTML = `<div class="muted">No voucher yet.</div>`;
+        return;
+      }
 
-    let sig = v.qr_sig;
-    if(!sig){
-      try{
-        const vr = await fetch(`${API}/voucher/${encodeURIComponent(id)}`, { cache:"no-store" });
-        const vd = await vr.json();
-        if(vr.ok && vd.qr_sig) sig = vd.qr_sig;
-      }catch(e){}
-    }
+      const status = v.status || "pending";
+      const used = !!v.used || status === "used";
+      const id = v.id;
 
-    const qrLink = makeFullAttendantLink(id, sig);
-    const compact = makeCompactPayload(id, sig);
+      let sig = v.qr_sig;
+      if (!sig) {
+        try {
+          const vr = await fetch(`${API}/voucher/${encodeURIComponent(id)}`, { cache: "no-store" });
+          const vd = await vr.json();
+          if (vr.ok && vd.qr_sig) sig = vd.qr_sig;
+        } catch (e) { }
+      }
 
-    wrap.innerHTML = `
+      const qrLink = makeFullAttendantLink(id, sig);
+      const compact = makeCompactPayload(id, sig);
+
+      wrap.innerHTML = `
       <div class="voucherItem" style="grid-template-columns: 1fr;">
         <div class="voucherLeft">
           <div class="voucherTitle">
@@ -1218,13 +1443,13 @@
           </div>
           <div class="voucherMeta">
             Bunk: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id}) •
-            Amount: ₹${Number(v.amount||0).toLocaleString("en-IN")} •
-            Litres: ${Number(v.litres||0).toFixed(2)} L •
+            Amount: ₹${Number(v.amount || 0).toLocaleString("en-IN")} •
+            Litres: ${Number(v.litres || 0).toFixed(2)} L •
             Time: ${fmtIST(v.created_at)}
           </div>
 
           <div class="row" style="margin-top:10px;">
-            <button class="btn btnPrimary" onclick="copyText('${qrLink.replace(/'/g,"")}')">Copy QR Link</button>
+            <button class="btn btnPrimary" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy QR Link</button>
             <button class="btn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
           </div>
 
@@ -1236,182 +1461,183 @@
       </div>
     `;
 
-    const qrEl = document.getElementById("latestQR");
-    qrEl.innerHTML = "";
-    new QRCode(qrEl, { text: compact, width: 190, height: 190 });
-  }
-
-  function copyText(txt){
-    navigator.clipboard.writeText(txt).then(()=> toast("Copied")).catch(()=> alert("Copy failed"));
-  }
-
-  function scrollToLatestQR(){
-    const card = document.getElementById("latestCard");
-    card.scrollIntoView({ behavior:"smooth", block:"start" });
-  }
-
-  // ---------------- Create voucher (Razorpay ONLY) ----------------
-  async function createVoucher(){
-    const s = getSession();
-    if(!s){ alert("Login first"); return; }
-
-    const bunk_id = document.getElementById("bunkSelect").value;
-    const fuel_type = document.getElementById("fuelType").value;
-
-    const amount = Number(document.getElementById("amountInput").value || 0);
-    const litres = Number(document.getElementById("litresInput").value || 0);
-
-    if((!amount || amount<=0) && (!litres || litres<=0)){
-      alert("Enter amount or litres");
-      return;
+      const qrEl = document.getElementById("latestQR");
+      qrEl.innerHTML = "";
+      new QRCode(qrEl, { text: compact, width: 190, height: 190 });
     }
 
-    const vehicleId = document.getElementById("vehiclePick").value;
-    let vehicle_type = null, vehicle_no = null;
-
-    const vlist = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, { cache:"no-store" })
-      .then(r=>r.ok?r.json():[])
-      .catch(()=>[]);
-    if(vehicleId){
-      const v = vlist.find(x=>x.id===vehicleId);
-      if(v){ vehicle_type = v.vehicle_type; vehicle_no = v.vehicle_no; }
-    } else {
-      const def = vlist.find(x=>x.is_default);
-      if(def){ vehicle_type = def.vehicle_type; vehicle_no = def.vehicle_no; }
+    function copyText(txt) {
+      navigator.clipboard.writeText(txt).then(() => toast("Copied")).catch(() => alert("Copy failed"));
     }
 
-    await saveUserDefaults({
-      last_bunk: bunk_id,
-      last_fuel_type: fuel_type,
-      last_amount: amount>0 ? amount : null,
-      last_vehicle_type: vehicle_type,
-      last_vehicle_no: vehicle_no
-    });
-
-    document.getElementById("homeStatus").textContent = "Creating voucher...";
-
-    const payload = { bunk_id, user_id: s.user_id, pay_method: "razorpay", fuel_type, vehicle_type, vehicle_no };
-    if(amount>0) payload.amount = amount;
-    if(litres>0 && amount<=0) payload.litres = litres;
-
-    const res = await fetch(`${API}/create-voucher`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await res.json();
-    if(!res.ok){
-      document.getElementById("homeStatus").textContent = "";
-      alert(data.detail || "Create failed");
-      return;
+    function scrollToLatestQR() {
+      const card = document.getElementById("latestCard");
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    if(data.razorpay_order_id){
-      document.getElementById("homeStatus").textContent = "Opening Razorpay...";
-      const options = {
-        key: data.razorpay_key_id,
-        amount: Math.round(Number(data.amount)*100),
-        currency: "INR",
-        name: "FuelSkip Voucher",
-        description: `Prepaid fuel voucher (${fuel_type})`,
-        order_id: data.razorpay_order_id,
-        handler: function(){
-          toast("Payment done. Updating...");
-          document.getElementById("homeStatus").textContent = "Payment done. Updating status...";
-          setTimeout(async ()=>{
-            await loadMyVouchers(true);
-            document.getElementById("homeStatus").textContent = "Voucher updated ✅";
-          }, 1600);
-        },
-        theme: { color: "#4f46e5" }
-      };
-      new Razorpay(options).open();
-    } else {
-      document.getElementById("homeStatus").textContent = "Voucher created.";
-      await loadMyVouchers(true);
-    }
-  }
+    // ---------------- Create voucher (Razorpay ONLY) ----------------
+    async function createVoucher() {
+      const s = getSession();
+      if (!s) { alert("Login first"); return; }
 
-  // ---------------- Analytics ----------------
-  function buildAnalytics(){
-    const data = window.__myVouchers || [];
-    if(!data.length){
-      document.getElementById("anSpent").textContent = "₹0";
-      document.getElementById("anLitres").textContent = "0 L";
-      document.getElementById("anBunk").textContent = "—";
-      document.getElementById("anVeh").textContent = "—";
-      document.getElementById("anFuelSplit").textContent = "—";
-      return;
-    }
+      const bunk_id = document.getElementById("bunkSelect").value;
+      const fuel_type = document.getElementById("fuelType").value;
 
-    let spent=0, litres=0;
-    const bunkCount = {};
-    const vehCount = {};
-    const fuelCount = {};
+      const amount = Number(document.getElementById("amountInput").value || 0);
+      const litres = Number(document.getElementById("litresInput").value || 0);
 
-    data.forEach(v=>{
-      const st = (v.status||"").toLowerCase();
-      const isPaid = (st==="paid" || st==="used") || !!v.used;
-      if(isPaid){
-        spent += Number(v.amount||0);
-        litres += Number(v.litres||0);
+      if ((!amount || amount <= 0) && (!litres || litres <= 0)) {
+        alert("Enter amount or litres");
+        return;
       }
-      const b = v.bunk_id || "—";
-      bunkCount[b] = (bunkCount[b]||0)+1;
 
-      const vn = v.vehicle_no || "";
-      if(vn) vehCount[vn] = (vehCount[vn]||0)+1;
+      const vehicleId = document.getElementById("vehiclePick").value;
+      let vehicle_type = null, vehicle_no = null;
 
-      const ft = (v.fuel_type||"PETROL").toUpperCase();
-      fuelCount[ft] = (fuelCount[ft]||0)+1;
-    });
+      const vlist = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, { cache: "no-store" })
+        .then(r => r.ok ? r.json() : [])
+        .catch(() => []);
+      if (vehicleId) {
+        const v = vlist.find(x => x.id === vehicleId);
+        if (v) { vehicle_type = v.vehicle_type; vehicle_no = v.vehicle_no; }
+      } else {
+        const def = vlist.find(x => x.is_default);
+        if (def) { vehicle_type = def.vehicle_type; vehicle_no = def.vehicle_no; }
+      }
 
-    const mostBunk = Object.entries(bunkCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—";
-    const mostVeh  = Object.entries(vehCount).sort((a,b)=>b[1]-a[1])[0]?.[0] || "—";
+      await saveUserDefaults({
+        last_bunk: bunk_id,
+        last_fuel_type: fuel_type,
+        last_amount: amount > 0 ? amount : null,
+        last_vehicle_type: vehicle_type,
+        last_vehicle_no: vehicle_no
+      });
 
-    document.getElementById("anSpent").textContent = `₹${spent.toLocaleString("en-IN")}`;
-    document.getElementById("anLitres").textContent = `${litres.toFixed(2)} L`;
-    document.getElementById("anBunk").textContent = bunkNameFromId(mostBunk);
-    document.getElementById("anVeh").textContent = mostVeh;
+      document.getElementById("homeStatus").textContent = "Creating voucher...";
 
-    const fs = Object.entries(fuelCount).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k}: ${v}`).join(" • ");
-    document.getElementById("anFuelSplit").textContent = fs || "—";
-  }
+      const payload = { bunk_id, user_id: s.user_id, pay_method: "razorpay", fuel_type, vehicle_type, vehicle_no };
+      if (amount > 0) payload.amount = amount;
+      if (litres > 0 && amount <= 0) payload.litres = litres;
 
-  // ---------------- App Init ----------------
-  async function refreshAll(){
-    await loadBunks();
-    const s = getSession();
-    if(s){
-      await loadVehicles();
-      await loadMyVouchers(false);
+      const res = await fetch(`${API}/create-voucher`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        document.getElementById("homeStatus").textContent = "";
+        alert(data.detail || "Create failed");
+        return;
+      }
+
+      if (data.razorpay_order_id) {
+        document.getElementById("homeStatus").textContent = "Opening Razorpay...";
+        const options = {
+          key: data.razorpay_key_id,
+          amount: Math.round(Number(data.amount) * 100),
+          currency: "INR",
+          name: "FuelSkip Voucher",
+          description: `Prepaid fuel voucher (${fuel_type})`,
+          order_id: data.razorpay_order_id,
+          handler: function () {
+            toast("Payment done. Updating...");
+            document.getElementById("homeStatus").textContent = "Payment done. Updating status...";
+            setTimeout(async () => {
+              await loadMyVouchers(true);
+              document.getElementById("homeStatus").textContent = "Voucher updated ✅";
+            }, 1600);
+          },
+          theme: { color: "#4f46e5" }
+        };
+        new Razorpay(options).open();
+      } else {
+        document.getElementById("homeStatus").textContent = "Voucher created.";
+        await loadMyVouchers(true);
+      }
     }
-    toast("Refreshed");
-  }
 
-  window.addEventListener("load", async ()=>{
-    setTimeout(()=> document.getElementById("splash").classList.add("hidden"), 650);
+    // ---------------- Analytics ----------------
+    function buildAnalytics() {
+      const data = window.__myVouchers || [];
+      if (!data.length) {
+        document.getElementById("anSpent").textContent = "₹0";
+        document.getElementById("anLitres").textContent = "0 L";
+        document.getElementById("anBunk").textContent = "—";
+        document.getElementById("anVeh").textContent = "—";
+        document.getElementById("anFuelSplit").textContent = "—";
+        return;
+      }
 
-    updateSessionUI();
-    await loadBunks();
+      let spent = 0, litres = 0;
+      const bunkCount = {};
+      const vehCount = {};
+      const fuelCount = {};
 
-    const s = getSession();
-    if(s){
-      await loadVehicles();
-      await loadMyVouchers(true);
-      showSection("home");
-    } else {
-      showSection("welcome");
+      data.forEach(v => {
+        const st = (v.status || "").toLowerCase();
+        const isPaid = (st === "paid" || st === "used") || !!v.used;
+        if (isPaid) {
+          spent += Number(v.amount || 0);
+          litres += Number(v.litres || 0);
+        }
+        const b = v.bunk_id || "—";
+        bunkCount[b] = (bunkCount[b] || 0) + 1;
+
+        const vn = v.vehicle_no || "";
+        if (vn) vehCount[vn] = (vehCount[vn] || 0) + 1;
+
+        const ft = (v.fuel_type || "PETROL").toUpperCase();
+        fuelCount[ft] = (fuelCount[ft] || 0) + 1;
+      });
+
+      const mostBunk = Object.entries(bunkCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+      const mostVeh = Object.entries(vehCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+
+      document.getElementById("anSpent").textContent = `₹${spent.toLocaleString("en-IN")}`;
+      document.getElementById("anLitres").textContent = `${litres.toFixed(2)} L`;
+      document.getElementById("anBunk").textContent = bunkNameFromId(mostBunk);
+      document.getElementById("anVeh").textContent = mostVeh;
+
+      const fs = Object.entries(fuelCount).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}: ${v}`).join(" • ");
+      document.getElementById("anFuelSplit").textContent = fs || "—";
     }
 
-    document.getElementById("fuelType").addEventListener("change", async (e)=>{
-      await saveUserDefaults({ last_fuel_type: e.target.value });
-    });
+    // ---------------- App Init ----------------
+    async function refreshAll() {
+      await loadBunks();
+      const s = getSession();
+      if (s) {
+        await loadVehicles();
+        await loadMyVouchers(false);
+      }
+      toast("Refreshed");
+    }
 
-    document.getElementById("bunkSelect").addEventListener("change", async (e)=>{
-      await saveUserDefaults({ last_bunk: e.target.value });
+    window.addEventListener("load", async () => {
+      setTimeout(() => document.getElementById("splash").classList.add("hidden"), 650);
+
+      updateSessionUI();
+      await loadBunks();
+
+      const s = getSession();
+      if (s) {
+        await loadVehicles();
+        await loadMyVouchers(true);
+        showSection("home");
+      } else {
+        showSection("welcome");
+      }
+
+      document.getElementById("fuelType").addEventListener("change", async (e) => {
+        await saveUserDefaults({ last_fuel_type: e.target.value });
+      });
+
+      document.getElementById("bunkSelect").addEventListener("change", async (e) => {
+        await saveUserDefaults({ last_bunk: e.target.value });
+      });
     });
-  });
-</script>
+  </script>
 </body>
+
 </html>
