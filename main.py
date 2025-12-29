@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+import os
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import init_db
 from backend.routers import auth, user, vouchers, devices, attendant
@@ -27,3 +29,46 @@ app.include_router(user.router, prefix="/user") # /user/vehicles...
 app.include_router(vouchers.router) # /create-voucher, /my-vouchers...
 app.include_router(devices.router, prefix="/devices") # /devices/register...
 app.include_router(attendant.router, prefix="/attendant") # /attendant/voucher...
+
+# --- Frontend Static Files ---
+@app.get("/")
+async def serve_customer():
+    if os.path.exists("customer.html"):
+        return FileResponse("customer.html")
+    return {"error": "customer.html not found"}
+
+@app.get("/attendant.html")
+async def serve_attendant():
+    if os.path.exists("attendant.html"):
+        return FileResponse("attendant.html")
+    return {"error": "attendant.html not found"}
+
+@app.get("/owner.html")
+async def serve_owner():
+    if os.path.exists("owner.html"):
+        return FileResponse("owner.html")
+    return {"error": "owner.html not found"}
+
+@app.get("/manifest.json")
+async def serve_manifest():
+    if os.path.exists("manifest.json"):
+        return FileResponse("manifest.json")
+    return {"error": "Not found"}
+
+@app.get("/service-worker.js")
+async def serve_sw():
+    if os.path.exists("service-worker.js"):
+        return FileResponse("service-worker.js")
+    return {"error": "Not found"}
+
+@app.get("/icon-192.png")
+async def serve_icon192():
+    if os.path.exists("icon-192.png"):
+        return FileResponse("icon-192.png")
+    return {"error": "Not found"}
+
+@app.get("/icon-512.png")
+async def serve_icon512():
+    if os.path.exists("icon-512.png"):
+        return FileResponse("icon-512.png")
+    return {"error": "Not found"}
