@@ -37,6 +37,12 @@ async def serve_customer():
         return FileResponse("customer.html")
     return {"error": "customer.html not found"}
 
+@app.get("/customer.html")
+async def serve_customer_html():
+    if os.path.exists("customer.html"):
+        return FileResponse("customer.html")
+    return {"error": "customer.html not found"}
+
 @app.get("/attendant.html")
 async def serve_attendant():
     if os.path.exists("attendant.html"):
