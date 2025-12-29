@@ -1053,7 +1053,8 @@
           return;
         }
 
-        setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "" });
+        // Save token!
+        setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "", token: data.token });
 
         if (data.last_fuel_type) document.getElementById("fuelType").value = data.last_fuel_type;
         if (data.last_amount) document.getElementById("amountInput").value = data.last_amount;
@@ -1071,6 +1072,7 @@
         showSection("home");
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (e) {
+        console.error(e);
         btn.textContent = "Login";
         btn.disabled = false;
         alert("Connection error");
@@ -1157,14 +1159,18 @@
       pick.appendChild(optNone);
 
       tableBody.innerHTML = "";
-      if (!s) {
+      if (!s || !s.token) {
         tableBody.innerHTML = `<tr><td colspan="4" class="muted">Login to manage vehicles.</td></tr>`;
         return;
       }
 
-      const res = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, { cache: "no-store" });
+      const res = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, {
+        cache: "no-store",
+        headers: { "X-USER-TOKEN": s.token }
+      });
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 401) logout();
         tableBody.innerHTML = `<tr><td colspan="4">Error: ${data.detail || "load failed"}</td></tr>`;
         return;
       }
@@ -1200,7 +1206,7 @@
 
     async function addVehicle() {
       const s = getSession();
-      if (!s) { alert("Login first"); return; }
+      if (!s || !s.token) { alert("Login first"); return; }
 
       const vehicle_type = document.getElementById("vehType").value;
       const vehicle_no = (document.getElementById("vehNo").value || "").trim();
@@ -1212,7 +1218,7 @@
 
       const res = await fetch(`${API}/user/vehicles/add`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
         body: JSON.stringify({ user_id: s.user_id, vehicle_type, vehicle_no })
       });
       const data = await res.json();
@@ -1229,11 +1235,11 @@
 
     async function setDefaultVehicle(vehicle_id) {
       const s = getSession();
-      if (!s) { alert("Login first"); return; }
+      if (!s || !s.token) { alert("Login first"); return; }
 
       const res = await fetch(`${API}/user/vehicles/set-default`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
         body: JSON.stringify({ user_id: s.user_id, vehicle_id })
       });
       const data = await res.json();
@@ -1247,11 +1253,12 @@
 
     async function deleteVehicle(vehicle_id) {
       const s = getSession();
-      if (!s) { alert("Login first"); return; }
+      if (!s || !s.token) { alert("Login first"); return; }
       if (!confirm("Delete this vehicle?")) return;
 
       const res = await fetch(`${API}/user/vehicles/${encodeURIComponent(vehicle_id)}?user_id=${encodeURIComponent(s.user_id)}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: { "X-USER-TOKEN": s.token }
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1265,12 +1272,12 @@
     // ---------------- Defaults save ----------------
     async function saveUserDefaults(partial) {
       const s = getSession();
-      if (!s) return;
+      if (!s || !s.token) return;
       const payload = { user_id: s.user_id, ...partial };
       try {
         await fetch(`${API}/user/update`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
           body: JSON.stringify(payload)
         });
       } catch (e) { }
@@ -1312,16 +1319,20 @@
     async function loadMyVouchers(rebuildLatest) {
       const s = getSession();
       const list = document.getElementById("voucherList");
-      if (!s) {
+      if (!s || !s.token) {
         list.innerHTML = `<div class="muted">Login to view vouchers.</div>`;
         document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
         return [];
       }
 
       list.innerHTML = `<div class="muted">Loading...</div>`;
-      const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(s.user_id)}`, { cache: "no-store" });
+      const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(s.user_id)}`, {
+        cache: "no-store",
+        headers: { "X-USER-TOKEN": s.token }
+      });
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 401) logout();
         list.innerHTML = `<div class="muted">Error: ${data.detail || "load failed"}</div>`;
         return [];
       }
@@ -1399,7 +1410,15 @@
     }
 
     async function checkVoucherStatus(voucherId) {
-      const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, { cache: "no-store" });
+      const s = getSession();
+      if (!s || !s.token) return; // Should we require token for status? Probably yes if it's user specific, but let's check auth.py
+      // Actually voucher-status calls vouchers.py which might not require token if it's just public status check?
+      // Let's assume it requires token for safety if we change it.
+
+      const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, {
+        cache: "no-store",
+        headers: { "X-USER-TOKEN": s.token }
+      });
       const data = await res.json();
       if (!res.ok) {
         toast("Status error");
@@ -1423,7 +1442,11 @@
       let sig = v.qr_sig;
       if (!sig) {
         try {
-          const vr = await fetch(`${API}/voucher/${encodeURIComponent(id)}`, { cache: "no-store" });
+          const s = getSession();
+          const vr = await fetch(`${API}/voucher/${encodeURIComponent(id)}`, {
+            cache: "no-store",
+            headers: { "X-USER-TOKEN": s ? s.token : "" }
+          });
           const vd = await vr.json();
           if (vr.ok && vd.qr_sig) sig = vd.qr_sig;
         } catch (e) { }
@@ -1478,7 +1501,7 @@
     // ---------------- Create voucher (Razorpay ONLY) ----------------
     async function createVoucher() {
       const s = getSession();
-      if (!s) { alert("Login first"); return; }
+      if (!s || !s.token) { alert("Login first"); return; }
 
       const bunk_id = document.getElementById("bunkSelect").value;
       const fuel_type = document.getElementById("fuelType").value;
@@ -1494,7 +1517,10 @@
       const vehicleId = document.getElementById("vehiclePick").value;
       let vehicle_type = null, vehicle_no = null;
 
-      const vlist = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, { cache: "no-store" })
+      const vlist = await fetch(`${API}/user/vehicles?user_id=${encodeURIComponent(s.user_id)}`, {
+        cache: "no-store",
+        headers: { "X-USER-TOKEN": s.token }
+      })
         .then(r => r.ok ? r.json() : [])
         .catch(() => []);
       if (vehicleId) {
@@ -1521,7 +1547,7 @@
 
       const res = await fetch(`${API}/create-voucher`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
@@ -1607,7 +1633,7 @@
     async function refreshAll() {
       await loadBunks();
       const s = getSession();
-      if (s) {
+      if (s && s.token) {
         await loadVehicles();
         await loadMyVouchers(false);
       }
@@ -1621,7 +1647,7 @@
       await loadBunks();
 
       const s = getSession();
-      if (s) {
+      if (s && s.token) {
         await loadVehicles();
         await loadMyVouchers(true);
         showSection("home");
