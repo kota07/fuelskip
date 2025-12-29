@@ -1,69 +1,276 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>FuelSkip - Owner Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin:0; padding:16px; background:#0f172a; color:#e5e7eb; }
-    h2 { margin-top:0; text-align:center; }
+    * {
+      box-sizing: border-box;
+    }
 
-    .panel { background:#020617; border-radius:16px; padding:12px 14px; box-shadow:0 10px 25px rgba(15,23,42,0.4); margin-bottom:12px; border:1px solid rgba(148,163,184,0.12); }
-    .row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:space-between; }
-    .field-group { display:flex; align-items:center; gap:6px; font-size:13px; }
-    label { font-weight:800; color:#cbd5e1; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #0f172a;
+      color: #e5e7eb;
+    }
 
-    input, select { padding:6px 8px; border-radius:10px; border:1px solid #334155; background:#020617; color:#e5e7eb; font-size:13px; outline:none; }
-    input:focus, select:focus { border-color:#60a5fa; box-shadow:0 0 0 3px rgba(96,165,250,0.16); }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+    }
 
-    button { padding:8px 12px; border-radius:12px; border:none; cursor:pointer; font-weight:800; font-size:13px; background:#22c55e; color:white; }
-    button:active { transform:scale(0.98); }
-    .btn-blue { background:#3b82f6; }
-    .btn-red  { background:#ef4444; }
-    .btn-gray { background:#334155; }
-    .btn-amber{ background:#f59e0b; color:#111827; font-weight:900; }
+    .panel {
+      background: #020617;
+      border-radius: 16px;
+      padding: 12px 14px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.4);
+      margin-bottom: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
 
-    .summary { margin-top:12px; display:flex; flex-wrap:wrap; gap:8px; font-size:13px; }
-    .chip { padding:6px 10px; border-radius:999px; background:#020617; border:1px solid #1f2937; color:#e2e8f0; font-weight:800; }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-    .scroll-wrap { margin-top:12px; max-height:55vh; overflow:auto; border-radius:16px; border:1px solid rgba(148,163,184,0.12); }
-    table { width:100%; border-collapse:collapse; background:#020617; overflow:hidden; }
-    th, td { padding:8px 10px; font-size:13px; border-bottom:1px solid #111827; text-align:left; white-space:nowrap; color:#e5e7eb; }
-    tbody tr:nth-child(even) { background:#030712; }
-    tbody tr:nth-child(odd)  { background:#020617; }
-    th { position:sticky; top:0; z-index:1; background:#0b1220; color:#cbd5e1; font-weight:900; letter-spacing:0.2px; }
+    .field-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
 
-    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:900; text-transform:uppercase; border:1px solid rgba(255,255,255,0.14); }
-    .paid { background:#14532d; color:#dcfce7; }
-    .pending { background:#7c2d12; color:#ffedd5; }
-    .used { background:#1e3a8a; color:#dbeafe; }
-    .failed { background:#7f1d1d; color:#fee2e2; }
+    label {
+      font-weight: 800;
+      color: #cbd5e1;
+    }
 
-    .mini { margin-top:8px; font-size:12px; color:#94a3b8; line-height:1.4; }
-    #qrBox { background:#0b1220; border:1px solid #1f2937; border-radius:16px; padding:12px; margin-top:10px; }
-    #qr { display:flex; justify-content:center; padding:12px; background:#fff; border-radius:12px; }
-    code { color:#93c5fd; word-break:break-all; }
+    input,
+    select {
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 13px;
+      outline: none;
+    }
 
-    .dangerText { color:#fecaca; font-weight:900; }
-    .okText { color:#bbf7d0; font-weight:900; }
+    input:focus,
+    select:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.16);
+    }
 
-    @media (max-width: 720px){
-      body{ padding:12px; }
-      .row{ justify-content:flex-start; }
-      input, select{ width:100%; }
-      .field-group{ width:100%; }
-      button{ width:100%; }
-      th, td{ font-size:12px; }
+    button {
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 13px;
+      background: #22c55e;
+      color: white;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-blue {
+      background: #3b82f6;
+    }
+
+    .btn-red {
+      background: #ef4444;
+    }
+
+    .btn-gray {
+      background: #334155;
+    }
+
+    .btn-amber {
+      background: #f59e0b;
+      color: #111827;
+      font-weight: 900;
+    }
+
+    .summary {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #1f2937;
+      color: #e2e8f0;
+      font-weight: 800;
+    }
+
+    .scroll-wrap {
+      margin-top: 12px;
+      max-height: 55vh;
+      overflow: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #020617;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 8px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid #111827;
+      text-align: left;
+      white-space: nowrap;
+      color: #e5e7eb;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #030712;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: #020617;
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #0b1220;
+      color: #cbd5e1;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .paid {
+      background: #14532d;
+      color: #dcfce7;
+    }
+
+    .pending {
+      background: #7c2d12;
+      color: #ffedd5;
+    }
+
+    .used {
+      background: #1e3a8a;
+      color: #dbeafe;
+    }
+
+    .failed {
+      background: #7f1d1d;
+      color: #fee2e2;
+    }
+
+    .mini {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    #qrBox {
+      background: #0b1220;
+      border: 1px solid #1f2937;
+      border-radius: 16px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    #qr {
+      display: flex;
+      justify-content: center;
+      padding: 12px;
+      background: #fff;
+      border-radius: 12px;
+    }
+
+    code {
+      color: #93c5fd;
+      word-break: break-all;
+    }
+
+    .dangerText {
+      color: #fecaca;
+      font-weight: 900;
+    }
+
+    .okText {
+      color: #bbf7d0;
+      font-weight: 900;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 12px;
+      }
+
+      .row {
+        justify-content: flex-start;
+      }
+
+      input,
+      select {
+        width: 100%;
+      }
+
+      .field-group {
+        width: 100%;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      th,
+      td {
+        font-size: 12px;
+      }
     }
 
     /* hidden copy input fallback */
     #copyFallback {
-      position:fixed;
-      left:-9999px;
-      top:-9999px;
-      opacity:0;
+      position: fixed;
+      left: -9999px;
+      top: -9999px;
+      opacity: 0;
+      opacity: 0;
+    }
+
+    option {
+      background: #020617;
+      color: #e5e7eb;
     }
   </style>
 </head>
@@ -96,7 +303,7 @@
         <label>Device Name:</label>
         <input id="pairName" value="Attendant Phone" />
       </div>
-      <button onclick="createPairQR()">Generate Pair QR</button>
+      <button onclick="safeCreatePairQR()">Generate Pair QR</button>
       <button class="btn-gray" onclick="copyPairLink()" id="copyPairBtn" disabled>Copy Pair Link</button>
     </div>
 
@@ -178,182 +385,182 @@
     <div class="mini">Note: “USED” is shown if status is used OR used=true (safer).</div>
   </div>
 
-<script>
-const API = window.location.origin;
+  <script>
+    const API = window.location.origin;
 
-const BUNK_META = {
-  "BUNK-1": { name: "BPCL Siripuram" },
-  "BUNK-2": { name: "Gajuwaka Expressway" }
-};
-function bunkName(id){
-  return (BUNK_META[id] && BUNK_META[id].name) ? BUNK_META[id].name : id;
-}
-function niceFuel(ft){
-  const x = String(ft || "PETROL").toUpperCase();
-  if(x === "DIESEL") return "Diesel";
-  if(x === "CNG") return "CNG";
-  if(x === "EV") return "EV";
-  return "Petrol";
-}
-function nicePay(pm){
-  const x = String(pm || "").toLowerCase();
-  if(!x) return "Razorpay";
-  if(x === "razorpay") return "Razorpay";
-  return x;
-}
-
-function ownerToken() {
-  return (localStorage.getItem("FUELSKIP_OWNER_TOKEN") || "").trim();
-}
-function saveOwnerToken() {
-  const t = document.getElementById("ownerToken").value.trim();
-  if (!t) return alert("Paste OWNER_TOKEN");
-  localStorage.setItem("FUELSKIP_OWNER_TOKEN", t);
-  alert("Saved.");
-  // ✅ Immediately refresh devices after saving token
-  loadDevices();
-}
-function clearOwnerToken() {
-  localStorage.removeItem("FUELSKIP_OWNER_TOKEN");
-  alert("Cleared.");
-}
-
-function fmtIST(ts) {
-  if (!ts) return "";
-  const d = new Date(ts);
-  return d.toLocaleString("en-IN", { timeZone:"Asia/Kolkata", hour12:true });
-}
-
-function pillHtml(status, usedFlag){
-  const st = String(status || "").toLowerCase();
-  const used = !!usedFlag || st === "used";
-  if(used) return `<span class="pill used">used</span>`;
-  if(st === "paid") return `<span class="pill paid">paid</span>`;
-  if(st === "failed") return `<span class="pill failed">failed</span>`;
-  return `<span class="pill pending">${st || "pending"}</span>`;
-}
-
-function populateBunks(){
-  const selects = [document.getElementById("pairBunk"), document.getElementById("bunkInput")];
-  selects.forEach(sel => {
-    if(!sel) return;
-    sel.innerHTML = "";
-    Object.keys(BUNK_META).forEach(id=>{
-      const opt = document.createElement("option");
-      opt.value = id;
-      opt.textContent = `${bunkName(id)} • (${id})`;
-      sel.appendChild(opt);
-    });
-  });
-  document.getElementById("bunkInput").value = "BUNK-1";
-}
-
-let lastPairLink = "";
-
-async function createPairQR() {
-  const tok = ownerToken();
-  if (!tok) return alert("Save OWNER_TOKEN first");
-
-  const bunk_id = document.getElementById("pairBunk").value;
-  const name = document.getElementById("pairName").value.trim() || "Attendant Device";
-
-  const res = await fetch(`${API}/devices/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-OWNER-TOKEN": tok },
-    body: JSON.stringify({ bunk_id, name })
-  });
-
-  const data = await res.json();
-  if (!res.ok) return alert(data.detail || "Failed to register device");
-
-  lastPairLink = `${window.location.origin}/attendant.html?dt=${encodeURIComponent(data.device_token)}`;
-
-  document.getElementById("pairLink").textContent = lastPairLink;
-  document.getElementById("qrBox").style.display = "block";
-  document.getElementById("qr").innerHTML = "";
-  new QRCode(document.getElementById("qr"), { text: lastPairLink, width: 200, height: 200 });
-
-  document.getElementById("copyPairBtn").disabled = false;
-  loadDevices();
-}
-
-async function copyPairLink(){
-  if(!lastPairLink) return alert("Generate Pair QR first");
-
-  // ✅ Modern clipboard first
-  try{
-    if(navigator.clipboard && window.isSecureContext){
-      await navigator.clipboard.writeText(lastPairLink);
-      alert("Pair link copied ✅");
-      return;
+    const BUNK_META = {
+      "BUNK-1": { name: "BPCL Siripuram" },
+      "BUNK-2": { name: "Gajuwaka Expressway" }
+    };
+    function bunkName(id) {
+      return (BUNK_META[id] && BUNK_META[id].name) ? BUNK_META[id].name : id;
     }
-  }catch(e){ /* fallthrough */ }
+    function niceFuel(ft) {
+      const x = String(ft || "PETROL").toUpperCase();
+      if (x === "DIESEL") return "Diesel";
+      if (x === "CNG") return "CNG";
+      if (x === "EV") return "EV";
+      return "Petrol";
+    }
+    function nicePay(pm) {
+      const x = String(pm || "").toLowerCase();
+      if (!x) return "Razorpay";
+      if (x === "razorpay") return "Razorpay";
+      return x;
+    }
 
-  // ✅ Fallback: hidden input + execCommand
-  const el = document.getElementById("copyFallback");
-  el.value = lastPairLink;
-  el.focus();
-  el.select();
-  try{
-    const ok = document.execCommand("copy");
-    alert(ok ? "Pair link copied ✅" : "Copy failed");
-  }catch(e){
-    alert("Copy failed");
-  }
-}
+    function ownerToken() {
+      return (localStorage.getItem("FUELSKIP_OWNER_TOKEN") || "").trim();
+    }
+    function saveOwnerToken() {
+      const t = document.getElementById("ownerToken").value.trim();
+      if (!t) return alert("Paste OWNER_TOKEN");
+      localStorage.setItem("FUELSKIP_OWNER_TOKEN", t);
+      alert("Saved.");
+      // ✅ Immediately refresh devices after saving token
+      loadDevices();
+    }
+    function clearOwnerToken() {
+      localStorage.removeItem("FUELSKIP_OWNER_TOKEN");
+      alert("Cleared.");
+    }
 
-async function revokeDevice(device_id, revoke){
-  const tok = ownerToken();
-  if (!tok) return alert("Save OWNER_TOKEN first");
+    function fmtIST(ts) {
+      if (!ts) return "";
+      const d = new Date(ts);
+      return d.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true });
+    }
 
-  const confirmMsg = revoke
-    ? "Revoke this device? It will stop working immediately."
-    : "Un-revoke this device? It will work again.";
+    function pillHtml(status, usedFlag) {
+      const st = String(status || "").toLowerCase();
+      const used = !!usedFlag || st === "used";
+      if (used) return `<span class="pill used">used</span>`;
+      if (st === "paid") return `<span class="pill paid">paid</span>`;
+      if (st === "failed") return `<span class="pill failed">failed</span>`;
+      return `<span class="pill pending">${st || "pending"}</span>`;
+    }
 
-  if(!confirm(confirmMsg)) return;
+    function populateBunks() {
+      const selects = [document.getElementById("pairBunk"), document.getElementById("bunkInput")];
+      selects.forEach(sel => {
+        if (!sel) return;
+        sel.innerHTML = "";
+        Object.keys(BUNK_META).forEach(id => {
+          const opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = `${bunkName(id)} • (${id})`;
+          sel.appendChild(opt);
+        });
+      });
+      document.getElementById("bunkInput").value = "BUNK-1";
+    }
 
-  const res = await fetch(`${API}/devices/revoke`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json", "X-OWNER-TOKEN": tok },
-    body: JSON.stringify({ device_id, revoke })
-  });
-  const data = await res.json();
-  if(!res.ok){
-    alert(data.detail || "Revoke failed");
-    return;
-  }
-  alert(revoke ? "Device revoked ✅" : "Device re-enabled ✅");
-  loadDevices();
-}
+    let lastPairLink = "";
 
-async function loadDevices(){
-  const tok = ownerToken();
-  if (!tok) return;
+    async function createPairQR() {
+      const tok = ownerToken();
+      if (!tok) return alert("Save OWNER_TOKEN first");
 
-  const tbody = document.querySelector("#devTbl tbody");
-  tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+      const bunk_id = document.getElementById("pairBunk").value;
+      const name = document.getElementById("pairName").value.trim() || "Attendant Device";
 
-  const res = await fetch(`${API}/devices`, {
-    headers: { "X-OWNER-TOKEN": tok },
-    cache: "no-store"
-  });
+      const res = await fetch(`${API}/devices/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-OWNER-TOKEN": tok },
+        body: JSON.stringify({ bunk_id, name })
+      });
 
-  const data = await res.json();
-  if(!res.ok){
-    tbody.innerHTML = `<tr><td colspan='6'>Error: ${data.detail || "load failed"}</td></tr>`;
-    return;
-  }
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || "Failed to register device");
 
-  if(!data.length){
-    tbody.innerHTML = "<tr><td colspan='6'>No devices registered</td></tr>";
-    return;
-  }
+      lastPairLink = `${window.location.origin}/attendant.html?dt=${encodeURIComponent(data.device_token)}`;
 
-  tbody.innerHTML = "";
-  data.forEach(d=>{
-    const revoked = !!d.revoked;
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
+      document.getElementById("pairLink").textContent = lastPairLink;
+      document.getElementById("qrBox").style.display = "block";
+      document.getElementById("qr").innerHTML = "";
+      new QRCode(document.getElementById("qr"), { text: lastPairLink, width: 200, height: 200 });
+
+      document.getElementById("copyPairBtn").disabled = false;
+      loadDevices();
+    }
+
+    async function copyPairLink() {
+      if (!lastPairLink) return alert("Generate Pair QR first");
+
+      // ✅ Modern clipboard first
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(lastPairLink);
+          alert("Pair link copied ✅");
+          return;
+        }
+      } catch (e) { /* fallthrough */ }
+
+      // ✅ Fallback: hidden input + execCommand
+      const el = document.getElementById("copyFallback");
+      el.value = lastPairLink;
+      el.focus();
+      el.select();
+      try {
+        const ok = document.execCommand("copy");
+        alert(ok ? "Pair link copied ✅" : "Copy failed");
+      } catch (e) {
+        alert("Copy failed");
+      }
+    }
+
+    async function revokeDevice(device_id, revoke) {
+      const tok = ownerToken();
+      if (!tok) return alert("Save OWNER_TOKEN first");
+
+      const confirmMsg = revoke
+        ? "Revoke this device? It will stop working immediately."
+        : "Un-revoke this device? It will work again.";
+
+      if (!confirm(confirmMsg)) return;
+
+      const res = await fetch(`${API}/devices/revoke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-OWNER-TOKEN": tok },
+        body: JSON.stringify({ device_id, revoke })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.detail || "Revoke failed");
+        return;
+      }
+      alert(revoke ? "Device revoked ✅" : "Device re-enabled ✅");
+      loadDevices();
+    }
+
+    async function loadDevices() {
+      const tok = ownerToken();
+      if (!tok) return;
+
+      const tbody = document.querySelector("#devTbl tbody");
+      tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+
+      const res = await fetch(`${API}/devices`, {
+        headers: { "X-OWNER-TOKEN": tok },
+        cache: "no-store"
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        tbody.innerHTML = `<tr><td colspan='6'>Error: ${data.detail || "load failed"}</td></tr>`;
+        return;
+      }
+
+      if (!data.length) {
+        tbody.innerHTML = "<tr><td colspan='6'>No devices registered</td></tr>";
+        return;
+      }
+
+      tbody.innerHTML = "";
+      data.forEach(d => {
+        const revoked = !!d.revoked;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
       <td>${d.name || "Device"}</td>
       <td>${bunkName(d.bunk_id)} (${d.bunk_id})</td>
       <td>${fmtIST(d.created_at)}</td>
@@ -361,59 +568,59 @@ async function loadDevices(){
       <td>${revoked ? `<span class="dangerText">REVOKED</span>` : `<span class="okText">ACTIVE</span>`}</td>
       <td>
         ${revoked
-          ? `<button class="btn-amber" onclick="revokeDevice(${d.id}, false)">Enable</button>`
-          : `<button class="btn-red" onclick="revokeDevice(${d.id}, true)">Revoke</button>`
-        }
+            ? `<button class="btn-amber" onclick="revokeDevice(${d.id}, false)">Enable</button>`
+            : `<button class="btn-red" onclick="revokeDevice(${d.id}, true)">Revoke</button>`
+          }
       </td>
     `;
-    tbody.appendChild(tr);
-  });
-}
+        tbody.appendChild(tr);
+      });
+    }
 
-async function loadVouchers() {
-  const tok = ownerToken();
-  if (!tok) return alert("Save OWNER_TOKEN first");
+    async function loadVouchers() {
+      const tok = ownerToken();
+      if (!tok) return alert("Save OWNER_TOKEN first");
 
-  const bunkId = document.getElementById('bunkInput').value.trim();
-  const status = document.getElementById('statusSelect').value;
+      const bunkId = document.getElementById('bunkInput').value.trim();
+      const status = document.getElementById('statusSelect').value;
 
-  const params = new URLSearchParams();
-  if (bunkId) params.append("bunk_id", bunkId);
-  if (status) params.append("status", status);
+      const params = new URLSearchParams();
+      if (bunkId) params.append("bunk_id", bunkId);
+      if (status) params.append("status", status);
 
-  const tbody = document.querySelector("#tbl tbody");
-  const sumRow = document.getElementById("summaryRow");
+      const tbody = document.querySelector("#tbl tbody");
+      const sumRow = document.getElementById("summaryRow");
 
-  tbody.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
-  sumRow.style.display = "none";
+      tbody.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
+      sumRow.style.display = "none";
 
-  const res = await fetch(`${API}/vouchers?` + params.toString(), {
-    headers: { "X-OWNER-TOKEN": tok },
-    cache: "no-store"
-  });
+      const res = await fetch(`${API}/vouchers?` + params.toString(), {
+        headers: { "X-OWNER-TOKEN": tok },
+        cache: "no-store"
+      });
 
-  const data = await res.json();
-  if (!res.ok) {
-    tbody.innerHTML = `<tr><td colspan='8'>Error: ${data.detail || "load failed"}</td></tr>`;
-    return;
-  }
-  if (!data.length) {
-    tbody.innerHTML = "<tr><td colspan='8'>No vouchers found</td></tr>`;
-    return;
-  }
+      const data = await res.json();
+      if (!res.ok) {
+        tbody.innerHTML = `<tr><td colspan='8'>Error: ${data.detail || "load failed"}</td></tr>`;
+        return;
+      }
+      if (!data.length) {
+        tbody.innerHTML = "<tr><td colspan='8'>No vouchers found</td></tr>`;
+        return;
+      }
 
-  let totalAmt = 0, totalLit = 0, usedCount = 0;
-  tbody.innerHTML = "";
-  data.forEach(v => {
-    const amt = Number(v.amount || 0);
-    const lit = Number(v.litres || 0);
-    totalAmt += amt; totalLit += lit;
+      let totalAmt = 0, totalLit = 0, usedCount = 0;
+      tbody.innerHTML = "";
+      data.forEach(v => {
+        const amt = Number(v.amount || 0);
+        const lit = Number(v.litres || 0);
+        totalAmt += amt; totalLit += lit;
 
-    const usedFlag = !!v.used || String(v.status||"").toLowerCase() === "used";
-    if(usedFlag) usedCount += 1;
+        const usedFlag = !!v.used || String(v.status || "").toLowerCase() === "used";
+        if (usedFlag) usedCount += 1;
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
       <td>${fmtIST(v.created_at)}</td>
       <td>${v.id}</td>
       <td>${bunkName(v.bunk_id)} (${v.bunk_id})</td>
@@ -423,29 +630,45 @@ async function loadVouchers() {
       <td>${lit.toFixed(2)}</td>
       <td>${pillHtml(v.status, usedFlag)}</td>
     `;
-    tbody.appendChild(tr);
-  });
+        tbody.appendChild(tr);
+      });
 
-  document.getElementById("sumCount").textContent  = `Total: ${data.length}`;
-  document.getElementById("sumAmount").textContent = `Amount: ₹${totalAmt.toLocaleString("en-IN")}`;
-  document.getElementById("sumLitres").textContent = `Litres: ${totalLit.toFixed(2)} L`;
-  document.getElementById("sumUsed").textContent   = `Used: ${usedCount}`;
-  sumRow.style.display = "flex";
-}
+      document.getElementById("sumCount").textContent = `Total: ${data.length}`;
+      document.getElementById("sumAmount").textContent = `Amount: ₹${totalAmt.toLocaleString("en-IN")}`;
+      document.getElementById("sumLitres").textContent = `Litres: ${totalLit.toFixed(2)} L`;
+      document.getElementById("sumUsed").textContent = `Used: ${usedCount}`;
+      sumRow.style.display = "flex";
+    }
 
-let autoTimer = null;
+    let autoTimer = null;
 
-window.addEventListener("load", () => {
-  document.getElementById("ownerToken").value = ownerToken();
-  populateBunks();
-  loadDevices();
+    window.addEventListener("load", () => {
+      try {
+        const val = ownerToken();
+        if (val) document.getElementById("ownerToken").value = val;
 
-  // ✅ Auto refresh devices every 20s (pilot friendly)
-  if(autoTimer) clearInterval(autoTimer);
-  autoTimer = setInterval(() => {
-    if(ownerToken()) loadDevices();
-  }, 20000);
-});
-</script>
+        populateBunks();
+        loadDevices();
+
+        // ✅ Auto refresh devices every 20s (pilot friendly)
+        if (autoTimer) clearInterval(autoTimer);
+        autoTimer = setInterval(() => {
+          if (ownerToken()) loadDevices();
+        }, 20000);
+      } catch (e) {
+        alert("Error initializing dashboard: " + e.message);
+        console.error(e);
+      }
+    });
+
+    function safeCreatePairQR() {
+      try {
+        createPairQR();
+      } catch (e) {
+        alert("QR Gen Error: " + e.message);
+      }
+    }
+  </script>
 </body>
+
 </html>
