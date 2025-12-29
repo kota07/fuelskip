@@ -1008,7 +1008,7 @@
 
       // Buttons visual state
       const navWelcome = document.getElementById("navWelcome");
-      const navWelcomeSpan = navWelcome.querySelector("span");
+      const navWelcomeSpan = navWelcome ? navWelcome.querySelector("span") : null;
 
       // Toggling views inside secWelcome
       const viewLogin = document.getElementById("viewLogin");
@@ -1016,8 +1016,8 @@
 
       if (!s) {
         // Logged OUT
-        pill.textContent = "Not logged in";
-        sub.textContent = "Login to save & reuse details.";
+        if (pill) pill.textContent = "Not logged in";
+        if (sub) sub.textContent = "Login to save & reuse details.";
         setNavEnabled(false);
 
         if (navWelcomeSpan) navWelcomeSpan.textContent = "✨ Welcome";
@@ -1029,8 +1029,8 @@
       }
 
       // Logged IN
-      pill.textContent = `Logged: ${s.phone}`;
-      sub.textContent = s.name ? `Hi ${s.name}` : `User ID: ${s.user_id}`;
+      if (pill) pill.textContent = `Logged: ${s.phone}`;
+      if (sub) sub.textContent = s.name ? `Hi ${s.name}` : `User ID: ${s.user_id}`;
       setNavEnabled(true);
 
       if (navWelcomeSpan) navWelcomeSpan.textContent = "👤 Profile";
