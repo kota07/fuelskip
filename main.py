@@ -10,6 +10,7 @@ import os
 import math
 import hmac
 import hashlib
+import re  # ✅ FIX: required by parse_qr_payload helpers
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -42,7 +43,8 @@ class UserDB(Base):
     name = Column(String, nullable=True)
     created_at = Column(DateTime)
 
-    # ✅ Wallet balance (INR)
+    # NOTE: wallet_balance column may exist from older DB.
+    # We intentionally DO NOT use it anymore to avoid wallet compliance.
     wallet_balance = Column(Float, default=0.0)
 
 
@@ -69,8 +71,11 @@ class VoucherDB(Base):
     vehicle_type = Column(String, nullable=True)
     vehicle_no = Column(String, nullable=True)
 
-    # ✅ How voucher was paid
-    pay_method = Column(String, nullable=True)  # "razorpay" or "wallet"
+    # ✅ NEW: fuel type
+    fuel_type = Column(String, nullable=True)  # PETROL/DIESEL/CNG/EV
+
+    # ✅ Only razorpay now (kept for record)
+    pay_method = Column(String, nullable=True)  # "razorpay"
 
 
 class WebhookEventDB(Base):
@@ -100,18 +105,6 @@ class DeviceDB(Base):
     device_token = Column(String, unique=True, index=True)
     created_at = Column(DateTime)
     last_seen_at = Column(DateTime, nullable=True)
-
-
-class WalletTopupDB(Base):
-    __tablename__ = "wallet_topups"
-    id = Column(String, primary_key=True, index=True)  # topup_id
-    user_id = Column(Integer, index=True)
-    amount = Column(Float)
-    status = Column(String, index=True)  # pending/paid/failed
-    created_at = Column(DateTime)
-
-    razorpay_order_id = Column(String, index=True)
-    razorpay_payment_id = Column(String, index=True, nullable=True)
 
 
 def get_db():
@@ -147,6 +140,7 @@ def _qr_secret() -> bytes:
 
 def sign_voucher_qr(voucher: VoucherDB) -> str:
     created = voucher.created_at.replace(tzinfo=None).isoformat(timespec="seconds")
+    # Keep signature stable: id|bunk|amount|created
     msg = f"{voucher.id}|{voucher.bunk_id}|{voucher.amount:.2f}|{created}".encode("utf-8")
     return hmac.new(_qr_secret(), msg, hashlib.sha256).hexdigest()
 
@@ -172,16 +166,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=BASE_DIR), name="static")
 
 
-
 def sanitize_hex_id(s: str | None, min_len: int = 6, max_len: int = 128) -> str | None:
-    """Extract the first hex-looking token from a noisy string.
-
-    Useful when QR payload accidentally includes brackets, labels, etc.
-    """
+    """Extract the first hex-looking token from a noisy string."""
     if not s:
         return None
     txt = str(s).strip()
-    # Strip common wrappers
     txt = txt.strip().strip("[](){}<>\"'`")
     m = re.search(r"[0-9a-fA-F]{%d,%d}" % (min_len, max_len), txt)
     if not m:
@@ -190,25 +179,16 @@ def sanitize_hex_id(s: str | None, min_len: int = 6, max_len: int = 128) -> str 
 
 
 def parse_qr_payload(payload: str) -> tuple[str, str | None]:
-    """Accept multiple QR payload formats and extract (voucher_id, sig).
-
-    Supported:
-      - voucher|sig  (compact)
-      - /attendant.html?voucher=...&sig=...
-      - https://.../attendant.html?voucher=...&sig=...
-      - Strings that accidentally include prefixes like 'QR payload:' or trailing brackets.
-    """
+    """Accept multiple QR payload formats and extract (voucher_id, sig)."""
     if payload is None:
         return "", None
 
     s = str(payload).strip()
 
-    # Remove common UI prefixes
     for prefix in ("QR payload:", "Payload:", "qr payload:", "QR:", "qr:"):
         if s.lower().startswith(prefix.lower()):
             s = s[len(prefix):].strip()
 
-    # If it looks like a URL or querystring, parse voucher & sig
     if "voucher=" in s:
         try:
             vid_m = re.search(r"(?:\?|&|\b)voucher=([^&\s#]+)", s)
@@ -221,16 +201,16 @@ def parse_qr_payload(payload: str) -> tuple[str, str | None]:
         except Exception:
             pass
 
-    # Compact format: voucher|sig
     if "|" in s:
         left, right = s.split("|", 1)
         vid = sanitize_hex_id(left) or left.strip()
         sig = sanitize_hex_id(right, min_len=8) or right.strip()
         return vid, sig
 
-    # Plain voucher id (possibly with stray characters)
     vid = sanitize_hex_id(s) or s.strip()
     return vid, None
+
+
 @app.get("/")
 def root():
     return FileResponse(os.path.join(BASE_DIR, "index.html"))
@@ -263,12 +243,10 @@ def on_startup():
     # SQLite schema patch for older dev DB
     if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         with engine.begin() as conn:
-            # users.wallet_balance
             cols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(users)")).fetchall()]
             if "wallet_balance" not in cols:
                 conn.execute(sql_text("ALTER TABLE users ADD COLUMN wallet_balance FLOAT DEFAULT 0"))
 
-            # vouchers extra cols
             vcols = [r[1] for r in conn.execute(sql_text("PRAGMA table_info(vouchers)")).fetchall()]
             if "vehicle_type" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN vehicle_type VARCHAR"))
@@ -278,7 +256,8 @@ def on_startup():
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN razorpay_payment_id VARCHAR"))
             if "pay_method" not in vcols:
                 conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN pay_method VARCHAR"))
-# -----------------------------------
+            if "fuel_type" not in vcols:
+                conn.execute(sql_text("ALTER TABLE vouchers ADD COLUMN fuel_type VARCHAR"))
 
 
 # ----- Razorpay setup -----
@@ -339,9 +318,10 @@ class CreateVoucher(BaseModel):
     user_id: int | None = None
     vehicle_type: str | None = None
     vehicle_no: str | None = None
+    fuel_type: str | None = "PETROL"  # ✅ petrol/diesel/cng/ev
 
-    # ✅ New: pay method
-    pay_method: str | None = "razorpay"  # "razorpay" or "wallet"
+    # ✅ wallet removed
+    pay_method: str | None = "razorpay"
 
 
 class LoginRequest(BaseModel):
@@ -353,17 +333,11 @@ class LoginResponse(BaseModel):
     user_id: int
     phone: str
     name: str | None = None
-    wallet_balance: float
 
 
 class RegisterDeviceRequest(BaseModel):
     name: str | None = None
     bunk_id: str
-
-
-class WalletTopupCreate(BaseModel):
-    user_id: int
-    amount: float
 # --------------------------------
 
 
@@ -380,68 +354,15 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
-    return LoginResponse(user_id=user.id, phone=user.phone, name=user.name, wallet_balance=user.wallet_balance or 0.0)
+    else:
+        # allow name update on login if provided
+        if req.name and (not user.name):
+            user.name = req.name
+            db.commit()
+            db.refresh(user)
 
-
-@app.get("/wallet/balance")
-def wallet_balance(user_id: int, db: Session = Depends(get_db)):
-    u = db.query(UserDB).filter(UserDB.id == user_id).first()
-    if not u:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"user_id": u.id, "wallet_balance": float(u.wallet_balance or 0.0)}
-
-
-@app.post("/wallet/topup/create-order")
-def wallet_topup_create(req: WalletTopupCreate, db: Session = Depends(get_db)):
-    u = db.query(UserDB).filter(UserDB.id == req.user_id).first()
-    if not u:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    amt = float(req.amount)
-    if amt < 50:
-        raise HTTPException(status_code=400, detail="Minimum topup is ₹50")
-    if amt > 50000:
-        raise HTTPException(status_code=400, detail="Maximum topup is ₹50,000")
-
-    topup_id = "topup_" + uuid.uuid4().hex[:12]
-
-    # Razorpay order
-    try:
-        order = razor_client.order.create(
-            {
-                "amount": int(amt * 100),
-                "currency": "INR",
-                "receipt": topup_id,
-                "payment_capture": 1,
-                "notes": {
-                    "type": "wallet_topup",
-                    "user_id": str(req.user_id),
-                    "topup_id": topup_id,
-                },
-            }
-        )
-    except Exception as e:
-        log_error(db, "wallet-topup-create", str(e))
-        raise HTTPException(status_code=500, detail="Razorpay order error")
-
-    db.add(
-        WalletTopupDB(
-            id=topup_id,
-            user_id=req.user_id,
-            amount=amt,
-            status="pending",
-            created_at=datetime.datetime.utcnow(),
-            razorpay_order_id=order["id"],
-        )
-    )
-    db.commit()
-
-    return {
-        "topup_id": topup_id,
-        "amount": amt,
-        "razorpay_order_id": order["id"],
-        "razorpay_key_id": RAZORPAY_KEY_ID,
-    }
+    # ✅ wallet removed from response
+    return LoginResponse(user_id=user.id, phone=user.phone, name=user.name)
 
 
 @app.get("/nearby-bunks")
@@ -489,58 +410,10 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
     now = datetime.datetime.utcnow()
     expires = now + datetime.timedelta(minutes=30)
 
-    pay_method = (req.pay_method or "razorpay").lower().strip()
+    # ✅ WALLET REMOVED: only razorpay allowed
+    pay_method = "razorpay"
 
-    # ✅ Wallet path: instant paid voucher
-    if pay_method == "wallet":
-        if not req.user_id:
-            raise HTTPException(status_code=400, detail="user_id required for wallet payment")
-
-        u = db.query(UserDB).filter(UserDB.id == req.user_id).with_for_update().first()
-        if not u:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        bal = float(u.wallet_balance or 0.0)
-        if bal + 1e-9 < float(amount):
-            raise HTTPException(status_code=400, detail=f"Insufficient wallet balance. Balance ₹{bal:.2f}")
-
-        # Deduct balance
-        u.wallet_balance = bal - float(amount)
-
-        v = VoucherDB(
-            id=voucher_id,
-            bunk_id=req.bunk_id,
-            amount=float(amount),
-            litres=float(litres),
-            status="paid",
-            price_per_litre=price,
-            created_at=now,
-            expires_at=expires,
-            razorpay_order_id="WALLET",
-            used=False,
-            user_id=req.user_id,
-            vehicle_type=req.vehicle_type,
-            vehicle_no=req.vehicle_no,
-            pay_method="wallet",
-        )
-        db.add(v)
-        db.commit()
-        db.refresh(v)
-
-        qr_sig = sign_voucher_qr(v)
-        return {
-            "voucher_id": voucher_id,
-            "amount": float(amount),
-            "litres": float(litres),
-            "price_per_litre": price,
-            "expires_at": expires,
-            "status": "paid",
-            "pay_method": "wallet",
-            "qr_sig": qr_sig,
-            "wallet_balance": float(u.wallet_balance or 0.0),
-        }
-
-    # ✅ Razorpay path (existing)
+    # Razorpay order
     try:
         order = razor_client.order.create(
             {
@@ -569,7 +442,8 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         user_id=req.user_id,
         vehicle_type=req.vehicle_type,
         vehicle_no=req.vehicle_no,
-        pay_method="razorpay",
+        fuel_type=(req.fuel_type or "PETROL").upper(),
+        pay_method=pay_method,
     )
     db.add(v)
     db.commit()
@@ -588,6 +462,7 @@ def create_voucher(req: CreateVoucher, db: Session = Depends(get_db)):
         "qr_sig": qr_sig,
         "status": "pending",
         "pay_method": "razorpay",
+        "fuel_type": v.fuel_type,
     }
 
 
@@ -602,11 +477,10 @@ def get_voucher(voucher_id: str, db: Session = Depends(get_db)):
     if v.user_id:
         user = db.query(UserDB).filter(UserDB.id == v.user_id).first()
 
-    return {
-        **v.__dict__,
-        "user_phone": user.phone if user else None,
-        "user_name": user.name if user else None,
-    }
+    d = {k: v.__dict__[k] for k in v.__dict__ if not k.startswith("_")}
+    d["user_phone"] = user.phone if user else None
+    d["user_name"] = user.name if user else None
+    return d
 
 
 @app.get("/voucher-status/{voucher_id}")
@@ -615,7 +489,7 @@ def voucher_status(voucher_id: str, db: Session = Depends(get_db)):
     v = db.query(VoucherDB).filter(VoucherDB.id == voucher_id).first()
     if not v:
         raise HTTPException(status_code=404, detail="Voucher not found")
-    return {"status": v.status}
+    return {"status": v.status, "used": bool(v.used)}
 
 
 # ------------------ DEVICE PAIRING (OWNER) ------------------
@@ -650,7 +524,10 @@ def list_devices(
 ):
     _require_token(OWNER_TOKEN, x_owner_token, "Owner")
     devices = db.query(DeviceDB).order_by(DeviceDB.created_at.desc()).all()
-    return [{"id": d.id, "name": d.name, "bunk_id": d.bunk_id, "created_at": d.created_at, "last_seen_at": d.last_seen_at} for d in devices]
+    return [
+        {"id": d.id, "name": d.name, "bunk_id": d.bunk_id, "created_at": d.created_at, "last_seen_at": d.last_seen_at}
+        for d in devices
+    ]
 # ------------------------------------------------------------
 
 
@@ -662,11 +539,11 @@ def validate_voucher(
     x_device_token: str | None = Header(None, alias="X-DEVICE-TOKEN"),
     x_attendant_token: str | None = Header(None, alias="X-ATTENDANT-TOKEN"),
 ):
-    # Allow compact payload in voucher_id (e.g., voucher|sig or URL)
     vid_from_payload, sig_from_payload = parse_qr_payload(voucher_id)
     if sig is None and sig_from_payload:
         sig = sig_from_payload
     voucher_id = vid_from_payload
+
     device = None
     if x_device_token:
         device = db.query(DeviceDB).filter(DeviceDB.device_token == x_device_token).first()
@@ -694,13 +571,29 @@ def validate_voucher(
         raise HTTPException(status_code=400, detail="Payment not completed yet")
 
     if v.used or v.status == "used":
-        return {"approved": True, "already_used": True, "voucher_id": voucher_id, "bunk_id": v.bunk_id, "amount": v.amount, "litres": v.litres}
+        return {
+            "approved": True,
+            "already_used": True,
+            "voucher_id": voucher_id,
+            "bunk_id": v.bunk_id,
+            "amount": v.amount,
+            "litres": v.litres,
+            "fuel_type": v.fuel_type,
+        }
 
     v.used = True
     v.status = "used"
     db.commit()
 
-    return {"approved": True, "already_used": False, "voucher_id": voucher_id, "bunk_id": v.bunk_id, "amount": v.amount, "litres": v.litres}
+    return {
+        "approved": True,
+        "already_used": False,
+        "voucher_id": voucher_id,
+        "bunk_id": v.bunk_id,
+        "amount": v.amount,
+        "litres": v.litres,
+        "fuel_type": v.fuel_type,
+    }
 
 
 # ---------------- Razorpay webhook ----------------
@@ -728,7 +621,14 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
         if already:
             return {"ok": True, "deduped": True}
 
-        db.add(WebhookEventDB(event_id=event_id, event_type=event or "", raw=str(payload)[:20000], created_at=datetime.datetime.utcnow()))
+        db.add(
+            WebhookEventDB(
+                event_id=event_id,
+                event_type=event or "",
+                raw=str(payload)[:20000],
+                created_at=datetime.datetime.utcnow(),
+            )
+        )
         db.commit()
 
     payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
@@ -737,34 +637,11 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 
     if event in ("payment.captured", "payment.failed"):
         if order_id:
-            # 1) If this order is a wallet topup
-            topup = db.query(WalletTopupDB).filter(WalletTopupDB.razorpay_order_id == order_id).first()
-            if topup:
-                if payment_id:
-                    topup.razorpay_payment_id = payment_id
-
-                if event == "payment.captured":
-                    if topup.status != "paid":
-                        topup.status = "paid"
-                        # credit wallet once
-                        u = db.query(UserDB).filter(UserDB.id == topup.user_id).with_for_update().first()
-                        if u:
-                            u.wallet_balance = float(u.wallet_balance or 0.0) + float(topup.amount)
-                else:
-                    topup.status = "failed"
-
-                db.commit()
-                return {"ok": True, "type": "wallet_topup"}
-
-            # 2) Else this is a voucher order
             v = db.query(VoucherDB).filter(VoucherDB.razorpay_order_id == order_id).first()
             if v:
                 if payment_id:
                     v.razorpay_payment_id = payment_id
-                if event == "payment.captured":
-                    v.status = "paid"
-                else:
-                    v.status = "failed"
+                v.status = "paid" if event == "payment.captured" else "failed"
                 db.commit()
                 return {"ok": True, "type": "voucher"}
 
@@ -786,10 +663,18 @@ def list_vouchers(
     if status:
         q = q.filter(VoucherDB.status == status)
     results = q.order_by(VoucherDB.created_at.desc()).all()
-    return [v.__dict__ for v in results]
+    out = []
+    for v in results:
+        d = {k: v.__dict__[k] for k in v.__dict__ if not k.startswith("_")}
+        out.append(d)
+    return out
 
 
 @app.get("/my-vouchers")
 def my_vouchers(user_id: int, db: Session = Depends(get_db)):
     q = db.query(VoucherDB).filter(VoucherDB.user_id == user_id).order_by(VoucherDB.created_at.desc())
-    return [v.__dict__ for v in q.all()]
+    out = []
+    for v in q.all():
+        d = {k: v.__dict__[k] for k in v.__dict__ if not k.startswith("_")}
+        out.append(d)
+    return out
