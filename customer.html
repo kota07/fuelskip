@@ -1505,7 +1505,8 @@
         return;
       }
       toast(`Status: ${data.used || data.status === "used" ? "USED" : (data.status || "")}`);
-      await loadMyVouchers(false);
+      // Force rebuild of latest card too, so user sees the change immediately
+      await loadMyVouchers(true);
     }
 
     async function renderLatestVoucher(v) {
@@ -1567,6 +1568,18 @@
       const qrEl = document.getElementById("latestQR");
       qrEl.innerHTML = "";
       new QRCode(qrEl, { text: compact, width: 190, height: 190 });
+
+      // Auto-poll if active (PAID/PENDING)
+      if (!used && status !== "failed" && status !== "used") {
+        clearTimeout(window.__pollTimer);
+        window.__pollTimer = setTimeout(() => {
+          // Only poll if this voucher is still the latest being shown
+          const currentLatest = (window.__myVouchers || [])[0];
+          if (currentLatest && currentLatest.id === id) {
+            checkVoucherStatus(id);
+          }
+        }, 5000);
+      }
     }
 
     function copyText(txt) {
@@ -1623,7 +1636,7 @@
 
       const payload = { bunk_id, user_id: s.user_id, pay_method: "razorpay", fuel_type, vehicle_type, vehicle_no };
       if (amount > 0) payload.amount = amount;
-      if (litres > 0 && amount <= 0) payload.litres = litres;
+      if (litres > 0) payload.litres = litres;
 
       const res = await fetch(`${API}/create-voucher`, {
         method: "POST",
