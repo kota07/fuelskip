@@ -67,6 +67,18 @@ async def serve_privacy():
         return FileResponse("privacy.html")
     return {"error": "Not found"}
 
+@app.get("/contact.html")
+async def serve_contact():
+    if os.path.exists("contact.html"):
+        return FileResponse("contact.html")
+    return {"error": "Not found"}
+
+@app.get("/refunds.html")
+async def serve_refunds():
+    if os.path.exists("refunds.html"):
+        return FileResponse("refunds.html")
+    return {"error": "Not found"}
+
 @app.get("/manifest.json")
 async def serve_manifest():
     if os.path.exists("manifest.json"):
