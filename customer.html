@@ -351,14 +351,14 @@
       min-width: 140px;
     }
 
-    /* Voucher list */
-    .voucherList {
+    /* Booking list */
+    .bookingList {
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    .voucherItem {
+    .bookingItem {
       border: 1px solid var(--border);
       background: #fff;
       border-radius: 16px;
@@ -370,19 +370,19 @@
     }
 
     @media (max-width: 860px) {
-      .voucherItem {
+      .bookingItem {
         grid-template-columns: 1fr;
       }
     }
 
-    .voucherLeft {
+    .bookingLeft {
       display: flex;
       flex-direction: column;
       gap: 6px;
       min-width: 0;
     }
 
-    .voucherTitle {
+    .bookingTitle {
       font-weight: 1000;
       font-size: 14px;
       display: flex;
@@ -427,7 +427,7 @@
       border-color: #fecaca;
     }
 
-    .voucherMeta {
+    .bookingMeta {
       color: var(--muted);
       font-weight: 800;
       font-size: 12px;
@@ -689,7 +689,7 @@
         <button id="navHome" onclick="showSection('home')" disabled>
           <span>🏠 Home</span><small>Book Fuel</small>
         </button>
-        <button id="navVouchers" onclick="showSection('vouchers')" disabled>
+        <button id="navBookings" onclick="showSection('bookings')" disabled>
           <span>🎟️ Bookings</span><small>History</small>
         </button>
         <button id="navVehicles" onclick="showSection('vehicles')" disabled>
@@ -760,7 +760,7 @@
               </div>
               <div class="tile">
                 <div class="k">Bookings</div>
-                <div class="v" id="profVouchCount">0</div>
+                <div class="v" id="profBookingCount">0</div>
               </div>
             </div>
 
@@ -834,7 +834,7 @@
       </section>
 
       <!-- VOUCHERS -->
-      <section id="secVouchers" class="section">
+      <section id="secBookings" class="section">
         <div class="card">
           <h2>Booking History</h2>
           <div class="muted">Your bookings (pending/paid/used). Used bookings stay visible.</div>
@@ -845,7 +845,7 @@
         </div>
 
         <div class="card">
-          <div id="voucherList" class="voucherList">
+          <div id="bookingList" class="bookingList">
             <div class="muted">Login to view bookings.</div>
           </div>
         </div>
@@ -938,9 +938,9 @@
     const API = window.location.origin;
 
     // ---------------- Compact QR helpers ----------------
-    // QR payload is SMALL: "voucherId|sig"
-    function makeCompactPayload(voucherId, sig) {
-      return `${voucherId}|${sig || ""}`;
+    // QR payload is SMALL: "bookingId|sig"
+    function makeCompactPayload(bookingId, sig) {
+      return `${bookingId}|${sig || ""}`;
     }
     function makeFullAttendantLink(bookingId, sig) {
       return sig
@@ -989,7 +989,7 @@
     }
 
     function setNavEnabled(isEnabled) {
-      ["navHome", "navVouchers", "navVehicles", "navAnalytics"].forEach(id => {
+      ["navHome", "navBookings", "navVehicles", "navAnalytics"].forEach(id => {
         const b = document.getElementById(id);
         if (b) b.disabled = !isEnabled;
       });
@@ -1041,10 +1041,10 @@
 
     function logout() {
       clearSession();
-      window.__myVouchers = [];
+      window.__myBookings = [];
       toast("Logged out");
       showSection("welcome");
-      document.getElementById("voucherList").innerHTML = `<div class="muted">Login to view bookings.</div>`;
+      document.getElementById("bookingList").innerHTML = `<div class="muted">Login to view bookings.</div>`;
       document.getElementById("latestWrap").innerHTML = `<div class="muted">No booking yet.</div>`;
     }
 
@@ -1107,7 +1107,7 @@
       const map = {
         welcome: "secWelcome",
         home: "secHome",
-        vouchers: "secVouchers",
+        bookings: "secBookings",
         vehicles: "secVehicles",
         analytics: "secAnalytics"
       };
@@ -1120,7 +1120,7 @@
       const navBtn = document.getElementById(navId);
       if (navBtn) navBtn.classList.add("active");
 
-      if (key === "vouchers") loadMyBookings(false);
+      if (key === "bookings") loadMyBookings(false);
       if (key === "vehicles") loadVehicles();
       if (key === "analytics") buildAnalytics();
     }
@@ -1254,7 +1254,7 @@
       document.getElementById("vehNo").value = "";
       toast(data.duplicate ? "Already exists (linked)" : "Vehicle added");
       await loadVehicles();
-      await loadMyVouchers(false);
+      await loadMyBookings(false);
       buildAnalytics();
     }
 
@@ -1356,7 +1356,7 @@
       });
     }
 
-    // ---------------- Vouchers ----------------
+    // ---------------- Bookings ----------------
     function statusBadge(status, used) {
       const st = (status || "").toLowerCase();
       if (used || st === "used") return `<span class="badge bUsed">USED</span>`;
@@ -1389,12 +1389,12 @@
       return d.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", hour12: true });
     }
 
-    async function loadMyVouchers(rebuildLatest) {
+    async function loadMyBookings(rebuildLatest) {
       const s = getSession();
-      const list = document.getElementById("voucherList");
+      const list = document.getElementById("bookingList");
       if (!s || !s.token) {
-        list.innerHTML = `<div class="muted">Login to view vouchers.</div>`;
-        document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
+        list.innerHTML = `<div class="muted">Login to view bookings.</div>`;
+        document.getElementById("latestWrap").innerHTML = `<div class="muted">No booking yet.</div>`;
         return [];
       }
 
@@ -1410,12 +1410,12 @@
         return [];
       }
 
-      if (data) document.getElementById("profVouchCount").textContent = data.length;
+      if (data) document.getElementById("profBookingCount").textContent = data.length;
 
       if (!data.length) {
         list.innerHTML = `<div class="muted">No bookings yet.</div>`;
         if (rebuildLatest) document.getElementById("latestWrap").innerHTML = `<div class="muted">No booking yet.</div>`;
-        window.__myVouchers = [];
+        window.__myBookings = [];
         buildAnalytics();
         return [];
       }
@@ -1444,16 +1444,16 @@
         if (v.vehicle_type) metaParts.push(`${v.vehicle_type}`);
 
         const item = document.createElement("div");
-        item.className = "voucherItem";
+        item.className = "bookingItem";
         item.innerHTML = `
-        <div class="voucherLeft">
-          <div class="voucherTitle">
+        <div class="bookingLeft">
+          <div class="bookingTitle">
             <span style="font-weight:1000;">Booking ID: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
             ${payChip()}
           </div>
-          <div class="voucherMeta">${metaParts.join(" • ")}</div>
+          <div class="bookingMeta">${metaParts.join(" • ")}</div>
 
           <div class="row" style="margin-top:8px;">
             <button class="smallBtn" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy Link</button>
@@ -1479,7 +1479,7 @@
         scrollToLatestQR();
       }
 
-      window.__myVouchers = data;
+      window.__myBookings = data;
       buildAnalytics();
       return data;
     }
@@ -1529,15 +1529,15 @@
       const compact = makeCompactPayload(id, sig);
 
       wrap.innerHTML = `
-      <div class="voucherItem" style="grid-template-columns: 1fr;">
-        <div class="voucherLeft">
-          <div class="voucherTitle">
+      <div class="bookingItem" style="grid-template-columns: 1fr;">
+        <div class="bookingLeft">
+          <div class="bookingTitle">
             <span style="font-weight:1000;">Booking ID: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
             ${payChip()}
           </div>
-          <div class="voucherMeta">
+          <div class="bookingMeta">
             Bunk: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id}) •
             Amount: ₹${Number(v.amount || 0).toLocaleString("en-IN")} •
             Litres: ${Number(v.litres || 0).toFixed(2)} L •
@@ -1565,8 +1565,8 @@
       if (!used && status !== "failed" && status !== "used") {
         clearTimeout(window.__pollTimer);
         window.__pollTimer = setTimeout(() => {
-          // Only poll if this voucher is still the latest being shown
-          const currentLatest = (window.__myVouchers || [])[0];
+          // Only poll if this booking is still the latest being shown
+          const currentLatest = (window.__myBookings || [])[0];
           if (currentLatest && currentLatest.id === id) {
             checkBookingStatus(id);
           }
@@ -1583,7 +1583,7 @@
       card.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    // ---------------- Create voucher (Razorpay ONLY) ----------------
+    // ---------------- Create booking (Razorpay ONLY) ----------------
     async function createBooking() {
       const s = getSession();
       if (!s || !s.token) { alert("Login first"); return; }
@@ -1688,7 +1688,7 @@
 
     // ---------------- Analytics ----------------
     function buildAnalytics() {
-      const data = window.__myVouchers || [];
+      const data = window.__myBookings || [];
       if (!data.length) {
         document.getElementById("anSpent").textContent = "₹0";
         document.getElementById("anLitres").textContent = "0 L";
