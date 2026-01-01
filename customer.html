@@ -815,7 +815,7 @@
           </div>
 
           <div class="row" style="margin-top:12px;">
-            <button class="btn btnPrimary" onclick="createVoucher()">Book Fuel Now</button>
+            <button class="btn btnPrimary" onclick="createBooking()">Book Fuel Now</button>
             <button class="btn" onclick="useCurrentLocation()">Find Nearby Bunks</button>
             <button class="btn" onclick="scrollToLatestQR()">Show QR</button>
           </div>
@@ -839,7 +839,7 @@
           <h2>Booking History</h2>
           <div class="muted">Your bookings (pending/paid/used). Used bookings stay visible.</div>
           <div class="row" style="margin-top:10px;">
-            <button class="btn btnPrimary" onclick="loadMyVouchers(true)">Reload</button>
+            <button class="btn btnPrimary" onclick="loadMyBookings(true)">Reload</button>
             <button class="btn" onclick="scrollToLatestQR()">Go to Latest QR</button>
           </div>
         </div>
@@ -924,7 +924,7 @@
           </div>
 
           <div class="hint" style="margin-top:12px;">
-            Pilot tip: Generate voucher before joining the queue to save time at peak hours.
+            Tip: Generate booking before joining the queue to save time at peak hours.
           </div>
         </div>
       </section>
@@ -1044,8 +1044,8 @@
       window.__myVouchers = [];
       toast("Logged out");
       showSection("welcome");
-      document.getElementById("voucherList").innerHTML = `<div class="muted">Login to view vouchers.</div>`;
-      document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
+      document.getElementById("voucherList").innerHTML = `<div class="muted">Login to view bookings.</div>`;
+      document.getElementById("latestWrap").innerHTML = `<div class="muted">No booking yet.</div>`;
     }
 
     async function processLogin() {
@@ -1089,7 +1089,7 @@
         }
 
         await loadVehicles();
-        await loadMyVouchers(true);
+        await loadMyBookings(true);
 
         toast("Welcome Back!");
         showSection("home");
@@ -1448,7 +1448,7 @@
         item.innerHTML = `
         <div class="voucherLeft">
           <div class="voucherTitle">
-            <span style="font-weight:1000;">Voucher: ${id}</span>
+            <span style="font-weight:1000;">Booking ID: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
             ${payChip()}
@@ -1475,7 +1475,7 @@
 
       if (rebuildLatest) {
         const latest = data[0];
-        await renderLatestVoucher(latest);
+        await renderLatestBooking(latest);
         scrollToLatestQR();
       }
 
@@ -1516,7 +1516,7 @@
       if (!sig) {
         try {
           const s = getSession();
-          const vr = await fetch(`${API}/voucher/${encodeURIComponent(id)}`, {
+          const vr = await fetch(`${API}/booking/${encodeURIComponent(id)}`, {
             cache: "no-store",
             headers: { "X-USER-TOKEN": s ? s.token : "" }
           });
@@ -1532,7 +1532,7 @@
       <div class="voucherItem" style="grid-template-columns: 1fr;">
         <div class="voucherLeft">
           <div class="voucherTitle">
-            <span style="font-weight:1000;">Voucher: ${id}</span>
+            <span style="font-weight:1000;">Booking ID: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
             ${payChip()}
@@ -1546,7 +1546,7 @@
 
           <div class="row" style="margin-top:10px;">
             <button class="btn btnPrimary" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy Pass Link</button>
-            <button class="btn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
+            <button class="btn" onclick="checkBookingStatus('${id}')">Refresh Status</button>
           </div>
 
           <div style="margin-top:12px;" class="qrBox">
@@ -1568,7 +1568,7 @@
           // Only poll if this voucher is still the latest being shown
           const currentLatest = (window.__myVouchers || [])[0];
           if (currentLatest && currentLatest.id === id) {
-            checkVoucherStatus(id);
+            checkBookingStatus(id);
           }
         }, 5000);
       }
@@ -1584,7 +1584,7 @@
     }
 
     // ---------------- Create voucher (Razorpay ONLY) ----------------
-    async function createVoucher() {
+    async function createBooking() {
       const s = getSession();
       if (!s || !s.token) { alert("Login first"); return; }
 
@@ -1661,14 +1661,20 @@
               method: "POST",
               headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
               body: JSON.stringify({ booking_id: data.id, razorpay_payment_id: response.razorpay_payment_id })
-            }).then(() => {
+            }).then(async res => {
+              if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Verify failed");
+              }
               toast("Verified! Updating...");
               setTimeout(async () => {
                 await loadMyBookings(true);
                 document.getElementById("homeStatus").textContent = "Booking updated ✅";
-              }, 1000);
-            }).catch(() => {
-              alert("Verification failed but payment may have succeeded.");
+              }, 1200);
+            }).catch(e => {
+              console.error("Verify Error:", e);
+              alert("Verification issue: " + e.message);
+              document.getElementById("homeStatus").textContent = "Verify failed. Refresh History.";
             });
           },
           theme: { color: "#4f46e5" }
@@ -1676,7 +1682,7 @@
         new Razorpay(options).open();
       } else {
         document.getElementById("homeStatus").textContent = "Booking created.";
-        await loadMyVouchers(true);
+        await loadMyBookings(true);
       }
     }
 
@@ -1732,7 +1738,7 @@
       const s = getSession();
       if (s && s.token) {
         await loadVehicles();
-        await loadMyVouchers(false);
+        await loadMyBookings(false);
       }
       toast("Refreshed");
     }
