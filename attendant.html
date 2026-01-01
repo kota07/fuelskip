@@ -411,10 +411,10 @@
       try {
         const u = new URL(r, window.location.origin), dt = u.searchParams.get("dt"), b = u.searchParams.get("booking"), s = u.searchParams.get("sig");
         if (dt) return { kind: "owner", dt: sanitizeHexId(dt) || dt };
-        if (b && s) return { kind: "booking", b: sanitizeHexId(b) || b, s: sanitizeHexId(s) || s };
+        if (b && s) return { kind: "booking", b: sanitizeHexId(b) || b, s: (s || "").trim() };
       } catch (e) { }
       if (r.includes("|")) {
-        const [a, b] = r.split("|", 2), bid = sanitizeHexId(a) || a.trim(), sig = sanitizeHexId(b) || (b || "").trim();
+        const [a, b] = r.split("|", 2), bid = sanitizeHexId(a) || a.trim(), sig = (b || "").trim();
         if (bid && sig) return { kind: "booking", b: bid, s: sig };
       }
       const id = sanitizeHexId(r); return id ? { kind: "id", b: id } : null;
