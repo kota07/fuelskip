@@ -664,7 +664,7 @@
       <div class="logoMarkBig">⛽</div>
       <div class="splashText">
         <div class="name">FuelSkip</div>
-        <div class="tag">Prepaid Voucher • Fast Dispense</div>
+        <div class="tag">Digital Fuel Pass • Fast Dispense</div>
         <div class="sub">Loading customer app…</div>
       </div>
     </div>
@@ -678,7 +678,7 @@
         <div class="logoMark">⛽</div>
         <div class="brandText">
           <div class="name">FuelSkip</div>
-          <div class="tag">Prepaid Voucher • Fast Dispense</div>
+          <div class="tag">Digital Fuel Pass • Fast Dispense</div>
         </div>
       </div>
 
@@ -687,10 +687,10 @@
           <span>✨ Welcome</span><small>Login</small>
         </button>
         <button id="navHome" onclick="showSection('home')" disabled>
-          <span>🏠 Home</span><small>Voucher</small>
+          <span>🏠 Home</span><small>Book Fuel</small>
         </button>
         <button id="navVouchers" onclick="showSection('vouchers')" disabled>
-          <span>🎟️ Vouchers</span><small>History</small>
+          <span>🎟️ Bookings</span><small>History</small>
         </button>
         <button id="navVehicles" onclick="showSection('vehicles')" disabled>
           <span>🚗 Vehicles</span><small>Saved</small>
@@ -704,7 +704,7 @@
       <div class="sessionCard" style="display:none;"></div>
 
       <div class="hint">
-        Tip: Create voucher before you reach bunk. Show QR to attendant for scanning.
+        Tip: Create your booking before you reach the bunk. Show the QR to the attendant for scanning.
       </div>
     </aside>
 
@@ -721,7 +721,7 @@
               <div class="logoMarkBig">⛽</div>
               <div>
                 <div style="font-weight:1000; font-size:24px;">FuelSkip</div>
-                <div class="muted" style="margin-top:4px;">Login to access your vouchers</div>
+                <div class="muted" style="margin-top:4px;">Login to access your fuel bookings</div>
               </div>
             </div>
 
@@ -779,7 +779,7 @@
       <!-- HOME -->
       <section id="secHome" class="section">
         <div class="card">
-          <h2>Create Voucher</h2>
+          <h2>Book Fuel</h2>
           <div class="muted">Choose bunk + fuel type + amount/litres. Pay securely via Razorpay.</div>
 
           <div class="grid2" style="margin-top:12px;">
@@ -820,20 +820,20 @@
           </div>
 
           <div class="row" style="margin-top:12px;">
-            <button class="btn btnPrimary" onclick="createVoucher()">Generate Voucher</button>
+            <button class="btn btnPrimary" onclick="createVoucher()">Book Fuel Now</button>
             <button class="btn" onclick="useCurrentLocation()">Find Nearby Bunks</button>
-            <button class="btn" onclick="scrollToLatestQR()">Scroll to QR</button>
+            <button class="btn" onclick="scrollToLatestQR()">Show QR</button>
           </div>
 
           <div id="homeStatus" class="muted" style="margin-top:10px;"></div>
         </div>
 
         <div class="card" id="latestCard">
-          <h2>Latest Voucher QR</h2>
-          <div class="muted">This QR is scanned by attendant for instant dispense.</div>
+          <h2>Latest Booking QR</h2>
+          <div class="muted">This QR is scanned by the attendant for instant dispensing.</div>
 
           <div id="latestWrap" style="margin-top:12px;">
-            <div class="muted">No voucher yet.</div>
+            <div class="muted">No booking yet.</div>
           </div>
         </div>
       </section>
@@ -841,8 +841,8 @@
       <!-- VOUCHERS -->
       <section id="secVouchers" class="section">
         <div class="card">
-          <h2>Voucher History</h2>
-          <div class="muted">Your vouchers (pending/paid/used). Used vouchers stay visible.</div>
+          <h2>Booking History</h2>
+          <div class="muted">Your bookings (pending/paid/used). Used bookings stay visible.</div>
           <div class="row" style="margin-top:10px;">
             <button class="btn btnPrimary" onclick="loadMyVouchers(true)">Reload</button>
             <button class="btn" onclick="scrollToLatestQR()">Go to Latest QR</button>
@@ -851,7 +851,7 @@
 
         <div class="card">
           <div id="voucherList" class="voucherList">
-            <div class="muted">Login to view vouchers.</div>
+            <div class="muted">Login to view bookings.</div>
           </div>
         </div>
       </section>
@@ -1553,7 +1553,7 @@
           </div>
 
           <div class="row" style="margin-top:10px;">
-            <button class="btn btnPrimary" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy QR Link</button>
+            <button class="btn btnPrimary" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy Pass Link</button>
             <button class="btn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
           </div>
 
@@ -1632,7 +1632,7 @@
         last_vehicle_no: vehicle_no
       });
 
-      document.getElementById("homeStatus").textContent = "Creating voucher...";
+      document.getElementById("homeStatus").textContent = "Creating booking...";
 
       const payload = { bunk_id, user_id: s.user_id, pay_method: "razorpay", fuel_type, vehicle_type, vehicle_no };
       if (amount > 0) payload.amount = amount;
@@ -1656,8 +1656,8 @@
           key: data.razorpay_key_id,
           amount: Math.round(Number(data.amount) * 100),
           currency: "INR",
-          name: "FuelSkip Voucher",
-          description: `Prepaid fuel voucher (${fuel_type})`,
+          name: "FuelSkip Booking",
+          description: `Digital fuel pass (${fuel_type})`,
           order_id: data.razorpay_order_id,
           handler: function (response) {
             toast("Payment done. Verifying...");
@@ -1683,7 +1683,7 @@
         };
         new Razorpay(options).open();
       } else {
-        document.getElementById("homeStatus").textContent = "Voucher created.";
+        document.getElementById("homeStatus").textContent = "Booking created.";
         await loadMyVouchers(true);
       }
     }
@@ -1771,6 +1771,17 @@
       });
     });
   </script>
+  <footer
+    style="text-align:center; padding:20px; color:var(--muted); font-size:12px; border-top:1px solid var(--border); margin-top:20px; background:#fff;">
+    <div style="margin-bottom:10px;">
+      <a href="about.html" style="color:var(--muted); text-decoration:none; margin:0 8px;">About Us</a> |
+      <a href="contact.html" style="color:var(--muted); text-decoration:none; margin:0 8px;">Contact Us</a> |
+      <a href="terms.html" style="color:var(--muted); text-decoration:none; margin:0 8px;">Terms</a> |
+      <a href="privacy.html" style="color:var(--muted); text-decoration:none; margin:0 8px;">Privacy</a> |
+      <a href="refunds.html" style="color:var(--muted); text-decoration:none; margin:0 8px;">Refunds</a>
+    </div>
+    &copy; 2026 FuelSkip. All rights reserved.
+  </footer>
 </body>
 
 </html>
