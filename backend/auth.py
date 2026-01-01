@@ -15,7 +15,7 @@ def now_iso() -> str:
 
 # Password / PIN utils
 def hash_pin(pin: str) -> str:
-    # Simple sha256 for pilot
+    # PIN hashing
     return hashlib.sha256(pin.encode()).hexdigest()
 
 def verify_pin_hash(pin: str, hashed: str) -> bool:

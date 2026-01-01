@@ -2,17 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from backend.database import db, one, now_iso
 from backend.auth import require_device
-from backend.routers.vouchers import verify_sig, sign_voucher
+from backend.routers.bookings import verify_sig, sign_booking
 
 router = APIRouter()
 
 class DispenseReq(BaseModel):
-    voucher: str
+    booking_id: str
     sig: str | None = None
 
-@router.get("/voucher")
-def attendant_check_voucher(
-    voucher: str = Query(...),
+@router.get("/booking")
+def attendant_check_booking(
+    booking_id: str = Query(...),
     sig: str | None = Query(None),
     device = Depends(require_device)
 ):
@@ -23,11 +23,11 @@ def attendant_check_voucher(
     
     # If sig is present, verify.
     if sig:
-        if not verify_sig(voucher, sig):
+        if not verify_sig(booking_id, sig):
             raise HTTPException(status_code=400, detail="Invalid QR signature")
     
     con = db()
-    cur = con.execute("SELECT * FROM vouchers WHERE id=?", (voucher,))
+    cur = con.execute("SELECT * FROM vouchers WHERE id=?", (booking_id,))
     v = one(cur)
     con.close()
     
@@ -35,7 +35,7 @@ def attendant_check_voucher(
         raise HTTPException(status_code=404, detail="Not Found")
     
     d = dict(v)
-    d["qr_sig"] = sign_voucher(d["id"])
+    d["qr_sig"] = sign_booking(d["id"])
     
     # Add customer name for UI
     d["customer_name"] = v["user_name"]
@@ -45,16 +45,16 @@ def attendant_check_voucher(
 
 @router.post("/dispense")
 def dispense(req: DispenseReq, device=Depends(require_device)):
-    voucher_id = req.voucher
+    booking_id = req.booking_id
     sig = req.sig
     
-    if not voucher_id:
-        raise HTTPException(status_code=400, detail="Voucher ID missing")
-    if sig and not verify_sig(voucher_id, sig):
+    if not booking_id:
+        raise HTTPException(status_code=400, detail="Booking ID missing")
+    if sig and not verify_sig(booking_id, sig):
         raise HTTPException(status_code=400, detail="Invalid QR signature")
 
     con = db()
-    cur = con.execute("SELECT * FROM vouchers WHERE id=?", (voucher_id,))
+    cur = con.execute("SELECT * FROM vouchers WHERE id=?", (booking_id,))
     v = one(cur)
     if not v:
         con.close()
@@ -71,7 +71,7 @@ def dispense(req: DispenseReq, device=Depends(require_device)):
     # Mark used
     con.execute(
         "UPDATE vouchers SET status='used', updated_at=? WHERE id=?",
-        (now_iso(), voucher_id),
+        (now_iso(), booking_id),
     )
     con.commit()
     con.close()

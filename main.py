@@ -3,9 +3,9 @@ from fastapi.responses import FileResponse
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import init_db
-from backend.routers import auth, user, vouchers, devices, attendant
+from backend.routers import auth, user, bookings, devices, attendant
 
-app = FastAPI(title="FuelSkip Pilot API (Refactored)")
+app = FastAPI(title="FuelSkip Management System")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,9 +26,9 @@ def health():
 # Mount Routers
 app.include_router(auth.router) # /login, /me
 app.include_router(user.router, prefix="/user") # /user/vehicles...
-app.include_router(vouchers.router) # /create-voucher, /my-vouchers...
+app.include_router(bookings.router) # /create-booking, /my-bookings...
 app.include_router(devices.router, prefix="/devices") # /devices/register...
-app.include_router(attendant.router, prefix="/attendant") # /attendant/voucher...
+app.include_router(attendant.router, prefix="/attendant") # /attendant/booking...
 
 # --- Frontend Static Files ---
 @app.get("/")

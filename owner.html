@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>FuelSkip - Owner Dashboard</title>
+  <title>FuelSkip - Admin Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
@@ -17,6 +17,11 @@
       padding: 16px;
       background: #0f172a;
       color: #e5e7eb;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 0;
     }
 
     h2 {
@@ -276,7 +281,7 @@
 </head>
 
 <body>
-  <h2>⛽ FuelSkip – Owner Dashboard</h2>
+  <h2>⛽ FuelSkip – Admin Dashboard</h2>
 
   <input id="copyFallback" />
 
@@ -317,7 +322,7 @@
   <div class="panel">
     <div class="row">
       <div style="font-weight:900;">📟 Devices</div>
-      <button class="btn-gray" onclick="loadDevices()">Refresh Devices</button>
+      <button class="btn-gray" onclick="loadDevices()">Refresh</button>
     </div>
     <div class="mini">Revoke disables a device token immediately (anti-fraud / lost phone).</div>
     <div class="scroll-wrap" style="max-height:34vh;">
@@ -354,7 +359,7 @@
           <option value="failed">failed</option>
         </select>
       </div>
-      <button onclick="loadVouchers()">Refresh Vouchers</button>
+      <button onclick="loadBookings()">Refresh Bookings</button>
     </div>
 
     <div class="summary" id="summaryRow" style="display:none;">
@@ -369,7 +374,7 @@
         <thead>
           <tr>
             <th>Time (IST)</th>
-            <th>Voucher</th>
+            <th>Booking ID</th>
             <th>Bunk</th>
             <th>Fuel</th>
             <th>Pay</th>
@@ -382,7 +387,7 @@
       </table>
     </div>
 
-    <div class="mini">Note: “USED” is shown if status is used OR used=true (safer).</div>
+    <div class="mini">Note: “USED” is shown if status is used (safer).</div>
   </div>
 
   <script>
@@ -577,7 +582,7 @@
       });
     }
 
-    async function loadVouchers() {
+    async function loadBookings() {
       const tok = ownerToken();
       if (!tok) return alert("Save OWNER_TOKEN first");
 
@@ -594,7 +599,7 @@
       tbody.innerHTML = "<tr><td colspan='8'>Loading...</td></tr>";
       sumRow.style.display = "none";
 
-      const res = await fetch(`${API}/vouchers?` + params.toString(), {
+      const res = await fetch(`${API}/bookings?` + params.toString(), {
         headers: { "X-OWNER-TOKEN": tok },
         cache: "no-store"
       });
@@ -605,7 +610,7 @@
         return;
       }
       if (!data.length) {
-        tbody.innerHTML = "<tr><td colspan='8'>No vouchers found</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='8'>No bookings found</td></tr>";
         return;
       }
 

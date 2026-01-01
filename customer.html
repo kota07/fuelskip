@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>FuelSkip – Customer</title>
+  <title>FuelSkip – Fuel Management</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Razorpay -->
@@ -665,7 +665,7 @@
       <div class="splashText">
         <div class="name">FuelSkip</div>
         <div class="tag">Digital Fuel Pass • Fast Dispense</div>
-        <div class="sub">Loading customer app…</div>
+        <div class="sub">Loading application…</div>
       </div>
     </div>
   </div>
@@ -745,11 +745,6 @@
               <button id="btnLoginAction" class="btn btnPrimary" style="width:100%; font-size:16px; padding:14px;"
                 onclick="processLogin()">Login</button>
             </div>
-
-            <div class="muted" style="margin-top:16px; font-size:12px; text-align:center;">
-              <a href="#" onclick="showSection('home'); return false;"
-                style="color:var(--brand); text-decoration:none; font-weight:800;">Continue as Guest (View Only)</a>
-            </div>
           </div>
 
           <!-- PROFILE VIEW (Originally hidden) -->
@@ -764,7 +759,7 @@
                 <div class="v" id="profVehCount">0</div>
               </div>
               <div class="tile">
-                <div class="k">Vouchers</div>
+                <div class="k">Bookings</div>
                 <div class="v" id="profVouchCount">0</div>
               </div>
             </div>
@@ -947,18 +942,18 @@
     function makeCompactPayload(voucherId, sig) {
       return `${voucherId}|${sig || ""}`;
     }
-    function makeFullAttendantLink(voucherId, sig) {
+    function makeFullAttendantLink(bookingId, sig) {
       return sig
-        ? `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}&sig=${encodeURIComponent(sig)}`
-        : `${API}/attendant.html?voucher=${encodeURIComponent(voucherId)}`;
+        ? `${API}/attendant.html?booking=${encodeURIComponent(bookingId)}&sig=${encodeURIComponent(sig)}`
+        : `${API}/attendant.html?booking=${encodeURIComponent(bookingId)}`;
     }
 
-    async function ensureVoucherSig(v) {
+    async function ensureBookingSig(v) {
       if (v && v.qr_sig) return v.qr_sig;
       try {
         const s = getSession();
         if (!s || !s.token || !v || !v.id) return "";
-        const res = await fetch(`${API}/voucher/${encodeURIComponent(v.id)}`, {
+        const res = await fetch(`${API}/booking/${encodeURIComponent(v.id)}`, {
           headers: { "X-USER-TOKEN": s.token },
           cache: "no-store"
         });
@@ -1125,7 +1120,7 @@
       const navBtn = document.getElementById(navId);
       if (navBtn) navBtn.classList.add("active");
 
-      if (key === "vouchers") loadMyVouchers(false);
+      if (key === "vouchers") loadMyBookings(false);
       if (key === "vehicles") loadVehicles();
       if (key === "analytics") buildAnalytics();
     }
@@ -1404,7 +1399,7 @@
       }
 
       list.innerHTML = `<div class="muted">Loading...</div>`;
-      const res = await fetch(`${API}/my-vouchers?user_id=${encodeURIComponent(s.user_id)}`, {
+      const res = await fetch(`${API}/my-bookings?user_id=${encodeURIComponent(s.user_id)}`, {
         cache: "no-store",
         headers: { "X-USER-TOKEN": s.token }
       });
@@ -1418,15 +1413,15 @@
       if (data) document.getElementById("profVouchCount").textContent = data.length;
 
       if (!data.length) {
-        list.innerHTML = `<div class="muted">No vouchers yet.</div>`;
-        if (rebuildLatest) document.getElementById("latestWrap").innerHTML = `<div class="muted">No voucher yet.</div>`;
+        list.innerHTML = `<div class="muted">No bookings yet.</div>`;
+        if (rebuildLatest) document.getElementById("latestWrap").innerHTML = `<div class="muted">No booking yet.</div>`;
         window.__myVouchers = [];
         buildAnalytics();
         return [];
       }
 
       try {
-        await Promise.all((data || []).filter(v => v && v.id && !v.qr_sig).map(v => ensureVoucherSig(v)));
+        await Promise.all((data || []).filter(v => v && v.id && !v.qr_sig).map(v => ensureBookingSig(v)));
       } catch (e) { }
 
       list.innerHTML = "";
@@ -1461,8 +1456,8 @@
           <div class="voucherMeta">${metaParts.join(" • ")}</div>
 
           <div class="row" style="margin-top:8px;">
-            <button class="smallBtn" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy QR Link</button>
-            <button class="smallBtn" onclick="checkVoucherStatus('${id}')">Refresh Status</button>
+            <button class="smallBtn" onclick="copyText('${qrLink.replace(/'/g, "")}')">Copy Link</button>
+            <button class="smallBtn" onclick="checkBookingStatus('${id}')">Refresh Status</button>
           </div>
         </div>
 
@@ -1489,13 +1484,11 @@
       return data;
     }
 
-    async function checkVoucherStatus(voucherId) {
+    async function checkBookingStatus(bookingId) {
       const s = getSession();
-      if (!s || !s.token) return; // Should we require token for status? Probably yes if it's user specific, but let's check auth.py
-      // Actually voucher-status calls vouchers.py which might not require token if it's just public status check?
-      // Let's assume it requires token for safety if we change it.
+      if (!s || !s.token) return;
 
-      const res = await fetch(`${API}/voucher-status/${encodeURIComponent(voucherId)}`, {
+      const res = await fetch(`${API}/booking-status/${encodeURIComponent(bookingId)}`, {
         cache: "no-store",
         headers: { "X-USER-TOKEN": s.token }
       });
@@ -1505,14 +1498,13 @@
         return;
       }
       toast(`Status: ${data.used || data.status === "used" ? "USED" : (data.status || "")}`);
-      // Force rebuild of latest card too, so user sees the change immediately
-      await loadMyVouchers(true);
+      await loadMyBookings(true);
     }
 
-    async function renderLatestVoucher(v) {
+    async function renderLatestBooking(v) {
       const wrap = document.getElementById("latestWrap");
       if (!v) {
-        wrap.innerHTML = `<div class="muted">No voucher yet.</div>`;
+        wrap.innerHTML = `<div class="muted">No booking yet.</div>`;
         return;
       }
 
@@ -1638,7 +1630,7 @@
       if (amount > 0) payload.amount = amount;
       if (litres > 0) payload.litres = litres;
 
-      const res = await fetch(`${API}/create-voucher`, {
+      const res = await fetch(`${API}/create-booking`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
         body: JSON.stringify(payload)
@@ -1668,12 +1660,12 @@
             fetch(`${API}/verify-payment`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
-              body: JSON.stringify({ voucher_id: data.id, razorpay_payment_id: response.razorpay_payment_id })
+              body: JSON.stringify({ booking_id: data.id, razorpay_payment_id: response.razorpay_payment_id })
             }).then(() => {
               toast("Verified! Updating...");
               setTimeout(async () => {
-                await loadMyVouchers(true);
-                document.getElementById("homeStatus").textContent = "Voucher updated ✅";
+                await loadMyBookings(true);
+                document.getElementById("homeStatus").textContent = "Booking updated ✅";
               }, 1000);
             }).catch(() => {
               alert("Verification failed but payment may have succeeded.");
@@ -1756,7 +1748,7 @@
       const s = getSession();
       if (s && s.token) {
         await loadVehicles();
-        await loadMyVouchers(true);
+        await loadMyBookings(true);
         showSection("home");
       } else {
         showSection("welcome");
