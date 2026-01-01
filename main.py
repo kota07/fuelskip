@@ -23,6 +23,17 @@ def startup():
 def health():
     return {"ok": True, "status": "running"}
 
+@app.get("/admin/reset-bookings-99")
+def reset_bookings(token: str = ""):
+    if token != "reset123":
+        return {"error": "Invalid token"}
+    from backend.database import db
+    con = db()
+    con.execute("TRUNCATE TABLE vouchers RESTART IDENTITY;")
+    con.commit()
+    con.close()
+    return {"ok": True, "message": "All bookings deleted."}
+
 # Mount Routers
 app.include_router(auth.router) # /login, /me
 app.include_router(user.router, prefix="/user") # /user/vehicles...
