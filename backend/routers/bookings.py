@@ -19,6 +19,35 @@ CF_SECRET_KEY = os.getenv("CASHFREE_SECRET_KEY", "")
 CF_ENVIRONMENT = os.getenv("CASHFREE_ENVIRONMENT", "sandbox") # "sandbox" or "production"
 
 # --- Utils ---
+def _verify_cashfree_order(booking_id: str) -> bool:
+    if not (CF_APP_ID and CF_SECRET_KEY):
+        return True # Default to paid in fake mode
+    try:
+        import requests
+        url = f"https://sandbox.cashfree.com/pg/orders/{booking_id}" if CF_ENVIRONMENT == "sandbox" else f"https://api.cashfree.com/pg/orders/{booking_id}"
+        headers = {
+            "accept": "application/json",
+            "x-api-version": "2023-08-01",
+            "x-client-id": CF_APP_ID,
+            "x-client-secret": CF_SECRET_KEY
+        }
+        resp = requests.get(url, headers=headers)
+        cf_data = resp.json()
+        print(f"DEBUG: Cashfree Verify Response for {booking_id}: {cf_data}")
+        
+        status = (cf_data.get("order_status") or "").upper()
+        if status in ["PAID", "SUCCESS"]:
+            return True
+            
+        # Fallback: check nested payments
+        payments = cf_data.get("payments", [])
+        for p in payments:
+            if (p.get("payment_status") or "").upper() == "SUCCESS":
+                return True
+    except Exception as e:
+        print(f"Verify Error: {e}")
+    return False
+
 def sign_booking(booking_id: str) -> str:
     mac = hmac.new(SIG_SECRET.encode("utf-8"), booking_id.encode("utf-8"), hashlib.sha256).digest()
     return base64.urlsafe_b64encode(mac).decode("utf-8").rstrip("=")[:32]
@@ -166,34 +195,68 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
 def verify_payment(req: PaymentVerify, user=Depends(require_user)):
     booking_id = req.booking_id
     t = now_iso()
-    con = db()
-    
-    # Real Verification logic if Cashfree keys are present
-    is_paid = True # Default for "fake" mode
-    if CF_APP_ID and CF_SECRET_KEY:
-        try:
-            import requests
-            url = f"https://sandbox.cashfree.com/pg/orders/{booking_id}" if CF_ENVIRONMENT == "sandbox" else f"https://api.cashfree.com/pg/orders/{booking_id}"
-            headers = {
-                "accept": "application/json",
-                "x-api-version": "2023-08-01",
-                "x-client-id": CF_APP_ID,
-                "x-client-secret": CF_SECRET_KEY
-            }
-            resp = requests.get(url, headers=headers)
-            cf_data = resp.json()
-            status = cf_data.get("order_status")
-            is_paid = (status == "PAID")
-        except Exception as e:
-            print(f"Verify Error: {e}")
-            is_paid = False
+    is_paid = _verify_cashfree_order(booking_id)
 
     if is_paid:
-        con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND user_phone=?", (t, booking_id, user["phone"]))
+        con = db()
+        con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND status='pending'", (t, booking_id))
         con.commit()
+        con.close()
     
-    con.close()
     return {"ok": is_paid}
+
+@router.post("/cashfree-webhook")
+async def cashfree_webhook(request: Request):
+    """
+    Cashfree Webhook for asynchronous payment notifications.
+    Ensures payment is recorded even if the user doesn't return to the app.
+    """
+    timestamp = request.headers.get("x-webhook-timestamp")
+    signature = request.headers.get("x-webhook-signature")
+    
+    if not timestamp or not signature:
+        raise HTTPException(status_code=400, detail="Missing signature headers")
+
+    raw_body = await request.body()
+    body_str = raw_body.decode("utf-8")
+    
+    # Verify Signature
+    # Algorithm: Base64(HMAC-SHA256(timestamp + raw_body, secret_key))
+    data_to_sign = timestamp + body_str
+    computed_sig = base64.b64encode(
+        hmac.new(CF_SECRET_KEY.encode("utf-8"), data_to_sign.encode("utf-8"), hashlib.sha256).digest()
+    ).decode("utf-8")
+    
+    if not hmac.compare_digest(computed_sig, signature):
+        print(f"WEBHOOK SIG MISMATCH: {computed_sig} vs {signature}")
+        raise HTTPException(status_code=401, detail="Invalid signature")
+
+    import json
+    try:
+        payload = json.loads(body_str)
+        print(f"DEBUG: Webhook Payload: {payload}")
+        data = payload.get("data", {})
+        order = data.get("order", {})
+        order_id = order.get("order_id")
+        payment = data.get("payment", {})
+        payment_status = payment.get("payment_status")
+        
+        if order_id and payment_status == "SUCCESS":
+            t = now_iso()
+            con = db()
+            con.execute(
+                "UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND status='pending'",
+                (t, order_id)
+            )
+            con.commit()
+            con.close()
+            print(f"WEBHOOK SUCCESS: Order {order_id} marked as PAID")
+        
+    except Exception as e:
+        print(f"Webhook Processing Error: {e}")
+        return {"ok": False}
+
+    return {"ok": True}
 
 @router.get("/my-bookings")
 def my_bookings(user_id: str|None=None, user=Depends(require_user)):
@@ -226,13 +289,19 @@ def get_booking_public(booking_id: str, user=Depends(require_user)):
 
 @router.get("/booking-status/{booking_id}")
 def get_booking_status(booking_id: str):
-    # Public or User? Frontend calls without headers sometimes? 
-    # Frontend wrapper: checkVoucherStatus calls fetch(API/voucher-status/ID).
-    # It does NOT appear to send headers in customer.html (Line 1175).
-    # So this must be public.
     con = db()
     cur = con.execute("SELECT status, updated_at FROM vouchers WHERE id=?", (booking_id,))
     v = one(cur)
+    
+    if v and v["status"] == "pending":
+        if _verify_cashfree_order(booking_id):
+            t = now_iso()
+            con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND status='pending'", (t, booking_id))
+            con.commit()
+            # Fetch updated
+            cur = con.execute("SELECT status, updated_at FROM vouchers WHERE id=?", (booking_id,))
+            v = one(cur)
+            
     con.close()
     if not v:
         raise HTTPException(status_code=404, detail="Not Found")
