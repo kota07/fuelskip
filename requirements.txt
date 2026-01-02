@@ -1,12 +1,9 @@
 fastapi
 uvicorn
 sqlalchemy
-razorpay
 python-dotenv
 python-multipart
 requests
+psycopg2-binary
 
 # For Railway Postgres
-
-
-
