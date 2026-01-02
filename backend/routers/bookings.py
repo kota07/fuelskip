@@ -16,7 +16,7 @@ router = APIRouter()
 # --- Config ---
 CF_APP_ID = os.getenv("CASHFREE_APP_ID", "")
 CF_SECRET_KEY = os.getenv("CASHFREE_SECRET_KEY", "")
-CF_ENVIRONMENT = os.getenv("CASHFREE_ENVIRONMENT", "sandbox") # "sandbox" or "production"
+CF_ENVIRONMENT = os.getenv("CASHFREE_ENVIRONMENT", "sandbox").strip().lower()
 
 # --- Utils ---
 def _verify_cashfree_order(booking_id: str) -> bool:
@@ -149,15 +149,18 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
             order_data = resp.json()
             if resp.status_code != 200:
                 print(f"CASHFREE API ERROR (Status {resp.status_code}): {order_data}")
+                raise HTTPException(status_code=400, detail=f"Cashfree API Error: {order_data.get('message', 'Unknown Error')}")
             payment_session_id = order_data.get("payment_session_id")
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"Cashfree Connection Error: {e}")
-            pass
+            raise HTTPException(status_code=500, detail=f"Connection Error: {str(e)}")
 
     # If NO payment session, handle based on environment
     if not payment_session_id:
         if CF_ENVIRONMENT == "production":
-            raise HTTPException(status_code=400, detail="Cashfree live session failed. Check your Live Keys and KYC status.")
+            raise HTTPException(status_code=400, detail="Cashfree live session failed. Please ensure your Live Keys are set and your account is active.")
         status = "paid"
     
     t = now_iso()
