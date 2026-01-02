@@ -147,13 +147,17 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
             }
             resp = requests.post(url, json=payload, headers=headers)
             order_data = resp.json()
+            if resp.status_code != 200:
+                print(f"CASHFREE API ERROR (Status {resp.status_code}): {order_data}")
             payment_session_id = order_data.get("payment_session_id")
         except Exception as e:
-            print(f"Cashfree Error: {e}")
+            print(f"Cashfree Connection Error: {e}")
             pass
 
-    # If NO payment session, auto-mark PAID (Fake mode)
+    # If NO payment session, handle based on environment
     if not payment_session_id:
+        if CF_ENVIRONMENT == "production":
+            raise HTTPException(status_code=400, detail="Cashfree live session failed. Check your Live Keys and KYC status.")
         status = "paid"
     
     t = now_iso()
