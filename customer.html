@@ -1740,7 +1740,7 @@
         if (paidOrderId) {
           toast("Verifying payment...");
           document.getElementById("homeStatus").textContent = "Verifying payment...";
-          showSection("history");
+          showSection("home");
           // Call verify/sync
           fetch(`${API}/verify-payment`, {
             method: "POST",
