@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>FuelSkip - Admin Dashboard</title>
+  <title>FuelTag - Fleet Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
@@ -281,7 +281,7 @@
 </head>
 
 <body>
-  <h2>⛽ FuelSkip – Admin Dashboard</h2>
+  <h2>⚡ FuelTag – Fleet Admin</h2>
 
   <input id="copyFallback" />
 
@@ -301,7 +301,7 @@
     <div style="font-weight:900;margin-bottom:8px;">📱 Pair Attendant Device (no token typing)</div>
     <div class="row">
       <div class="field-group">
-        <label>Bunk:</label>
+        <label>Service Point:</label>
         <select id="pairBunk"></select>
       </div>
       <div class="field-group">
@@ -321,7 +321,7 @@
 
   <div class="panel">
     <div class="row">
-      <div style="font-weight:900;">📟 Devices</div>
+      <div style="font-weight:900;">📟 Authorized Devices</div>
       <button class="btn-gray" onclick="loadDevices()">Refresh</button>
     </div>
     <div class="mini">Revoke disables a device token immediately (anti-fraud / lost phone).</div>
@@ -346,7 +346,7 @@
   <div class="panel">
     <div class="row">
       <div class="field-group">
-        <label for="bunkInput">Bunk:</label>
+        <label for="bunkInput">Service Point:</label>
         <select id="bunkInput"></select>
       </div>
       <div class="field-group">
@@ -359,13 +359,13 @@
           <option value="failed">failed</option>
         </select>
       </div>
-      <button onclick="loadBookings()">Refresh Bookings</button>
+      <button onclick="loadBookings()">Refresh Transactions</button>
     </div>
 
     <div class="summary" id="summaryRow" style="display:none;">
       <div class="chip" id="sumCount">Total: 0</div>
       <div class="chip" id="sumAmount">Amount: ₹0</div>
-      <div class="chip" id="sumLitres">Litres: 0 L</div>
+      <div class="chip" id="sumLitres">Units: 0</div>
       <div class="chip" id="sumUsed">Used: 0</div>
     </div>
 
@@ -374,12 +374,12 @@
         <thead>
           <tr>
             <th>Time (IST)</th>
-            <th>Booking ID</th>
-            <th>Bunk</th>
-            <th>Fuel</th>
+            <th>Ticket ID</th>
+            <th>Service Point</th>
+            <th>Service</th>
             <th>Pay</th>
             <th>Amount</th>
-            <th>Litres</th>
+            <th>Units</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -405,7 +405,7 @@
       if (x === "DIESEL") return "Diesel";
       if (x === "CNG") return "CNG";
       if (x === "EV") return "EV";
-      return "Petrol";
+      return "Petrol Service";
     }
     function nicePay(pm) {
       const x = String(pm || "").toLowerCase();
@@ -415,18 +415,18 @@
     }
 
     function ownerToken() {
-      return (localStorage.getItem("FUELSKIP_OWNER_TOKEN") || "").trim();
+      return (localStorage.getItem("FUELTAG_OWNER_TOKEN") || "").trim();
     }
     function saveOwnerToken() {
       const t = document.getElementById("ownerToken").value.trim();
       if (!t) return alert("Paste OWNER_TOKEN");
-      localStorage.setItem("FUELSKIP_OWNER_TOKEN", t);
+      localStorage.setItem("FUELTAG_OWNER_TOKEN", t);
       alert("Saved.");
       // ✅ Immediately refresh devices after saving token
       loadDevices();
     }
     function clearOwnerToken() {
-      localStorage.removeItem("FUELSKIP_OWNER_TOKEN");
+      localStorage.removeItem("FUELTAG_OWNER_TOKEN");
       alert("Cleared.");
     }
 
@@ -640,7 +640,7 @@
 
       document.getElementById("sumCount").textContent = `Total: ${data.length}`;
       document.getElementById("sumAmount").textContent = `Amount: ₹${totalAmt.toLocaleString("en-IN")}`;
-      document.getElementById("sumLitres").textContent = `Litres: ${totalLit.toFixed(2)} L`;
+      document.getElementById("sumLitres").textContent = `Units: ${totalLit.toFixed(2)}`;
       document.getElementById("sumUsed").textContent = `Used: ${usedCount}`;
       sumRow.style.display = "flex";
     }

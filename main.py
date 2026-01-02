@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.database import init_db
 from backend.routers import auth, user, bookings, devices, attendant
 
-app = FastAPI(title="FuelSkip Management System")
+app = FastAPI(title="FuelTag Management System")
 
 app.add_middleware(
     CORSMiddleware,

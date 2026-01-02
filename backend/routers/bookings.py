@@ -14,8 +14,9 @@ from backend.config import SIG_SECRET
 router = APIRouter()
 
 # --- Config ---
-RP_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
-RP_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
+CF_APP_ID = os.getenv("CASHFREE_APP_ID", "")
+CF_SECRET_KEY = os.getenv("CASHFREE_SECRET_KEY", "")
+CF_ENVIRONMENT = os.getenv("CASHFREE_ENVIRONMENT", "test") # "test" or "production"
 
 # --- Utils ---
 def sign_booking(booking_id: str) -> str:
@@ -64,7 +65,7 @@ class BookingOut(BaseModel):
 
 class PaymentVerify(BaseModel):
     booking_id: str
-    razorpay_payment_id: Optional[str] = None
+    payment_id: Optional[str] = None
 
 # --- Routes ---
 
@@ -72,8 +73,8 @@ class PaymentVerify(BaseModel):
 def nearby_bunks(lat: float, lon: float):
     # Mock
     return [
-        {"id":"BUNK-1", "name":"BPCL Siripuram", "dist": 1.2},
-        {"id":"BUNK-2", "name":"Gajuwaka Expressway", "dist": 4.5},
+        {"id":"BUNK-1", "name":"Service Point 1", "dist": 1.2},
+        {"id":"BUNK-2", "name":"Service Point 2", "dist": 4.5},
     ]
 
 @router.post("/create-booking")
@@ -85,28 +86,45 @@ def create_booking(req: BookingCreate, user=Depends(require_user)):
     litres = float(req.litres or 0)
     bunk_id = req.bunk_id.strip() or "BUNK-1"
 
-    # Razorpay Integration
-    rz_order_id = None
+    # Cashfree Integration
+    payment_session_id = None
     status = "pending"
     
     # If keys exist, try to create real order
-    if RP_KEY_ID and RP_KEY_SECRET and amount > 0 and payment_method == "razorpay":
+    if CF_APP_ID and CF_SECRET_KEY and amount >= 1 and payment_method in {"cashfree", "razorpay"}:
         try:
-            import razorpay
-            client = razorpay.Client(auth=(RP_KEY_ID, RP_KEY_SECRET))
-            data = {"amount": int(amount * 100), "currency": "INR", "receipt": booking_id}
-            order = client.order.create(data=data)
-            rz_order_id = order.get("id")
+            import requests
+            url = "https://sandbox.cashfree.com/pg/orders" if CF_ENVIRONMENT == "test" else "https://api.cashfree.com/pg/orders"
+            headers = {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "x-api-version": "2023-08-01",
+                "x-client-id": CF_APP_ID,
+                "x-client-secret": CF_SECRET_KEY
+            }
+            payload = {
+                "order_amount": amount,
+                "order_currency": "INR",
+                "order_id": booking_id,
+                "customer_details": {
+                    "customer_id": str(user["phone"]),
+                    "customer_phone": str(user["phone"]),
+                    "customer_name": user["name"] or "Fleet Driver"
+                },
+                "order_meta": {
+                    "return_url": f"https://fueltag-production.up.railway.app/customer.html?order_id={booking_id}"
+                },
+                "order_note": "Fleet Management Service Credit"
+            }
+            resp = requests.post(url, json=payload, headers=headers)
+            order_data = resp.json()
+            payment_session_id = order_data.get("payment_session_id")
         except Exception as e:
-            print(f"Razorpay Error: {e}")
-            # Fallback to fake if error? Or fail? 
-            # Let's fallback to fake "paid" if keys are bad, 
-            # BUT if keys are there and just verify failed, we stick to pending.
-            # If NO keys, we do the "fake paid" behavior.
+            print(f"Cashfree Error: {e}")
             pass
 
-    # If NO Razorpay order (keys missing or method not razorpay), auto-mark PAID (Fake mode)
-    if not rz_order_id:
+    # If NO payment session, auto-mark PAID (Fake mode)
+    if not payment_session_id:
         status = "paid"
     
     t = now_iso()
@@ -140,19 +158,42 @@ def create_booking(req: BookingCreate, user=Depends(require_user)):
         "id": booking_id,
         "amount": amount,
         "status": status,
-        "razorpay_order_id": rz_order_id, 
-        "razorpay_key_id": RP_KEY_ID
+        "payment_session_id": payment_session_id,
+        "cf_environment": CF_ENVIRONMENT
     }
 
 @router.post("/verify-payment")
 def verify_payment(req: PaymentVerify, user=Depends(require_user)):
-    # In a real app, verify signature. Here we trust the frontend (Fake/Test mode).
+    booking_id = req.booking_id
     t = now_iso()
     con = db()
-    con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND user_phone=?", (t, req.booking_id, user["phone"]))
-    con.commit()
+    
+    # Real Verification logic if Cashfree keys are present
+    is_paid = True # Default for "fake" mode
+    if CF_APP_ID and CF_SECRET_KEY:
+        try:
+            import requests
+            url = f"https://sandbox.cashfree.com/pg/orders/{booking_id}" if CF_ENVIRONMENT == "test" else f"https://api.cashfree.com/pg/orders/{booking_id}"
+            headers = {
+                "accept": "application/json",
+                "x-api-version": "2023-08-01",
+                "x-client-id": CF_APP_ID,
+                "x-client-secret": CF_SECRET_KEY
+            }
+            resp = requests.get(url, headers=headers)
+            cf_data = resp.json()
+            status = cf_data.get("order_status")
+            is_paid = (status == "PAID")
+        except Exception as e:
+            print(f"Verify Error: {e}")
+            is_paid = False
+
+    if is_paid:
+        con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND user_phone=?", (t, booking_id, user["phone"]))
+        con.commit()
+    
     con.close()
-    return {"ok": True}
+    return {"ok": is_paid}
 
 @router.get("/my-bookings")
 def my_bookings(user_id: str|None=None, user=Depends(require_user)):

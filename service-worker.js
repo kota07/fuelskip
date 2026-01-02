@@ -1,4 +1,4 @@
-const CACHE_NAME = "fuelskip-v1";
+const CACHE_NAME = "fueltag-v1";
 
 const FILES_TO_CACHE = [
   "/customer.html",

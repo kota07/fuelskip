@@ -1,7 +1,7 @@
 {
-  "name": "FuelSkip",
-  "short_name": "FuelSkip",
-  "description": "Fast fuel. No queue.",
+  "name": "FuelTag",
+  "short_name": "FuelTag",
+  "description": "Fleet Management & Service Credits",
   "start_url": "/customer.html",
   "display": "standalone",
   "background_color": "#f6f8fc",

@@ -4,12 +4,9 @@ sqlalchemy
 razorpay
 python-dotenv
 python-multipart
+requests
 
 # For Railway Postgres
-psycopg2-binary
-
-
-
 
 
 

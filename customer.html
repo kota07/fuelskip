@@ -3,11 +3,11 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>FuelSkip – Fuel Management</title>
+  <title>FuelTag – Fleet Management & Service Credits</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Razorpay -->
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- Cashfree -->
+  <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
 
   <!-- QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -661,11 +661,11 @@
   <!-- Splash (logo first) -->
   <div id="splash" class="splash">
     <div class="splashCard">
-      <div class="logoMarkBig">⛽</div>
+      <div class="logoMarkBig">⚡</div>
       <div class="splashText">
-        <div class="name">FuelSkip</div>
-        <div class="tag">Digital Fuel Pass • Fast Dispense</div>
-        <div class="sub">Loading application…</div>
+        <div class="name">FuelTag</div>
+        <div class="tag">Fleet Management • Service Credits</div>
+        <div class="sub">Loading management portal…</div>
       </div>
     </div>
   </div>
@@ -675,10 +675,10 @@
     <!-- SIDEBAR / TOPBAR -->
     <aside class="sidebar">
       <div class="brandRow">
-        <div class="logoMark">⛽</div>
+        <div class="logoMark">⚡</div>
         <div class="brandText">
-          <div class="name">FuelSkip</div>
-          <div class="tag">Digital Fuel Pass • Fast Dispense</div>
+          <div class="name">FuelTag</div>
+          <div class="tag">Fleet Management • Service Credits</div>
         </div>
       </div>
 
@@ -687,7 +687,7 @@
           <span>✨ Welcome</span><small>Login</small>
         </button>
         <button id="navHome" onclick="showSection('home')" disabled>
-          <span>🏠 Home</span><small>Book Fuel</small>
+          <span>🏠 Home</span><small>Buy Credits</small>
         </button>
         <button id="navBookings" onclick="showSection('bookings')" disabled>
           <span>🎟️ Bookings</span><small>History</small>
@@ -704,7 +704,7 @@
       <div class="sessionCard" style="display:none;"></div>
 
       <div class="hint">
-        Tip: Create your booking before you reach the bunk. Show the QR to the attendant for scanning.
+        Tip: Purchase service credits before visiting the station. Show your service ticket QR to the attendant.
       </div>
     </aside>
 
@@ -718,10 +718,10 @@
           <!-- LOGIN VIEW -->
           <div class="welcomeCard" id="viewLogin">
             <div class="welcomeTop">
-              <div class="logoMarkBig">⛽</div>
+              <div class="logoMarkBig">⚡</div>
               <div>
-                <div style="font-weight:1000; font-size:24px;">FuelSkip</div>
-                <div class="muted" style="margin-top:4px;">Login to access your fuel bookings</div>
+                <div style="font-weight:1000; font-size:24px;">FuelTag</div>
+                <div class="muted" style="margin-top:4px;">Login to manage your service credits</div>
               </div>
             </div>
 
@@ -774,12 +774,13 @@
       <!-- HOME -->
       <section id="secHome" class="section">
         <div class="card">
-          <h2>Book Fuel</h2>
-          <div class="muted">Choose bunk + fuel type + amount/litres. Pay securely via Razorpay.</div>
+          <h2>Purchase Service Credits</h2>
+          <div class="muted">Refill your fleet credits for various energy types. Secure checkout via Service Gateway.
+          </div>
 
           <div class="grid2" style="margin-top:12px;">
             <div>
-              <label>Fuel Type</label>
+              <label>Service / Energy Type</label>
               <select id="fuelType">
                 <option value="PETROL">PETROL</option>
                 <option value="DIESEL">DIESEL</option>
@@ -789,7 +790,7 @@
             </div>
 
             <div>
-              <label>Nearby Bunks (or pick)</label>
+              <label>Authorized Service Points</label>
               <select id="bunkSelect"></select>
             </div>
 
@@ -815,8 +816,8 @@
           </div>
 
           <div class="row" style="margin-top:12px;">
-            <button class="btn btnPrimary" onclick="createBooking()">Book Fuel Now</button>
-            <button class="btn" onclick="useCurrentLocation()">Find Nearby Bunks</button>
+            <button class="btn btnPrimary" onclick="createBooking()">Purchase Credits</button>
+            <button class="btn" onclick="useCurrentLocation()">Find Service Points</button>
             <button class="btn" onclick="scrollToLatestQR()">Show QR</button>
           </div>
 
@@ -824,7 +825,7 @@
         </div>
 
         <div class="card" id="latestCard">
-          <h2>Latest Booking QR</h2>
+          <h2>Latest Service Ticket</h2>
           <div class="muted">This QR is scanned by the attendant for instant dispensing.</div>
 
           <div id="latestWrap" style="margin-top:12px;">
@@ -836,8 +837,8 @@
       <!-- VOUCHERS -->
       <section id="secBookings" class="section">
         <div class="card">
-          <h2>Booking History</h2>
-          <div class="muted">Your bookings (pending/paid/used). Used bookings stay visible.</div>
+          <h2>Transaction History</h2>
+          <div class="muted">Your service tickets (pending/paid/used). Used tickets stay visible.</div>
           <div class="row" style="margin-top:10px;">
             <button class="btn btnPrimary" onclick="loadMyBookings(true)">Reload</button>
             <button class="btn" onclick="scrollToLatestQR()">Go to Latest QR</button>
@@ -846,7 +847,7 @@
 
         <div class="card">
           <div id="bookingList" class="bookingList">
-            <div class="muted">Login to view bookings.</div>
+            <div class="muted">Login to view history.</div>
           </div>
         </div>
       </section>
@@ -897,7 +898,7 @@
       <section id="secAnalytics" class="section">
         <div class="card">
           <h2>Analytics</h2>
-          <div class="muted">Useful metrics: spend, fuel split, bunk usage, vehicle usage.</div>
+          <div class="muted">Useful metrics: spend, energy split, service point usage, vehicle usage.</div>
 
           <div class="tiles">
             <div class="tile">
@@ -909,7 +910,7 @@
               <div class="v" id="anLitres">0 L</div>
             </div>
             <div class="tile">
-              <div class="k">Most Used Bunk</div>
+              <div class="k">Top Service Point</div>
               <div class="v" id="anBunk">—</div>
             </div>
             <div class="tile">
@@ -919,12 +920,12 @@
           </div>
 
           <div class="tile" style="margin-top:12px;">
-            <div class="k">Fuel Split</div>
+            <div class="k">Energy Split</div>
             <div class="v" style="font-size:14px; font-weight:1000;" id="anFuelSplit">—</div>
           </div>
 
           <div class="hint" style="margin-top:12px;">
-            Tip: Generate booking before joining the queue to save time at peak hours.
+            Tip: Purchase credits before joining the queue to save time at peak hours.
           </div>
         </div>
       </section>
@@ -968,15 +969,15 @@
 
     // ---------------- Session ----------------
     function getSession() {
-      try { return JSON.parse(localStorage.getItem("FUELSKIP_SESSION") || "null"); }
+      try { return JSON.parse(localStorage.getItem("FUELTAG_SESSION") || "null"); }
       catch (e) { return null; }
     }
     function setSession(obj) {
-      localStorage.setItem("FUELSKIP_SESSION", JSON.stringify(obj));
+      localStorage.setItem("FUELTAG_SESSION", JSON.stringify(obj));
       updateSessionUI();
     }
     function clearSession() {
-      localStorage.removeItem("FUELSKIP_SESSION");
+      localStorage.removeItem("FUELTAG_SESSION");
       updateSessionUI();
     }
 
@@ -1044,8 +1045,8 @@
       window.__myBookings = [];
       toast("Logged out");
       showSection("welcome");
-      document.getElementById("bookingList").innerHTML = `<div class="muted">Login to view bookings.</div>`;
-      document.getElementById("latestWrap").innerHTML = `<div class="muted">No booking yet.</div>`;
+      document.getElementById("bookingList").innerHTML = `<div class="muted">Login to view history.</div>`;
+      document.getElementById("latestWrap").innerHTML = `<div class="muted">No ticket yet.</div>`;
     }
 
     async function processLogin() {
@@ -1367,18 +1368,18 @@
 
     function fuelChip(ft) {
       const x = (ft || "PETROL").toUpperCase();
-      const map = { PETROL: "⛽ PETROL", DIESEL: "🛢️ DIESEL", CNG: "💨 CNG", EV: "⚡ EV" };
+      const map = { PETROL: "⚡ PETROL", DIESEL: "🛠️ DIESEL", CNG: "💨 CNG", EV: "⚡ EV" };
       return `<span class="badge" style="background:#ecfeff;color:#155e75;border-color:#a5f3fc;">${map[x] || x}</span>`;
     }
 
     function payChip() {
-      return `<span class="badge" style="background:#eef2ff;color:#3730a3;border-color:#c7d2fe;">RAZORPAY</span>`;
+      return `<span class="badge" style="background:#eef2ff;color:#3730a3;border-color:#c7d2fe;">CASHFREE</span>`;
     }
 
     function bunkNameFromId(id) {
       const map = {
-        "BUNK-1": "BPCL Siripuram",
-        "BUNK-2": "Gajuwaka Expressway"
+        "BUNK-1": "Service Point 1",
+        "BUNK-2": "Service Point 2"
       };
       return map[id] || id || "—";
     }
@@ -1413,8 +1414,8 @@
       if (data) document.getElementById("profBookingCount").textContent = data.length;
 
       if (!data.length) {
-        list.innerHTML = `<div class="muted">No bookings yet.</div>`;
-        if (rebuildLatest) document.getElementById("latestWrap").innerHTML = `<div class="muted">No booking yet.</div>`;
+        list.innerHTML = `<div class="muted">No transactions yet.</div>`;
+        if (rebuildLatest) document.getElementById("latestWrap").innerHTML = `<div class="muted">No ticket yet.</div>`;
         window.__myBookings = [];
         buildAnalytics();
         return [];
@@ -1448,7 +1449,7 @@
         item.innerHTML = `
         <div class="bookingLeft">
           <div class="bookingTitle">
-            <span style="font-weight:1000;">Booking ID: ${id}</span>
+            <span style="font-weight:1000;">Ticket ID: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
             ${payChip()}
@@ -1538,9 +1539,9 @@
             ${payChip()}
           </div>
           <div class="bookingMeta">
-            Bunk: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id}) •
+            Service Point: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id}) •
             Amount: ₹${Number(v.amount || 0).toLocaleString("en-IN")} •
-            Litres: ${Number(v.litres || 0).toFixed(2)} L •
+            Units: ${Number(v.litres || 0).toFixed(2)} •
             Time: ${fmtIST(v.created_at)}
           </div>
 
@@ -1626,7 +1627,7 @@
 
       document.getElementById("homeStatus").textContent = "Creating booking...";
 
-      const payload = { bunk_id, user_id: s.user_id, pay_method: "razorpay", fuel_type, vehicle_type, vehicle_no };
+      const payload = { bunk_id, user_id: s.user_id, pay_method: "cashfree", fuel_type, vehicle_type, vehicle_no };
       if (amount > 0) payload.amount = amount;
       if (litres > 0) payload.litres = litres;
 
@@ -1642,44 +1643,20 @@
         return;
       }
 
-      if (data.razorpay_order_id) {
-        document.getElementById("homeStatus").textContent = "Opening Razorpay...";
-        const options = {
-          key: data.razorpay_key_id,
-          amount: Math.round(Number(data.amount) * 100),
-          currency: "INR",
-          name: "FuelSkip Booking",
-          description: `Digital fuel pass (${fuel_type})`,
-          order_id: data.razorpay_order_id,
-          handler: function (response) {
-            toast("Payment done. Verifying...");
-            document.getElementById("homeStatus").textContent = "Payment done. Verifying...";
-
-            // Create a lightweight verify call
-            const s = getSession();
-            fetch(`${API}/verify-payment`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
-              body: JSON.stringify({ booking_id: data.id, razorpay_payment_id: response.razorpay_payment_id })
-            }).then(async res => {
-              if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.detail || "Verify failed");
-              }
-              toast("Verified! Updating...");
-              setTimeout(async () => {
-                await loadMyBookings(true);
-                document.getElementById("homeStatus").textContent = "Booking updated ✅";
-              }, 1200);
-            }).catch(e => {
-              console.error("Verify Error:", e);
-              alert("Verification issue: " + e.message);
-              document.getElementById("homeStatus").textContent = "Verify failed. Refresh History.";
-            });
-          },
-          theme: { color: "#4f46e5" }
-        };
-        new Razorpay(options).open();
+      if (data.payment_session_id) {
+        document.getElementById("homeStatus").textContent = "Opening Checkout...";
+        const cashfree = Cashfree({ mode: data.cf_environment || "sandbox" });
+        cashfree.checkout({
+          paymentSessionId: data.payment_session_id,
+          redirectTarget: "_self"
+        }).then((result) => {
+          if (result.error) {
+            alert(result.error.message || "Payment failed");
+          }
+          if (result.redirect) {
+            console.log("Redirecting...");
+          }
+        });
       } else {
         document.getElementById("homeStatus").textContent = "Booking created.";
         await loadMyBookings(true);
@@ -1755,7 +1732,23 @@
       if (s && s.token) {
         await loadVehicles();
         await loadMyBookings(true);
-        showSection("home");
+
+        // --- Cashfree Redirect Handling ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const paidOrderId = urlParams.get("order_id");
+        if (paidOrderId) {
+          toast("Verifying payment...");
+          document.getElementById("homeStatus").textContent = "Verifying payment...";
+          showSection("history");
+          // Call verify/sync
+          fetch(`${API}/verify-payment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
+            body: JSON.stringify({ booking_id: paidOrderId })
+          }).then(() => loadMyBookings(true));
+        } else {
+          showSection("home");
+        }
       } else {
         showSection("welcome");
       }
@@ -1778,7 +1771,7 @@
       <a href="privacy.html" style="color:var(--muted); text-decoration:none; margin:0 8px;">Privacy</a> |
       <a href="refunds.html" style="color:var(--muted); text-decoration:none; margin:0 8px;">Refunds</a>
     </div>
-    &copy; 2026 FuelSkip. All rights reserved.
+    &copy; 2026 FuelTag. All rights reserved.
   </footer>
 </body>
 
