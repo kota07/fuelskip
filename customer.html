@@ -811,7 +811,7 @@
 
             <div>
               <label>Payment Method</label>
-              <input value="Razorpay" disabled />
+              <input value="Cashfree" disabled />
             </div>
           </div>
 
@@ -1584,7 +1584,7 @@
       card.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    // ---------------- Create booking (Razorpay ONLY) ----------------
+    // ---------------- Create booking (Cashfree ONLY) ----------------
     async function createBooking() {
       const s = getSession();
       if (!s || !s.token) { alert("Login first"); return; }
@@ -1645,7 +1645,8 @@
 
       if (data.payment_session_id) {
         document.getElementById("homeStatus").textContent = "Opening Checkout...";
-        const cashfree = Cashfree({ mode: data.cf_environment || "sandbox" });
+        const env = (data.cf_environment || "sandbox").toLowerCase();
+        const cashfree = Cashfree({ mode: (env === "production") ? "production" : "sandbox" });
         cashfree.checkout({
           paymentSessionId: data.payment_session_id,
           redirectTarget: "_self"

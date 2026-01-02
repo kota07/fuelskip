@@ -16,7 +16,7 @@ router = APIRouter()
 # --- Config ---
 CF_APP_ID = os.getenv("CASHFREE_APP_ID", "")
 CF_SECRET_KEY = os.getenv("CASHFREE_SECRET_KEY", "")
-CF_ENVIRONMENT = os.getenv("CASHFREE_ENVIRONMENT", "test") # "test" or "production"
+CF_ENVIRONMENT = os.getenv("CASHFREE_ENVIRONMENT", "sandbox") # "sandbox" or "production"
 
 # --- Utils ---
 def sign_booking(booking_id: str) -> str:
@@ -43,7 +43,7 @@ class BookingCreate(BaseModel):
     fuel_type: str
     amount: float = 0
     litres: float = 0
-    pay_method: str = Field(..., description="wallet|razorpay")
+    pay_method: str = Field(..., description="wallet|cashfree")
     vehicle_type: Optional[str] = None
     vehicle_no: Optional[str] = None
     user_id: Optional[int|str] = None
@@ -91,10 +91,10 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
     status = "pending"
     
     # If keys exist, try to create real order
-    if CF_APP_ID and CF_SECRET_KEY and amount >= 1 and payment_method in {"cashfree", "razorpay"}:
+    if CF_APP_ID and CF_SECRET_KEY and amount >= 1 and payment_method in {"cashfree"}:
         try:
             import requests
-            url = "https://sandbox.cashfree.com/pg/orders" if CF_ENVIRONMENT == "test" else "https://api.cashfree.com/pg/orders"
+            url = "https://sandbox.cashfree.com/pg/orders" if CF_ENVIRONMENT == "sandbox" else "https://api.cashfree.com/pg/orders"
             headers = {
                 "accept": "application/json",
                 "content-type": "application/json",
@@ -173,7 +173,7 @@ def verify_payment(req: PaymentVerify, user=Depends(require_user)):
     if CF_APP_ID and CF_SECRET_KEY:
         try:
             import requests
-            url = f"https://sandbox.cashfree.com/pg/orders/{booking_id}" if CF_ENVIRONMENT == "test" else f"https://api.cashfree.com/pg/orders/{booking_id}"
+            url = f"https://sandbox.cashfree.com/pg/orders/{booking_id}" if CF_ENVIRONMENT == "sandbox" else f"https://api.cashfree.com/pg/orders/{booking_id}"
             headers = {
                 "accept": "application/json",
                 "x-api-version": "2023-08-01",

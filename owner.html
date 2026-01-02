@@ -409,8 +409,8 @@
     }
     function nicePay(pm) {
       const x = String(pm || "").toLowerCase();
-      if (!x) return "Razorpay";
-      if (x === "razorpay") return "Razorpay";
+      if (!x) return "Cashfree";
+      if (x === "cashfree" || x === "razorpay") return "Cashfree";
       return x;
     }
 
