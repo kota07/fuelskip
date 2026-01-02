@@ -4,7 +4,7 @@ import hmac
 import hashlib
 import base64
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from fastapi import APIRouter, Depends, HTTPException, Query, Header, Request
 from pydantic import BaseModel, Field
 
 from backend.database import db, one, rows, now_iso
@@ -78,7 +78,7 @@ def nearby_bunks(lat: float, lon: float):
     ]
 
 @router.post("/create-booking")
-def create_booking(req: BookingCreate, user=Depends(require_user)):
+def create_booking(req: BookingCreate, request: Request, user=Depends(require_user)):
     booking_id = secrets.token_hex(6)
     fuel_type = normalize_fuel(req.fuel_type)
     payment_method = (req.pay_method or "wallet").lower()
@@ -112,7 +112,7 @@ def create_booking(req: BookingCreate, user=Depends(require_user)):
                     "customer_name": user["name"] or "Fleet Driver"
                 },
                 "order_meta": {
-                    "return_url": f"https://fueltag-production.up.railway.app/customer.html?order_id={booking_id}"
+                    "return_url": f"{request.base_url}customer.html?order_id={booking_id}"
                 },
                 "order_note": "Fleet Management Service Credit"
             }
