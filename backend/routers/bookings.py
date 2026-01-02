@@ -141,7 +141,7 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
                     "customer_name": user["name"] or "Fleet Driver"
                 },
                 "order_meta": {
-                    "return_url": f"{request.base_url}customer.html?order_id={booking_id}"
+                    "return_url": f"{str(request.base_url).replace('http://', 'https://')}customer.html?order_id={booking_id}"
                 },
                 "order_note": "Fleet Management Service Credit"
             }
