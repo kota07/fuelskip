@@ -149,7 +149,11 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
             order_data = resp.json()
             if resp.status_code != 200:
                 print(f"CASHFREE API ERROR (Status {resp.status_code}): {order_data}")
-                raise HTTPException(status_code=400, detail=f"Cashfree API Error: {order_data.get('message', 'Unknown Error')}")
+                # Provide a more specific error message based on common Cashfree errors
+                error_msg = order_data.get('message', 'Unknown Error')
+                error_code = order_data.get('code', 'Unknown Code')
+                detailed_error = f"Cashfree API Error: [{error_code}] {error_msg}"
+                raise HTTPException(status_code=400, detail=detailed_error)
             payment_session_id = order_data.get("payment_session_id")
         except HTTPException:
             raise
