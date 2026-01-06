@@ -263,13 +263,21 @@ async def cashfree_webhook(request: Request):
         if order_id and payment_status == "SUCCESS":
             t = now_iso()
             con = db()
+            # Award loyalty points
+            cur_v = con.execute("SELECT amount, user_phone FROM vouchers WHERE id=?", (order_id,))
+            v_data = one(cur_v)
+            if v_data:
+                pts = int(float(v_data["amount"] or 0) / 100)
+                if pts > 0:
+                    con.execute("UPDATE users SET points = points + ? WHERE phone = ?", (pts, v_data["user_phone"]))
+
             con.execute(
                 "UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND status='pending'",
                 (t, order_id)
             )
             con.commit()
             con.close()
-            print(f"WEBHOOK SUCCESS: Order {order_id} marked as PAID")
+            print(f"WEBHOOK SUCCESS: Order {order_id} marked as PAID and points awarded")
         
     except Exception as e:
         print(f"Webhook Processing Error: {e}")
