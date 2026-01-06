@@ -346,6 +346,31 @@
   </div>
 
   <div class="panel">
+    <div style="font-weight:900; margin-bottom:10px;">⚙️ Fuel Price Management (Live Overrides)</div>
+    <div class="mini" style="margin-bottom:12px;">Update rates here to override config file defaults. Units are ₹ per
+      Litre/Charge.</div>
+    <div class="row" style="gap:15px;">
+      <div class="field-group">
+        <label>Petrol:</label>
+        <input id="ratePetrol" type="number" step="0.01" style="width:80px;">
+      </div>
+      <div class="field-group">
+        <label>Diesel:</label>
+        <input id="rateDiesel" type="number" step="0.01" style="width:80px;">
+      </div>
+      <div class="field-group">
+        <label>CNG:</label>
+        <input id="rateCng" type="number" step="0.01" style="width:80px;">
+      </div>
+      <div class="field-group">
+        <label>EV:</label>
+        <input id="rateEv" type="number" step="0.01" style="width:80px;">
+      </div>
+      <button class="btn-amber" onclick="updateRates()">Update Prices</button>
+    </div>
+  </div>
+
+  <div class="panel">
     <div class="row">
       <div class="field-group">
         <label for="bunkInput">Service Point:</label>
@@ -421,9 +446,45 @@
           });
           BUNK_META = meta;
           populateBunks();
+
+          // Fill price inputs
+          if (data.rates) {
+            if (document.getElementById("ratePetrol")) document.getElementById("ratePetrol").value = data.rates.PETROL || "";
+            if (document.getElementById("rateDiesel")) document.getElementById("rateDiesel").value = data.rates.DIESEL || "";
+            if (document.getElementById("rateCng")) document.getElementById("rateCng").value = data.rates.CNG || "";
+            if (document.getElementById("rateEv")) document.getElementById("rateEv").value = data.rates.EV || "";
+          }
         }
       } catch (e) {
         console.error("Failed to load system info", e);
+      }
+    }
+
+    async function updateRates() {
+      const tok = ownerToken();
+      if (!tok) return alert("Save OWNER_TOKEN first");
+
+      const rates = {
+        PETROL: parseFloat(document.getElementById("ratePetrol").value || 0),
+        DIESEL: parseFloat(document.getElementById("rateDiesel").value || 0),
+        CNG: parseFloat(document.getElementById("rateCng").value || 0),
+        EV: parseFloat(document.getElementById("rateEv").value || 0)
+      };
+
+      const res = await fetch(`${API}/info`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-OWNER-TOKEN": tok
+        },
+        body: JSON.stringify(rates)
+      });
+
+      if (res.ok) {
+        alert("Prices updated successfully ✅");
+      } else {
+        const data = await res.json();
+        alert("Update failed: " + (data.detail || "Error"));
       }
     }
     function bunkName(id) {

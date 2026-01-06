@@ -11,6 +11,8 @@
 
   <!-- QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- jspdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root {
@@ -812,6 +814,9 @@
     <button class="btn green" id="btnWaShare" style="width:240px; background:#25D366; border:none;">
       💬 Share to WhatsApp
     </button>
+    <button class="btn blue" id="btnPdfDownload" style="width:240px; margin-top:12px;">
+      📄 Download PDF Receipt
+    </button>
     <button class="btn outline" style="width:240px; margin-top:12px;"
       onclick="document.getElementById('successOverlay').style.display='none'">
       Close
@@ -903,6 +908,12 @@
                 <input id="loginName" placeholder="Your Name" style="font-size:16px; padding:14px;" />
               </div>
 
+              <div style="margin-bottom:16px;">
+                <label>Referral Code (Optional)</label>
+                <input id="loginRef" placeholder="FT-XXXXXX"
+                  style="font-size:16px; padding:14px; text-transform:uppercase;" />
+              </div>
+
               <button id="btnLoginAction" class="btn btnPrimary" style="width:100%; font-size:16px; padding:14px;"
                 onclick="processLogin()">Login</button>
             </div>
@@ -916,7 +927,7 @@
             <div id="loyaltyDisplay" class="ptsBadge" style="display:inline-flex; margin-bottom:20px;">⭐ <span
                 id="userPts">0</span> Pts</div>
 
-            <div class="grid2" style="text-align:left; margin-bottom:20px;">
+            <div class="grid2" style="text-align:left; margin-bottom:15px;">
               <div class="tile">
                 <div class="k">Vehicles</div>
                 <div class="v" id="profVehCount">0</div>
@@ -925,6 +936,15 @@
                 <div class="k">Bookings</div>
                 <div class="v" id="profBookingCount">0</div>
               </div>
+            </div>
+
+            <div class="card" style="background:#f8fafc; border:1px dashed #cbd5e1; margin-bottom:20px; padding:15px;">
+              <div class="muted" style="font-size:11px; text-transform:uppercase;">My Referral Code</div>
+              <div id="profRefCode" style="font-size:24px; font-weight:1000; color:var(--brand); margin:5px 0;">
+                FT-XXXXXX</div>
+              <div class="muted" style="margin-bottom:12px;">Share & earn 100 pts each!</div>
+              <button class="btn" style="width:100%; background:#25D366; color:white; border:none;"
+                onclick="shareReferral()">💬 Invite Friends</button>
             </div>
 
             <button class="btn btnPrimary" style="width:100%; margin-bottom:10px;" onclick="showSection('home')">Go to
@@ -1149,6 +1169,7 @@
     function showSuccessOverlay(booking_id, amount, fuel_type) {
       const ov = document.getElementById("successOverlay");
       const waBtn = document.getElementById("btnWaShare");
+      const pdfBtn = document.getElementById("btnPdfDownload");
 
       if (waBtn) {
         waBtn.onclick = () => {
@@ -1157,12 +1178,34 @@
         };
       }
 
+      if (pdfBtn) {
+        pdfBtn.onclick = () => generatePDF(booking_id, amount, fuel_type);
+      }
+
       ov.style.display = "flex";
       if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-      // Remove auto-close so they have time to click WhatsApp
-      // setTimeout(() => {
-      //   ov.style.display = "none";
-      // }, 3000);
+    }
+
+    async function generatePDF(booking_id, amount, fuel_type) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(22);
+      doc.text("FuelTag Service Receipt", 20, 30);
+
+      doc.setFontSize(12);
+      doc.text("------------------------------------------", 20, 40);
+      doc.text(`Booking ID: ${booking_id}`, 20, 50);
+      doc.text(`Service / Fuel: ${fuel_type}`, 20, 60);
+      doc.text(`Amount Paid: Rs. ${amount}`, 20, 70);
+      doc.text(`Date: ${new Date().toLocaleString()}`, 20, 80);
+      doc.text("------------------------------------------", 20, 90);
+
+      doc.setFontSize(10);
+      doc.text("Thank you for using FuelTag!", 20, 110);
+      doc.text("Visit our website for more details: " + window.location.origin, 20, 120);
+
+      doc.save(`FuelTag_Receipt_${booking_id}.pdf`);
     }
 
     function toast(msg) {
@@ -1223,6 +1266,14 @@
       if (document.getElementById("profName")) document.getElementById("profName").textContent = s.name || "User";
       if (document.getElementById("profPhone")) document.getElementById("profPhone").textContent = `+91 ${s.phone}`;
       if (document.getElementById("userPts")) document.getElementById("userPts").textContent = s.points || 0;
+      if (document.getElementById("profRefCode")) document.getElementById("profRefCode").textContent = s.referral_code || "—";
+    }
+
+    function shareReferral() {
+      const s = getSession();
+      if (!s || !s.referral_code) return;
+      const msg = encodeURIComponent(`⚡ Join me on *FuelTag*!\n\nUse my code *${s.referral_code}* and get 50 bonus pts instantly 🎁\n\nDownload here: ${window.location.origin}`);
+      window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
 
     function logout() {
@@ -1238,6 +1289,7 @@
       const phone = document.getElementById("loginPhone").value.trim();
       const pin = document.getElementById("loginPin").value.trim();
       const name = document.getElementById("loginName").value.trim();
+      const referred_by = document.getElementById("loginRef").value.trim();
 
       if (!phone || phone.length < 6) return alert("Enter valid phone");
       if (!pin || pin.length < 4) return alert("Enter 4-digit PIN");
@@ -1251,7 +1303,7 @@
         const res = await fetch(`${API}/auth/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, name, pin })
+          body: JSON.stringify({ phone, name, pin, referred_by })
         });
         const data = await res.json();
 
@@ -1265,7 +1317,7 @@
         }
 
         // Save token!
-        setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "", token: data.token, points: data.points || 0 });
+        setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "", token: data.token, points: data.points || 0, referral_code: data.referral_code });
 
         if (data.last_fuel_type) document.getElementById("fuelType").value = data.last_fuel_type;
         if (data.last_amount) document.getElementById("amountInput").value = data.last_amount;
@@ -1932,6 +1984,7 @@
           if (r.ok) {
             s.points = d.points || 0;
             s.name = d.name || s.name;
+            s.referral_code = d.referral_code || s.referral_code;
             setSession(s);
           }
         } catch (e) { }

@@ -64,7 +64,14 @@ def init_db() -> None:
           last_amount TEXT,
           last_vehicle_type TEXT,
           last_vehicle_no TEXT,
-          points INTEGER DEFAULT 0
+          points INTEGER DEFAULT 0,
+          referral_code TEXT UNIQUE,
+          referred_by TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY,
+          value TEXT
         );
     """)
     
