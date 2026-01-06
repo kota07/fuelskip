@@ -59,11 +59,21 @@ def login(req: LoginReq):
                 raise HTTPException(status_code=401, detail="Invalid PIN")
             
             # PIN OK, rotate token
-            con.execute(
-                "UPDATE users SET name=?, token=?, last_login_at=? WHERE phone=?",
-                (name or u["name"], token, t, phone),
-            )
+            # Generate referral code if legacy user doesn't have one
+            my_ref = u.get("referral_code")
+            if not my_ref:
+                my_ref = f"FT-{secrets.token_hex(3).upper()}"
+                con.execute(
+                    "UPDATE users SET name=?, token=?, last_login_at=?, referral_code=? WHERE phone=?",
+                    (name or u["name"], token, t, my_ref, phone),
+                )
+            else:
+                con.execute(
+                    "UPDATE users SET name=?, token=?, last_login_at=? WHERE phone=?",
+                    (name or u["name"], token, t, phone),
+                )
             user_id = u["id"]
+            referral_code = my_ref
             
         # Get defaults (this was missing in original main.py logic but frontend expects it?)
         # unique logic for getting defaults not implemented in main.py, customer.html 836 expects it.

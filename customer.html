@@ -1271,7 +1271,10 @@
 
     function shareReferral() {
       const s = getSession();
-      if (!s || !s.referral_code) return;
+      if (!s || !s.referral_code) {
+        toast("Referral code not ready. Please Logout & Login again!");
+        return;
+      }
       const msg = encodeURIComponent(`⚡ Join me on *FuelTag*!\n\nUse my code *${s.referral_code}* and get 50 bonus pts instantly 🎁\n\nDownload here: ${window.location.origin}`);
       window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
