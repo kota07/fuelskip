@@ -1127,17 +1127,18 @@
     }
 
     // ---------------- Bunks ----------------
-    async function loadBunks(nearbyList) {
+    async function loadBunks(list) {
       const sel = document.getElementById("bunkSelect");
+      if (!sel) return;
       sel.innerHTML = "";
-      let list = nearbyList;
-      if (!list) {
-        list = [
+      let bunks = list || window.__BUNKS;
+      if (!bunks) {
+        bunks = [
           { id: "BUNK-1", name: "BPCL Siripuram" },
           { id: "BUNK-2", name: "Gajuwaka Expressway" },
         ];
       }
-      list.forEach(b => {
+      bunks.forEach(b => {
         const opt = document.createElement("option");
         opt.value = b.id;
         opt.textContent = `${b.name} (${b.id})`;
@@ -1310,12 +1311,26 @@
     }
 
     // ---------------- Fuel Rates (AP Approx) ----------------
-    const FUEL_RATES = {
+    let FUEL_RATES = {
       PETROL: 109.50,
       DIESEL: 97.20,
       CNG: 90.00,
       EV: 15.00
     };
+
+    async function loadSystemInfo() {
+      try {
+        const res = await fetch(`${API}/info`);
+        const data = await res.json();
+        if (res.ok) {
+          FUEL_RATES = data.rates;
+          window.__BUNKS = data.bunks;
+          await loadBunks(data.bunks);
+        }
+      } catch (e) {
+        console.error("Failed to load system info", e);
+      }
+    }
 
     function setupFuelCalc() {
       const amtIn = document.getElementById("amountInput");
@@ -1377,6 +1392,10 @@
     }
 
     function bunkNameFromId(id) {
+      if (window.__BUNKS) {
+        const found = window.__BUNKS.find(b => b.id === id);
+        if (found) return found.name;
+      }
       const map = {
         "BUNK-1": "Service Point 1",
         "BUNK-2": "Service Point 2"
@@ -1712,7 +1731,7 @@
 
     // ---------------- App Init ----------------
     async function refreshAll() {
-      await loadBunks();
+      await loadSystemInfo();
       const s = getSession();
       if (s && s.token) {
         await loadVehicles();
@@ -1727,7 +1746,7 @@
       setTimeout(() => document.getElementById("splash").classList.add("hidden"), 650);
 
       updateSessionUI();
-      await loadBunks();
+      await loadSystemInfo();
 
       const s = getSession();
       if (s && s.token) {

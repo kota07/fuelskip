@@ -393,10 +393,27 @@
   <script>
     const API = window.location.origin;
 
-    const BUNK_META = {
+    let BUNK_META = {
       "BUNK-1": { name: "BPCL Siripuram" },
       "BUNK-2": { name: "Gajuwaka Expressway" }
     };
+
+    async function loadSystemInfo() {
+      try {
+        const res = await fetch(`${API}/info`);
+        const data = await res.json();
+        if (res.ok) {
+          const meta = {};
+          data.bunks.forEach(b => {
+            meta[b.id] = { name: b.name };
+          });
+          BUNK_META = meta;
+          populateBunks();
+        }
+      } catch (e) {
+        console.error("Failed to load system info", e);
+      }
+    }
     function bunkName(id) {
       return (BUNK_META[id] && BUNK_META[id].name) ? BUNK_META[id].name : id;
     }
@@ -647,12 +664,13 @@
 
     let autoTimer = null;
 
-    window.addEventListener("load", () => {
+    window.addEventListener("load", async () => {
       try {
         const val = ownerToken();
         if (val) document.getElementById("ownerToken").value = val;
 
         populateBunks();
+        await loadSystemInfo();
         loadDevices();
 
         // ✅ Auto refresh devices every 20s (pilot friendly)

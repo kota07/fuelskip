@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import init_db
-from backend.routers import auth, user, bookings, devices, attendant
+from backend.routers import auth, user, bookings, devices, attendant, settings
 
 app = FastAPI(title="FuelTag Management System")
 
@@ -29,6 +29,7 @@ app.include_router(user.router, prefix="/user") # /user/vehicles...
 app.include_router(bookings.router) # /create-booking, /my-bookings...
 app.include_router(devices.router, prefix="/devices") # /devices/register...
 app.include_router(attendant.router, prefix="/attendant") # /attendant/booking...
+app.include_router(settings.router) # /info
 
 # --- Frontend Static Files ---
 @app.get("/")
