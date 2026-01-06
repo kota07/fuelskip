@@ -6,6 +6,8 @@
   <title>FuelTag - Fleet Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -360,6 +362,7 @@
         </select>
       </div>
       <button onclick="loadBookings()">Refresh Transactions</button>
+      <button class="btn-amber" id="csvBtn" style="display:none;" onclick="exportCSV()">Download CSV</button>
     </div>
 
     <div class="summary" id="summaryRow" style="display:none;">
@@ -367,6 +370,15 @@
       <div class="chip" id="sumAmount">Amount: ₹0</div>
       <div class="chip" id="sumLitres">Units: 0</div>
       <div class="chip" id="sumUsed">Used: 0</div>
+    </div>
+
+    <!-- Chart Row -->
+    <div id="chartContainer" class="panel"
+      style="display:none; margin-top:12px; background:#fff; border-radius:16px; padding:16px;">
+      <h3 style="color:#1e293b; margin-top:0;">Daily Sales Trend (Last 7 Days)</h3>
+      <div style="height:250px; position:relative;">
+        <canvas id="salesChart"></canvas>
+      </div>
     </div>
 
     <div class="scroll-wrap">
@@ -660,6 +672,84 @@
       document.getElementById("sumLitres").textContent = `Units: ${totalLit.toFixed(2)}`;
       document.getElementById("sumUsed").textContent = `Used: ${usedCount}`;
       sumRow.style.display = "flex";
+      document.getElementById("csvBtn").style.display = "inline-block";
+
+      buildCharts(data);
+    }
+
+    let salesChart = null;
+    function buildCharts(data) {
+      const container = document.getElementById("chartContainer");
+      if (!data || data.length === 0) {
+        container.style.display = "none";
+        return;
+      }
+      container.style.display = "block";
+
+      const dailyMap = {};
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        dailyMap[key] = 0;
+      }
+
+      data.forEach(v => {
+        const dateStr = (v.created_at || "").split('T')[0];
+        if (dailyMap.hasOwnProperty(dateStr)) {
+          dailyMap[dateStr] += Number(v.amount || 0);
+        }
+      });
+
+      const labels = Object.keys(dailyMap).map(k => {
+        const d = new Date(k);
+        return d.toLocaleDateString("en-IN", { day: 'numeric', month: 'short' });
+      });
+      const values = Object.values(dailyMap);
+
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      if (salesChart) salesChart.destroy();
+      salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Sales (₹)',
+            data: values,
+            backgroundColor: '#3b82f6',
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    function exportCSV() {
+      // Collect rows
+      const rows_ = document.querySelectorAll("#tbl tr");
+      let csv = [];
+      rows_.forEach(tr => {
+        const cols = tr.querySelectorAll("th, td");
+        const rowData = [];
+        cols.forEach(c => rowData.push('"' + c.innerText.replace(/"/g, '""') + '"'));
+        csv.push(rowData.join(","));
+      });
+
+      const blob = new Blob([csv.join("\n")], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `FuelTag_Transactions_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
     }
 
     let autoTimer = null;

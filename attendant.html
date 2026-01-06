@@ -207,7 +207,7 @@
 
     .statusChip.pending {
       background: #fee2e2;
-      color: #7f1d1d
+      color: #991b1b
     }
 
     .statusChip.failed {
@@ -306,6 +306,56 @@
     .mono {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace
     }
+
+    /* Offline Indicator */
+    .offlineBanner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--bad);
+      color: #fff;
+      text-align: center;
+      padding: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      z-index: 10000;
+      display: none;
+    }
+
+    /* Verified Overlay */
+    .verifiedOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(22, 163, 74, 0.95);
+      z-index: 20000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: #fff;
+      text-align: center;
+    }
+
+    .bigCheck {
+      font-size: 120px;
+      margin-bottom: 20px;
+      animation: popBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes popBounce {
+      0% {
+        transform: scale(0);
+      }
+
+      70% {
+        transform: scale(1.1);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
   </style>
 
   <!-- jsQR -->
@@ -313,6 +363,12 @@
 </head>
 
 <body>
+  <div id="verifiedOverlay" class="verifiedOverlay">
+    <div class="bigCheck">✓</div>
+    <h2 style="font-size:40px; margin:0;">VERIFIED</h2>
+    <div style="font-size:20px; opacity:0.9; margin-top:10px;">Service Authorized</div>
+  </div>
+  <div id="offlineBanner" class="offlineBanner">⚠️ OFFLINE MODE: Check your connection.</div>
   <div class="wrap">
     <h1>⚡ <span>FuelTag</span></h1>
 
@@ -362,7 +418,7 @@
     <div class="card" id="detailsCard" style="display:none">
       <div style="font-weight:900;font-size:28px;margin-bottom:8px">Ticket Details</div>
 
-      <div id="detailsBody" style="font-size:18px;line-height:1.5"></div>
+      <div id="detailsBody" style="font-size:22px; line-height:1.6; font-weight:700;"></div>
 
       <div class="statusLine" id="statusLine" style="margin-top:14px"></div>
 
@@ -442,8 +498,13 @@
         const code = jsQR(ctx.getImageData(0, 0, canvas.width, canvas.height).data, canvas.width, canvas.height);
         if (code) {
           const p = parseQRPayload(code.data);
-          if (scanMode === "owner" && p?.kind === "owner") { setDeviceToken(p.dt); closeScanner(); }
+          if (scanMode === "owner" && p?.kind === "owner") {
+            if (navigator.vibrate) navigator.vibrate(100);
+            setDeviceToken(p.dt);
+            closeScanner();
+          }
           else if (scanMode === "booking" && p) {
+            if (navigator.vibrate) navigator.vibrate(100);
             document.getElementById("bookingInput").value = p.s ? `${p.b}|${p.s}` : p.b;
             closeScanner(); checkBooking(); return;
           }
@@ -461,7 +522,11 @@
       const d = await res.json(); if (!res.ok) return alert(d.detail || "Error");
       curB = { id: bid, sig: sig || d.qr_sig };
       document.getElementById("detailsCard").style.display = "block";
-      document.getElementById("detailsBody").innerHTML = `<b>ID:</b> ${d.id}<br><b>Service:</b> ${d.fuel_type}<br><b>Credits:</b> ₹${d.amount}`;
+      document.getElementById("detailsBody").innerHTML = `
+        <div style="margin-bottom:8px;">ID: <span class="mono">${d.id}</span></div>
+        <div style="font-size:32px; color:#1e40af; margin-bottom:12px;">${d.fuel_type} Credits</div>
+        <div style="font-size:40px; font-weight:900; color:#166534;">₹${d.amount}</div>
+      `;
       const ok = d.status === "paid";
       document.getElementById("statusLine").innerHTML = `Status: <span class="statusChip ${ok ? 'paid' : 'used'}">${d.status.toUpperCase()}</span>`;
       document.getElementById("dispenseBtn").disabled = !ok;
@@ -473,14 +538,38 @@
         method: "POST", headers: { "Content-Type": "application/json", "X-DEVICE-TOKEN": tok },
         body: JSON.stringify({ booking_id: curB.id, sig: curB.sig })
       });
-      if (res.ok) { btn.textContent = "✔ Done"; setTimeout(() => location.reload(), 2000); }
-      else { alert("Failed"); btn.disabled = false; btn.textContent = "Dispense"; }
+      if (res.ok) {
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        // Show overlay
+        const ov = document.getElementById("verifiedOverlay");
+        ov.style.display = "flex";
+        setTimeout(() => {
+          ov.style.display = "none";
+          btn.textContent = "✔ VERIFIED";
+          btn.className = "btn green";
+          document.getElementById("dispenseMsg").innerHTML = `<div class="msgOk" style="font-size:24px; text-align:center; margin-top:20px;">✅ Service Completed!<br><button class="btn blue" style="margin-top:15px;" onclick="location.reload()">NEXT TICKET</button></div>`;
+        }, 2000);
+      }
+      else {
+        alert("Failed to verify transaction");
+        btn.disabled = false;
+        btn.textContent = "Dispense";
+      }
     }
     window.onload = () => {
       renderPair(); const u = new URL(window.location.href);
       if (u.searchParams.has("dt")) setDeviceToken(u.searchParams.get("dt"));
       const b = u.searchParams.get("booking"), s = u.searchParams.get("sig");
       if (b) { document.getElementById("bookingInput").value = s ? `${b}|${s}` : b; checkBooking(); }
+
+      // --- Offline Handling ---
+      window.addEventListener("online", () => {
+        document.getElementById("offlineBanner").style.display = "none";
+      });
+      window.addEventListener("offline", () => {
+        document.getElementById("offlineBanner").style.display = "block";
+      });
+      if (!navigator.onLine) document.getElementById("offlineBanner").style.display = "block";
     };
   </script>
 </body>
