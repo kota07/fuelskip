@@ -547,7 +547,13 @@
           ov.style.display = "none";
           btn.textContent = "✔ VERIFIED";
           btn.className = "btn green";
-          document.getElementById("dispenseMsg").innerHTML = `<div class="msgOk" style="font-size:24px; text-align:center; margin-top:20px;">✅ Service Completed!<br><button class="btn blue" style="margin-top:15px;" onclick="location.reload()">NEXT TICKET</button></div>`;
+          const waMsg = encodeURIComponent(`⚡ *FuelTag Verification*\n\n✅ Service Authorized\n🆔 Ticket: ${curB.id}\n\nProcessed at: ${new Date().toLocaleTimeString()}`);
+          document.getElementById("dispenseMsg").innerHTML = `
+            <div class="msgOk" style="font-size:24px; text-align:center; margin-top:20px;">
+              ✅ Service Completed!<br>
+              <button class="btn" style="margin-top:10px; background:#25D366; border:none; color:white;" onclick="window.open('https://wa.me/?text=${waMsg}', '_blank')">💬 Share Confirmation</button><br>
+              <button class="btn blue" style="margin-top:15px;" onclick="location.reload()">NEXT TICKET</button>
+            </div>`;
         }, 2000);
       }
       else {

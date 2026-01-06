@@ -63,7 +63,8 @@ def init_db() -> None:
           last_fuel_type TEXT,
           last_amount TEXT,
           last_vehicle_type TEXT,
-          last_vehicle_no TEXT
+          last_vehicle_no TEXT,
+          points INTEGER DEFAULT 0
         );
     """)
     

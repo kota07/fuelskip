@@ -210,6 +210,14 @@ def verify_payment(req: PaymentVerify, user=Depends(require_user)):
 
     if is_paid:
         con = db()
+        # Award loyalty points (1 per 100 ₹)
+        cur = con.execute("SELECT amount, user_phone FROM vouchers WHERE id=?", (booking_id,))
+        v = one(cur)
+        if v:
+            pts = int(float(v["amount"] or 0) / 100)
+            if pts > 0:
+                con.execute("UPDATE users SET points = points + ? WHERE phone = ?", (pts, v["user_phone"]))
+
         con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND status='pending'", (t, booking_id))
         con.commit()
         con.close()
@@ -307,6 +315,14 @@ def get_booking_status(booking_id: str):
     if v and v["status"] == "pending":
         if _verify_cashfree_order(booking_id):
             t = now_iso()
+            # Award loyalty points
+            cur_v = con.execute("SELECT amount, user_phone FROM vouchers WHERE id=?", (booking_id,))
+            v_data = one(cur_v)
+            if v_data:
+                pts = int(float(v_data["amount"] or 0) / 100)
+                if pts > 0:
+                    con.execute("UPDATE users SET points = points + ? WHERE phone = ?", (pts, v_data["user_phone"]))
+
             con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND status='pending'", (t, booking_id))
             con.commit()
             # Fetch updated

@@ -258,6 +258,54 @@
       font-weight: 900;
     }
 
+    .btn.blue {
+      background: var(--btn-grad);
+      color: #fff;
+    }
+
+    .btn.outline {
+      background: transparent;
+      border: 1.5px solid #e2e8f0;
+      color: #475569;
+    }
+
+    /* Loyalty Badge */
+    .ptsBadge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: 0 4px 10px rgba(217, 119, 6, 0.3);
+    }
+
+    /* Larger Bottom Nav */
+    .nav {
+      height: 75px;
+      padding: 0 10px;
+    }
+
+    .navBtn {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 14px;
+    }
+
+    .navBtn img {
+      width: 26px;
+      height: 26px;
+    }
+
+    .navBtn.active {
+      background: rgba(0, 186, 242, 0.1);
+      color: var(--primary);
+    }
+
     .btnPrimary {
       background: var(--brand);
       color: #fff;
@@ -612,6 +660,10 @@
         margin: 0;
         gap: 0;
         justify-content: space-around;
+        height: 75px;
+        /* Added from instruction */
+        padding: 0 10px;
+        /* Added from instruction */
       }
 
       .nav button {
@@ -626,6 +678,34 @@
         font-weight: 700;
         border-radius: 8px;
         width: 100%;
+      }
+
+      /* navBtn styles applied to .nav button for mobile */
+      .nav button {
+        font-size: 13px;
+        /* Modified from instruction */
+        font-weight: 700;
+        padding: 8px 12px;
+        /* Modified from instruction */
+        border-radius: 14px;
+        /* Modified from instruction */
+      }
+
+      .nav button img {
+        /* Added from instruction */
+        width: 26px;
+        height: 26px;
+      }
+
+      .nav button.active {
+        background: transparent;
+        color: var(--brand);
+      }
+
+      .nav button.active {
+        /* Added from instruction */
+        background: rgba(0, 186, 242, 0.1);
+        color: var(--primary);
       }
 
       .nav button span {
@@ -756,7 +836,14 @@
   <div id="successOverlay" class="successOverlay">
     <div class="checkCircle">✓</div>
     <h2 style="font-size:32px; margin-bottom:10px;">Payment Successful!</h2>
-    <div class="muted" style="font-size:18px;">Your fuel ticket is ready.</div>
+    <div class="muted" style="font-size:18px; margin-bottom:25px;">Your fuel ticket is ready.</div>
+    <button class="btn green" id="btnWaShare" style="width:240px; background:#25D366; border:none;">
+      💬 Share to WhatsApp
+    </button>
+    <button class="btn outline" style="width:240px; margin-top:12px;"
+      onclick="document.getElementById('successOverlay').style.display='none'">
+      Close
+    </button>
   </div>
   <div id="offlineBanner" class="offlineBanner">⚠️ OFFLINE MODE: Connection lost. Some features may be limited.</div>
 
@@ -853,7 +940,9 @@
           <div class="welcomeCard" id="viewProfile" style="display:none; text-align:center;">
             <div class="logoMarkBig" style="margin:0 auto 14px auto; width:80px; height:80px; font-size:32px;">👤</div>
             <h2 style="margin:0;" id="profName">User</h2>
-            <div class="muted" id="profPhone" style="margin-bottom:20px;">+91 ...</div>
+            <div class="muted" id="profPhone" style="margin-bottom:12px;">+91 ...</div>
+            <div id="loyaltyDisplay" class="ptsBadge" style="display:inline-flex; margin-bottom:20px;">⭐ <span
+                id="userPts">0</span> Pts</div>
 
             <div class="grid2" style="text-align:left; margin-bottom:20px;">
               <div class="tile">
@@ -917,10 +1006,13 @@
             </div>
           </div>
 
-          <div class="row" style="margin-top:12px;">
-            <button class="btn btnPrimary" onclick="createBooking()">Purchase Credits</button>
-            <button class="btn" onclick="useCurrentLocation()">Find Service Points</button>
-            <button class="btn" onclick="scrollToLatestQR()">Show QR</button>
+          <div class="row" style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <button class="btn btnPrimary" style="height:60px; font-size:18px;" onclick="createBooking()">🚀 Purchase
+              Credits</button>
+            <button class="btn blue" style="height:60px; font-size:16px;" onclick="scrollToLatestQR()">📱 Open Active
+              QR</button>
+            <button class="btn outline" style="grid-column: span 2; height:50px;" onclick="useCurrentLocation()">📍 Find
+              Nearby Service Points</button>
           </div>
 
           <div id="homeStatus" class="muted" style="margin-top:10px;"></div>
@@ -1002,34 +1094,33 @@
           <h2>Analytics</h2>
           <div class="muted">Useful metrics: spend, energy split, service point usage, vehicle usage.</div>
 
-          <div class="tiles">
-            <div class="tile">
-              <div class="k">Total Spent</div>
-              <div class="v" id="anSpent">₹0</div>
+          <div class="tiles" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div class="tile" style="padding:20px; background:#f0f9ff; border-left:4px solid #0ea5e9;">
+              <div class="k" style="font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Total Spent</div>
+              <div class="v" id="anSpent" style="font-size:28px; color:#0369a1;">₹0</div>
             </div>
-            <div class="tile">
-              <div class="k">Total Litres</div>
-              <div class="v" id="anLitres">0 L</div>
+            <div class="tile" style="padding:20px; background:#f0fdf4; border-left:4px solid #22c55e;">
+              <div class="k" style="font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Total Litres</div>
+              <div class="v" id="anLitres" style="font-size:28px; color:#15803d;">0 L</div>
             </div>
-            <div class="tile">
-              <div class="k">Top Service Point</div>
-              <div class="v" id="anBunk">—</div>
+            <div class="tile" style="padding:20px; background:#fff7ed; border-left:4px solid #f97316;">
+              <div class="k" style="font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Frequent Bunk</div>
+              <div class="v" id="anBunk" style="font-size:18px; color:#9a3412;">—</div>
             </div>
-            <div class="tile">
-              <div class="k">Most Used Vehicle</div>
-              <div class="v" id="anVeh">—</div>
+            <div class="tile" style="padding:20px; background:#fef2f2; border-left:4px solid #ef4444;">
+              <div class="k" style="font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Top Vehicle</div>
+              <div class="v" id="anVeh" style="font-size:22px; color:#b91c1c;">—</div>
             </div>
-          </div>
 
-          <div class="tile" style="margin-top:12px;">
-            <div class="k">Energy Split</div>
-            <div class="v" style="font-size:14px; font-weight:1000;" id="anFuelSplit">—</div>
-          </div>
+            <div class="tile" style="margin-top:12px;">
+              <div class="k">Energy Split</div>
+              <div class="v" style="font-size:14px; font-weight:1000;" id="anFuelSplit">—</div>
+            </div>
 
-          <div class="hint" style="margin-top:12px;">
-            Tip: Purchase credits before joining the queue to save time at peak hours.
+            <div class="hint" style="margin-top:12px;">
+              Tip: Purchase credits before joining the queue to save time at peak hours.
+            </div>
           </div>
-        </div>
       </section>
 
     </main>
@@ -1081,6 +1172,25 @@
     function clearSession() {
       localStorage.removeItem("FUELTAG_SESSION");
       updateSessionUI();
+    }
+
+    function showSuccessOverlay(booking_id, amount, fuel_type) {
+      const ov = document.getElementById("successOverlay");
+      const waBtn = document.getElementById("btnWaShare");
+
+      if (waBtn) {
+        waBtn.onclick = () => {
+          const msg = encodeURIComponent(`⚡ *FuelTag Receipt*\n\n✅ Payment Successful\n🆔 ID: ${booking_id}\n⛽ Fuel: ${fuel_type}\n💰 Amount: ₹${amount}\n\nDownload App: ${window.location.origin}`);
+          window.open(`https://wa.me/?text=${msg}`, '_blank');
+        };
+      }
+
+      ov.style.display = "flex";
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      // Remove auto-close so they have time to click WhatsApp
+      // setTimeout(() => {
+      //   ov.style.display = "none";
+      // }, 3000);
     }
 
     function toast(msg) {
@@ -1140,6 +1250,7 @@
       // Fill profile details
       if (document.getElementById("profName")) document.getElementById("profName").textContent = s.name || "User";
       if (document.getElementById("profPhone")) document.getElementById("profPhone").textContent = `+91 ${s.phone}`;
+      if (document.getElementById("userPts")) document.getElementById("userPts").textContent = s.points || 0;
     }
 
     function logout() {
@@ -1182,7 +1293,7 @@
         }
 
         // Save token!
-        setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "", token: data.token });
+        setSession({ user_id: data.user_id, phone: data.phone, name: data.name || "", token: data.token, points: data.points || 0 });
 
         if (data.last_fuel_type) document.getElementById("fuelType").value = data.last_fuel_type;
         if (data.last_amount) document.getElementById("amountInput").value = data.last_amount;
@@ -1842,6 +1953,17 @@
       await loadSystemInfo();
       const s = getSession();
       if (s && s.token) {
+        // Sync points from /me
+        try {
+          const r = await fetch(`${API}/me`, { headers: { "X-USER-TOKEN": s.token } });
+          const d = await r.json();
+          if (r.ok) {
+            s.points = d.points || 0;
+            s.name = d.name || s.name;
+            setSession(s);
+          }
+        } catch (e) { }
+
         await loadVehicles();
         await loadMyBookings(false);
       }
@@ -1875,8 +1997,10 @@
             body: JSON.stringify({ booking_id: paidOrderId })
           }).then(r => r.json()).then(data => {
             if (data.ok) {
-              showSuccessOverlay();
+              // Get details from session/history if needed, or just show summary
+              showSuccessOverlay(paidOrderId, data.amount || "...", data.fuel_type || "Fuel");
               loadMyBookings(true);
+              refreshAll(); // Refresh user points
             }
           });
         } else {

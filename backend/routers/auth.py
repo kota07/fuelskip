@@ -20,6 +20,7 @@ class LoginResp(BaseModel):
     last_fuel_type: str | None = None
     last_amount: float | None = None
     last_bunk: str | None = None
+    points: int = 0
 
 @router.post("/login", response_model=LoginResp)
 @router.post("/auth/login", response_model=LoginResp)
@@ -87,6 +88,7 @@ def login(req: LoginReq):
         last_bunk=u["last_bunk"] if u and "last_bunk" in u.keys() else None,
         last_fuel_type=u["last_fuel_type"] if u and "last_fuel_type" in u.keys() else None,
         last_amount=float(u["last_amount"]) if u and "last_amount" in u.keys() and u["last_amount"] else None,
+        points=u["points"] if u and "points" in u.keys() else 0,
     )
 
 @router.get("/me")
@@ -95,5 +97,6 @@ def me(user=Depends(require_user)):
         "user_id": user["id"],
         "phone": user["phone"],
         "name": user["name"],
+        "points": user.get("points", 0),
         "last_login_at": user["last_login_at"]
     }
