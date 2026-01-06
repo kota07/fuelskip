@@ -100,11 +100,29 @@ class PaymentVerify(BaseModel):
 
 @router.get("/nearby-bunks")
 def nearby_bunks(lat: float, lon: float):
-    # Mock
-    return [
-        {"id":"BUNK-1", "name":"Service Point 1", "dist": 1.2},
-        {"id":"BUNK-2", "name":"Service Point 2", "dist": 4.5},
-    ]
+    from backend.config import BUNKS
+    import math
+
+    def haversine(lat1, lon1, lat2, lon2):
+        R = 6371  # Earth radius in km
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        return R * c
+
+    results = []
+    for b in BUNKS:
+        dist = haversine(lat, lon, b["lat"], b["lon"])
+        results.append({
+            "id": b["id"],
+            "name": b["name"],
+            "dist": round(dist, 1)
+        })
+    
+    # Sort by distance
+    results.sort(key=lambda x: x["dist"])
+    return results[:5]
 
 @router.post("/create-booking")
 def create_booking(req: BookingCreate, request: Request, user=Depends(require_user)):
