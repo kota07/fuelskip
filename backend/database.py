@@ -68,7 +68,14 @@ def init_db() -> None:
           referral_code TEXT UNIQUE,
           referred_by TEXT
         );
+    """)
 
+    # Migrations: Ensure columns exist
+    for col in ["points INTEGER DEFAULT 0", "referral_code TEXT UNIQUE", "referred_by TEXT", "last_bunk TEXT", "last_fuel_type TEXT", "last_amount TEXT", "last_vehicle_type TEXT", "last_vehicle_no TEXT"]:
+        try: con.execute(f"ALTER TABLE users ADD COLUMN IF NOT EXISTS {col}")
+        except: pass
+
+    con.execute("""
         CREATE TABLE IF NOT EXISTS settings (
           key TEXT PRIMARY KEY,
           value TEXT
