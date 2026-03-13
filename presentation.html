@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelTag – Pitch Presentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030712;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --primary: #4f46e5;
+            --accent: #06b6d4;
+            --text: #f9fafb;
+            --text-dim: #9ca3af;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .background-blob {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(3, 7, 18, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(80px);
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            0% { transform: translate(-10%, -10%); }
+            100% { transform: translate(60%, 40%); }
+        }
+
+        .presentation-container {
+            height: 100vh;
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+        }
+
+        .content-card {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 60px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease 0.3s;
+        }
+
+        .slide.active .content-card {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: linear-gradient(to right, #818cf8, #2dd4bf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.1;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        p {
+            font-size: 1.25rem;
+            color: var(--text-dim);
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .feature-item {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 24px;
+            border-radius: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .feature-item h3 {
+            color: #fff;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+
+        .nav-controls {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            z-index: 1000;
+            transition: width 0.3s ease;
+        }
+
+        .logo-mark {
+            position: fixed;
+            top: 40px;
+            left: 40px;
+            font-weight: 800;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        ul {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        li {
+            margin-bottom: 12px;
+            padding-left: 28px;
+            position: relative;
+            font-size: 1.1rem;
+        }
+
+        li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 1.8rem; }
+            .content-card { padding: 30px; }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-blob"></div>
+    <div class="progress-bar" id="progress"></div>
+    
+    <div class="logo-mark">
+        ⚡ <span>FuelTag</span>
+    </div>
+
+    <div class="presentation-container" id="container">
+        <!-- Slide 1: Intro -->
+        <section class="slide active">
+            <div class="content-card">
+                <h1>Modernizing Your <br> Petrol Bunk Operations</h1>
+                <p>The SaaS platform designed to streamline fuel procurement, eliminate credit friction, and maximize your bunk's throughput.</p>
+                <div style="margin-top: 40px; color: var(--text-dim); font-size: 0.9rem;">
+                    Use Arrow Keys or Buttons to Navigate
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 2: The Problem -->
+        <section class="slide">
+            <div class="content-card">
+                <h2>The Current Hurdles</h2>
+                <p>Traditional bunk operations face significant friction in the digital age:</p>
+                <ul>
+                    <li><span class="highlight">Manual Credit Tracking:</span> Risky ledger books and paper slips.</li>
+                    <li><span class="highlight">Queue Congestion:</span> Slow transaction processing during peak hours.</li>
+                    <li><span class="highlight">No Real-time Data:</span> Hard to track which drivers/fleets are fueling when.</li>
+                    <li><span class="highlight">Fraud Risk:</span> Unauthorized refueling and stolen physical cards.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Slide 3: The Solution -->
+        <section class="slide">
+            <div class="content-card">
+                <h2>The FuelTag Solution</h2>
+                <p>A complete digital infrastructure that bridges the gap between bunk owners and fleet operators.</p>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h3>Digital Fuel Pass</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">QR-based authorization for instant refueling.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>Automated Credit</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">Stop using registers. FuelTag tracks every Rupee automatically.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>Direct Settlement</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">Direct payouts to your bank account with full transparency.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>Fleet Portal</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">Connect directly with large transport companies.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+         <!-- Slide 4: Real-time Analytics -->
+         <section class="slide">
+            <div class="content-card">
+                <h2>Data-Driven Decisions</h2>
+                <p>Our bunk owner dashboard gives you total control and visibility.</p>
+                <ul>
+                    <li><span class="highlight">Daily Sales Trends:</span> Visualize peak hours and revenue growth.</li>
+                    <li><span class="highlight">Device Management:</span> Authorize attendant phones with one tap.</li>
+                    <li><span class="highlight">Price Control:</span> Update fuel rates instantly to reflect market changes.</li>
+                    <li><span class="highlight">Audit Logs:</span> Every transaction is cryptographically logged and unchangeable.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Slide 5: Why Partner With Us? -->
+        <section class="slide">
+            <div class="content-card">
+                <h2>Bunk Owner Benefits</h2>
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <h3>Zero Hardware Cost</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">Works on any smartphone. No expensive machines needed.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>Guaranteed Payments</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">We handle the credit risk. You get paid for every litre.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>Customer Loyalty</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">Fleet drivers prefer FuelTag bunks for faster service.</p>
+                    </div>
+                    <div class="feature-item">
+                        <h3>Future Ready</h3>
+                        <p style="font-size: 1rem; margin-bottom: 0;">Support for Petrol, Diesel, CNG, and EV in one platform.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Slide 6: Security & Pairing -->
+        <section class="slide">
+            <div class="content-card">
+                <h2>Secure by Design</h2>
+                <p>We've built enterprise-grade security into every layer of the platform.</p>
+                <ul>
+                    <li><span class="highlight">Device Pairing:</span> Attendants scan a unique QR code to link their phones securely.</li>
+                    <li><span class="highlight">Instant Revoke:</span> Lost a phone? Revoke access immediately from your dashboard.</li>
+                    <li><span class="highlight">Encrypted Tokens:</span> No passwords to steal. We use secure session tokens.</li>
+                    <li><span class="highlight">Fraud Prevention:</span> Geofencing and transaction limits keep your bunk safe.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Slide 7: Next Steps -->
+        <section class="slide">
+            <div class="content-card">
+                <h2>Ready to Start?</h2>
+                <p>Join the growing network of smart petrol bunks.</p>
+                <div style="background: rgba(79, 70, 229, 0.2); padding: 30px; border-radius: 20px; border: 1px dashed var(--primary);">
+                    <h3 style="margin-bottom: 10px;">Our Onboarding Plan:</h3>
+                    <p style="font-size: 1.1rem; margin-bottom: 0;">
+                        1. Register your service point.<br>
+                        2. Set your fuel rates.<br>
+                        3. Pair your attendant devices.<br>
+                        4. Accept your first FuelTag driver.
+                    </p>
+                </div>
+                <p style="margin-top: 40px; font-weight: 600; color: #fff;">Let's build the future of fuel together.</p>
+            </div>
+        </section>
+    </div>
+
+    <div class="nav-controls">
+        <button class="nav-btn" onclick="prevSlide()">Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const container = document.getElementById('container');
+        const progress = document.getElementById('progress');
+
+        function updateSlide() {
+            container.style.transform = `translateX(-${currentSlide * 100}vw)`;
+            slides.forEach((s, i) => {
+                if(i === currentSlide) s.classList.add('active');
+                else s.classList.remove('active');
+            });
+            progress.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+            if (e.key === 'ArrowLeft') prevSlide();
+        });
+
+        // Initialize
+        updateSlide();
+    </script>
+</body>
+</html>
