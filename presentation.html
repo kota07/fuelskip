@@ -215,6 +215,11 @@
 </head>
 <body>
     <div class="background-blob"></div>
+    <div id="video-bg-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; overflow: hidden; opacity: 0.4;">
+        <video id="intro-video" muted style="width: 100%; height: 100%; object-fit: cover;">
+            Your browser does not support the video tag.
+        </video>
+    </div>
     <div class="progress-bar" id="progress"></div>
     
     <div class="logo-mark">
@@ -227,7 +232,10 @@
             <div class="content-card">
                 <h1>Modernizing Your <br> Petrol Bunk Operations</h1>
                 <p>The SaaS platform designed to streamline fuel procurement, eliminate credit friction, and maximize your bunk's throughput.</p>
-                <div style="margin-top: 40px; color: var(--text-dim); font-size: 0.9rem;">
+                <div style="margin-top: 40px; display: flex; gap: 15px;">
+                    <button class="nav-btn" onclick="playExplainer()" id="play-btn">▶ Play Explainer Video</button>
+                </div>
+                <div style="margin-top: 20px; color: var(--text-dim); font-size: 0.9rem;">
                     Use Arrow Keys or Buttons to Navigate
                 </div>
             </div>
@@ -410,6 +418,34 @@
             if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
             if (e.key === 'ArrowLeft') prevSlide();
         });
+
+        // Video Sequence Logic
+        const videoElement = document.getElementById('intro-video');
+        const videoSources = [
+            'videos/video_69b3f3f5b9d48190ad7c4b3703f6847a0d546016f808f3df(1).mp4',
+            'videos/video_69b3f40015d48191bde946d0616f766a0d24655fd52044eb.mp4',
+            'videos/video_69b3f3ea22048191b35f79211e633c5405367d35c0946351.mp4'
+        ];
+        let currentVideoIndex = 0;
+
+        function playExplainer() {
+            currentVideoIndex = 0;
+            videoElement.src = videoSources[currentVideoIndex];
+            document.getElementById('video-bg-container').style.opacity = "0.7";
+            videoElement.play();
+            document.getElementById('play-btn').innerText = "Playing Explainer...";
+        }
+
+        videoElement.onended = function() {
+            currentVideoIndex++;
+            if (currentVideoIndex < videoSources.length) {
+                videoElement.src = videoSources[currentVideoIndex];
+                videoElement.play();
+            } else {
+                document.getElementById('video-bg-container').style.opacity = "0.4";
+                document.getElementById('play-btn').innerText = "Replay Explainer";
+            }
+        };
 
         // Initialize
         updateSlide();
