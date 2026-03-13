@@ -422,16 +422,18 @@
         // Video Sequence Logic
         const videoElement = document.getElementById('intro-video');
         const videoSources = [
+            'videos/video_3.mp4',
             'videos/video_1.mp4',
-            'videos/video_2.mp4',
-            'videos/video_3.mp4'
+            'videos/video_2.mp4'
         ];
         let currentVideoIndex = 0;
 
         function playExplainer() {
             currentVideoIndex = 0;
             videoElement.src = videoSources[currentVideoIndex];
-            document.getElementById('video-bg-container').style.opacity = "0.7";
+            videoElement.muted = false; // Unmute for explainer
+            document.getElementById('video-bg-container').style.opacity = "1";
+            document.querySelector('.content-card').style.opacity = "0.1"; // Dim content for focus
             videoElement.play();
             document.getElementById('play-btn').innerText = "Playing Explainer...";
         }
@@ -443,6 +445,8 @@
                 videoElement.play();
             } else {
                 document.getElementById('video-bg-container').style.opacity = "0.4";
+                document.querySelector('.content-card').style.opacity = "1"; // Restore content
+                videoElement.muted = true;
                 document.getElementById('play-btn').innerText = "Replay Explainer";
             }
         };
