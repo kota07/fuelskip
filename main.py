@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 import os
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import init_db
@@ -30,6 +31,10 @@ app.include_router(bookings.router) # /create-booking, /my-bookings...
 app.include_router(devices.router, prefix="/devices") # /devices/register...
 app.include_router(attendant.router, prefix="/attendant") # /attendant/booking...
 app.include_router(settings.router) # /info
+
+# Mount Videos Directory
+if os.path.exists("videos"):
+    app.mount("/videos", StaticFiles(directory="videos"), name="videos")
 
 # --- Frontend Static Files ---
 @app.get("/")
