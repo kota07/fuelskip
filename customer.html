@@ -995,7 +995,10 @@
 
             <div>
               <label>Payment Method</label>
-              <input value="Cashfree" disabled />
+              <select id="payMethod">
+                <option value="cashfree">Cashfree (Cards/Wallets)</option>
+                <option value="upi">Direct UPI (PhonePe / Paytm - 0% Fee)</option>
+              </select>
             </div>
           </div>
 
@@ -1630,7 +1633,10 @@
       return `<span class="badge" style="background:#ecfeff;color:#155e75;border-color:#a5f3fc;">${map[x] || x}</span>`;
     }
 
-    function payChip() {
+    function payChip(method) {
+      if (method === "upi") {
+        return `<span class="badge" style="background:#fce7f3;color:#be185d;border-color:#fbcfe8;">DIRECT UPI</span>`;
+      }
       return `<span class="badge" style="background:#eef2ff;color:#3730a3;border-color:#c7d2fe;">CASHFREE</span>`;
     }
 
@@ -1714,7 +1720,7 @@
             <span style="font-weight:1000;">Ticket ID: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
-            ${payChip()}
+            ${payChip(v.payment_method)}
           </div>
           <div class="bookingMeta">${metaParts.join(" • ")}</div>
 
@@ -1798,7 +1804,7 @@
             <span style="font-weight:1000;">Booking ID: ${id}</span>
             ${statusBadge(status, used)}
             ${fuelChip(v.fuel_type)}
-            ${payChip()}
+            ${payChip(v.payment_method)}
           </div>
           <div class="bookingMeta">
             Service Point: ${bunkNameFromId(v.bunk_id)} (${v.bunk_id}) •
@@ -1889,7 +1895,8 @@
 
       document.getElementById("homeStatus").textContent = "Creating booking...";
 
-      const payload = { bunk_id, user_id: s.user_id, pay_method: "cashfree", fuel_type, vehicle_type, vehicle_no };
+      const pay_method = document.getElementById("payMethod").value;
+      const payload = { bunk_id, user_id: s.user_id, pay_method, fuel_type, vehicle_type, vehicle_no };
       if (amount > 0) payload.amount = amount;
       if (litres > 0) payload.litres = litres;
 
@@ -1909,7 +1916,28 @@
         return;
       }
 
-      if (data.payment_session_id) {
+      if (pay_method === "upi") {
+        document.getElementById("homeStatus").textContent = "Opening UPI App...";
+        toast("Redirecting to PhonePe / Paytm...");
+        
+        // Simulating UPI App redirection & payment for demo purposes
+        setTimeout(async () => {
+          document.getElementById("homeStatus").textContent = "Verifying UPI payment...";
+          const verifyRes = await fetch(`${API}/verify-payment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-USER-TOKEN": s.token },
+            body: JSON.stringify({ booking_id: data.id })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.ok) {
+            showSuccessOverlay(data.id, payload.amount || "...", payload.fuel_type);
+            await loadMyBookings(true);
+            refreshAll(); 
+          } else {
+            document.getElementById("homeStatus").textContent = "UPI Payment Failed.";
+          }
+        }, 3000);
+      } else if (data.payment_session_id) {
         document.getElementById("homeStatus").textContent = "Opening Checkout...";
         const env = (data.cf_environment || "sandbox").toLowerCase();
         const cashfree = Cashfree({ mode: (env === "production") ? "production" : "sandbox" });

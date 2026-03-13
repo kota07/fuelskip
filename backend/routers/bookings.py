@@ -179,11 +179,17 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
             print(f"Cashfree Connection Error: {e}")
             raise HTTPException(status_code=500, detail=f"Connection Error: {str(e)}")
 
-    # If NO payment session, handle based on environment
+    # If NO payment session, handle based on environment for cashfree
     if not payment_session_id:
-        if CF_ENVIRONMENT == "production":
-            raise HTTPException(status_code=400, detail="Cashfree live session failed. Please ensure your Live Keys are set and your account is active.")
-        status = "paid"
+        if payment_method == "cashfree":
+            if CF_ENVIRONMENT == "production":
+                raise HTTPException(status_code=400, detail="Cashfree live session failed. Please ensure your Live Keys are set and your account is active.")
+            status = "paid"
+        elif payment_method == "upi":
+            status = "pending"
+        else:
+            status = "paid"
+
     
     t = now_iso()
     con = db()
@@ -224,10 +230,23 @@ def create_booking(req: BookingCreate, request: Request, user=Depends(require_us
 def verify_payment(req: PaymentVerify, user=Depends(require_user)):
     booking_id = req.booking_id
     t = now_iso()
-    is_paid = _verify_cashfree_order(booking_id)
+    
+    con = db()
+    cur = con.execute("SELECT payment_method FROM vouchers WHERE id=?", (booking_id,))
+    v_info = one(cur)
+    if not v_info:
+        con.close()
+        return {"ok": False}
+        
+    payment_method = v_info["payment_method"]
+    is_paid = False
+    
+    if payment_method == "upi":
+        is_paid = True # Mock Verification for Demo
+    else:
+        is_paid = _verify_cashfree_order(booking_id)
 
     if is_paid:
-        con = db()
         # Award loyalty points (1 per 100 ₹)
         cur = con.execute("SELECT amount, user_phone FROM vouchers WHERE id=?", (booking_id,))
         v = one(cur)
@@ -238,7 +257,7 @@ def verify_payment(req: PaymentVerify, user=Depends(require_user)):
 
         con.execute("UPDATE vouchers SET status='paid', updated_at=? WHERE id=? AND status='pending'", (t, booking_id))
         con.commit()
-        con.close()
+    con.close()
     
     return {"ok": is_paid}
 
