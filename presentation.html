@@ -232,8 +232,9 @@
             <div class="content-card">
                 <h1>Modernizing Your <br> Petrol Bunk Operations</h1>
                 <p>The SaaS platform designed to streamline fuel procurement, eliminate credit friction, and maximize your bunk's throughput.</p>
-                <div style="margin-top: 40px; display: flex; gap: 15px;">
-                    <button class="nav-btn" onclick="playExplainer()" id="play-btn">▶ Play Explainer Video</button>
+                <div style="margin-top: 40px; display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="nav-btn" onclick="playSequence('explainer')" id="explainer-btn">▶ Play Explainer (Concept)</button>
+                    <button class="nav-btn" style="background: var(--accent); border-color: var(--accent);" onclick="playSequence('demo')" id="demo-btn">📱 Play App Demo</button>
                 </div>
                 <div style="margin-top: 20px; color: var(--text-dim); font-size: 0.9rem;">
                     Use Arrow Keys or Buttons to Navigate
@@ -421,33 +422,54 @@
 
         // Video Sequence Logic
         const videoElement = document.getElementById('intro-video');
-        const videoSources = [
-            'videos/video_3.mp4',
-            'videos/video_1.mp4',
-            'videos/video_2.mp4'
-        ];
+        const sequences = {
+            explainer: [
+                'videos/video_3.mp4',
+                'videos/video_1.mp4',
+                'videos/video_2.mp4'
+            ],
+            demo: [
+                'videos/fueltagdemo_video1.mp4',
+                'videos/fueltagdemo_video2.mp4'
+            ]
+        };
+        let currentSequence = 'explainer';
         let currentVideoIndex = 0;
 
-        function playExplainer() {
+        function playSequence(type) {
+            currentSequence = type;
             currentVideoIndex = 0;
-            videoElement.src = videoSources[currentVideoIndex];
-            videoElement.muted = false; // Unmute for explainer
+            videoElement.src = sequences[currentSequence][currentVideoIndex];
+            videoElement.muted = false; // Unmute for audio
             document.getElementById('video-bg-container').style.opacity = "1";
             document.querySelector('.content-card').style.opacity = "0.1"; // Dim content for focus
             videoElement.play();
-            document.getElementById('play-btn').innerText = "Playing Explainer...";
+            
+            // UI Feedback
+            if(type === 'explainer') {
+                document.getElementById('explainer-btn').innerText = "Playing Explainer...";
+                document.getElementById('demo-btn').innerText = "📱 Play App Demo";
+            } else {
+                document.getElementById('demo-btn').innerText = "Playing App Demo...";
+                document.getElementById('explainer-btn').innerText = "▶ Play Explainer (Concept)";
+            }
         }
 
         videoElement.onended = function() {
             currentVideoIndex++;
-            if (currentVideoIndex < videoSources.length) {
-                videoElement.src = videoSources[currentVideoIndex];
+            if (currentVideoIndex < sequences[currentSequence].length) {
+                videoElement.src = sequences[currentSequence][currentVideoIndex];
                 videoElement.play();
             } else {
                 document.getElementById('video-bg-container').style.opacity = "0.4";
                 document.querySelector('.content-card').style.opacity = "1"; // Restore content
                 videoElement.muted = true;
-                document.getElementById('play-btn').innerText = "Replay Explainer";
+                
+                if(currentSequence === 'explainer') {
+                    document.getElementById('explainer-btn').innerText = "Replay Explainer";
+                } else {
+                    document.getElementById('demo-btn').innerText = "Replay App Demo";
+                }
             }
         };
 
