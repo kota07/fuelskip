@@ -56,6 +56,12 @@ async def serve_owner():
         return FileResponse("owner.html")
     return {"error": "owner.html not found"}
 
+@app.get("/presentation.html")
+async def serve_presentation():
+    if os.path.exists("presentation.html"):
+        return FileResponse("presentation.html")
+    return {"error": "presentation.html not found"}
+
 @app.get("/terms.html")
 async def serve_terms():
     if os.path.exists("terms.html"):
